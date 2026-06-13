@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APM システム管理ポータル</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root {
+  --navy:#1E2761;--navy-mid:#2D4A8A;--navy-light:#4A6FA5;--accent:#2D72D2;
+  --green:#1A7F5A;--green-light:#D1FAE5;--red:#B91C1C;--red-light:#FEE2E2;
+  --yellow:#B45309;--yellow-light:#FEF3C7;
+  --gray-50:#F8FAFC;--gray-100:#F1F5F9;--gray-200:#E2E8F0;
+  --gray-400:#94A3B8;--gray-600:#475569;--gray-800:#1E293B;--white:#FFFFFF;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 15px rgba(0,0,0,.08),0 4px 6px rgba(0,0,0,.04);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--gray-50);color:var(--gray-800);font-size:14px;line-height:1.6;}
+.header{background:var(--navy);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.header-left{display:flex;align-items:center;gap:16px;}
+.header-logo{color:var(--white);font-size:16px;font-weight:700;letter-spacing:.05em;}
+.header-logo span{color:#93C5FD;font-weight:300;}
+.header-nav{display:flex;gap:4px;}
+.nav-item{color:#CBD5E1;font-size:13px;padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.nav-item:hover{background:rgba(255,255,255,.1);color:var(--white);}
+.nav-item.active{background:var(--accent);color:var(--white);}
+.user-switcher{display:flex;align-items:center;gap:8px;}
+.user-label{color:#94A3B8;font-size:12px;}
+.user-toggle{display:flex;background:rgba(255,255,255,.1);border-radius:20px;padding:3px;gap:2px;}
+.user-btn{padding:4px 12px;border-radius:16px;border:none;font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .2s;color:#94A3B8;background:transparent;}
+.user-btn.active{background:var(--white);color:var(--navy);font-weight:500;}
+.main{display:flex;min-height:calc(100vh - 56px);}
+.sidebar{width:220px;background:var(--white);border-right:1px solid var(--gray-200);padding:20px 0;flex-shrink:0;}
+.sidebar-section{margin-bottom:8px;}
+.sidebar-title{font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;text-transform:uppercase;padding:0 16px 6px;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;color:var(--gray-600);font-size:13px;transition:all .15s;border-left:3px solid transparent;}
+.sidebar-item:hover{background:var(--gray-50);color:var(--navy);}
+.sidebar-item.active{background:#EFF6FF;color:var(--accent);border-left-color:var(--accent);font-weight:500;}
+.sidebar-badge{background:var(--red);color:var(--white);border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:auto;}
+.sidebar-icon{font-size:15px;width:20px;text-align:center;}
+.content{flex:1;padding:24px;overflow:auto;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:700;color:var(--navy);}
+.page-subtitle{font-size:13px;color:var(--gray-400);margin-top:2px;}
+.btn{padding:8px 16px;border-radius:8px;border:none;font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-primary{background:var(--accent);color:var(--white);}
+.btn-primary:hover{background:#1D5FAA;}
+.btn-secondary{background:var(--white);color:var(--gray-600);border:1px solid var(--gray-200);}
+.btn-secondary:hover{background:var(--gray-50);}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid #FCA5A5;}
+.btn-danger:hover{background:#FEE2E2;}
+.btn-success{background:var(--green-light);color:var(--green);border:1px solid #6EE7B7;}
+.btn-success:hover{background:#A7F3D0;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--white);border-radius:10px;padding:16px 20px;box-shadow:var(--shadow);border-left:4px solid transparent;}
+.stat-card.green{border-left-color:var(--green);}
+.stat-card.blue{border-left-color:var(--accent);}
+.stat-card.yellow{border-left-color:#D97706;}
+.stat-card.red{border-left-color:var(--red);}
+.stat-label{font-size:11px;color:var(--gray-400);font-weight:500;text-transform:uppercase;letter-spacing:.05em;}
+.stat-value{font-size:28px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace;line-height:1.2;margin-top:4px;}
+.stat-sub{font-size:11px;color:var(--gray-400);margin-top:2px;}
+.table-card{background:var(--white);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;}
+.table-header-title{font-size:15px;font-weight:700;color:var(--navy);}
+.table-search-wrap{display:flex;align-items:center;gap:8px;}
+.table-search{display:flex;align-items:center;gap:6px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:6px 12px;}
+.table-search input{border:none;background:transparent;font-size:13px;font-family:'Noto Sans JP',sans-serif;outline:none;width:160px;color:var(--gray-800);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--gray-50);}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--gray-200);white-space:nowrap;}
+td{padding:12px 16px;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-800);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;}
+.badge::before{content:'●';font-size:8px;}
+.badge-running{background:var(--green-light);color:var(--green);}
+.badge-plan{background:#EFF6FF;color:var(--accent);}
+.badge-dev{background:#F0FDF4;color:#15803D;}
+.badge-order{background:var(--yellow-light);color:var(--yellow);}
+.badge-retire{background:var(--gray-100);color:var(--gray-400);}
+.badge-pending{background:var(--yellow-light);color:var(--yellow);}
+.badge-approved{background:var(--green-light);color:var(--green);}
+.badge-rejected{background:var(--red-light);color:var(--red);}
+.env-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.env-chip{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:'JetBrains Mono',monospace;}
+.env-prod{background:#FEE2E2;color:var(--red);}
+.env-stg{background:var(--yellow-light);color:var(--yellow);}
+.env-dev{background:#EFF6FF;color:var(--accent);}
+.sys-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);background:var(--gray-100);padding:2px 6px;border-radius:4px;}
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;justify-content:flex-end;}
+.detail-overlay.open{display:flex;}
+.detail-panel{width:680px;background:var(--white);height:100%;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.12);display:flex;flex-direction:column;}
+.detail-header{padding:20px 24px;background:var(--navy);color:var(--white);position:sticky;top:0;z-index:10;}
+.detail-header-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.detail-title{font-size:18px;font-weight:700;}
+.detail-id{font-family:'JetBrains Mono',monospace;font-size:12px;color:#93C5FD;margin-top:4px;}
+.close-btn{background:rgba(255,255,255,.15);border:none;color:var(--white);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.close-btn:hover{background:rgba(255,255,255,.25);}
+.detail-body{padding:24px;flex:1;}
+.detail-section{margin-bottom:24px;}
+.detail-section-title{font-size:12px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.detail-field label{font-size:11px;color:var(--gray-400);font-weight:600;display:block;margin-bottom:3px;}
+.detail-field span{font-size:13px;color:var(--gray-800);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:12px;width:560px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--white);z-index:10;}
+.modal-title{font-size:16px;font-weight:700;color:var(--navy);}
+.modal-body{padding:20px 24px;}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--white);}
+.form-group{margin-bottom:16px;}
+.form-group label{font-size:12px;font-weight:600;color:var(--gray-600);display:block;margin-bottom:6px;}
+.required{color:var(--red);margin-left:2px;}
+.form-control{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--gray-800);background:var(--white);transition:border-color .15s;}
+.form-control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(45,114,210,.1);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.approval-banner{background:var(--yellow-light);border:1px solid #FCD34D;border-radius:10px;padding:14px 20px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between;}
+.approval-banner.show{display:flex;}
+.history-type{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;}
+.type-register{background:#EFF6FF;color:var(--accent);}
+.type-update{background:var(--yellow-light);color:var(--yellow);}
+.type-retire{background:var(--red-light);color:var(--red);}
+.env-table{width:100%;border-collapse:collapse;font-size:12px;}
+.env-table th{padding:8px 12px;background:var(--gray-50);font-size:10px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--gray-200);text-align:left;}
+.env-table td{padding:9px 12px;border-bottom:1px solid var(--gray-100);color:var(--gray-800);font-family:'JetBrains Mono',monospace;font-size:12px;}
+.env-table tr:last-child td{border-bottom:none;}
+.env-table td input{border:none;background:transparent;font-family:'JetBrains Mono',monospace;font-size:12px;width:100%;outline:none;color:var(--gray-800);}
+.env-table td input:focus{background:var(--gray-50);border-radius:4px;padding:2px 4px;}
+.workflow-steps{display:flex;align-items:center;gap:8px;margin-top:12px;}
+.wf-step{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 16px;border-radius:8px;font-size:11px;font-weight:600;flex:1;text-align:center;}
+.wf-step-icon{font-size:18px;}
+.wf-step.done{background:var(--green-light);color:var(--green);}
+.wf-step.current{background:var(--yellow-light);color:var(--yellow);}
+.wf-step.pending{background:var(--gray-100);color:var(--gray-400);}
+.wf-arrow{color:var(--gray-300);font-size:16px;}
+.approval-modal{width:640px;}
+.approval-item{border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:12px;}
+.approval-item-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.approval-item-actions{display:flex;gap:8px;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;box-shadow:var(--shadow-lg);z-index:500;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+.csv-btn{background:#F0FDF4;color:var(--green);border:1px solid #6EE7B7;padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:500;display:inline-flex;align-items:center;gap:4px;text-decoration:none;}
+.csv-btn:hover{background:#DCFCE7;}
+.empty-state{text-align:center;padding:40px;color:var(--gray-400);}
+.empty-state-icon{font-size:40px;margin-bottom:8px;}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-select{padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--gray-600);background:var(--white);cursor:pointer;}
+.filter-select:focus{outline:none;border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">APM <span>Portal</span></div>
+    <nav class="header-nav">
+      <div class="nav-item active" onclick="showPage('home',this)">ホーム</div>
+      <div class="nav-item" onclick="showPage('history',this)">申請一覧</div>
+      <div class="nav-item" onclick="showPage('approval',this)">承認</div>
+    </nav>
+  </div>
+  <div class="user-switcher">
+    <span class="user-label">表示ユーザー：</span>
+    <div class="user-toggle">
+      <button class="user-btn active" onclick="switchUser('applicant',this)">申請者</button>
+      <button class="user-btn" onclick="switchUser('admin',this)">事務局</button>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">ITアセット管理</div>
+      <div class="sidebar-item active" id="sb-apps" onclick="showSidebarView('apps',this)">
+        <span class="sidebar-icon">📦</span> ビジネスアプリ
+      </div>
+      <div class="sidebar-item" id="sb-envs" onclick="showSidebarView('envs',this)">
+        <span class="sidebar-icon">🖥️</span> システム環境
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">申請カタログ</div>
+      <div class="sidebar-item" onclick="openCatalogModal('register')">
+        <span class="sidebar-icon">➕</span> 新規登録申請
+      </div>
+      <div class="sidebar-item" onclick="openCatalogModal('update')">
+        <span class="sidebar-icon">✏️</span> 更新申請
+      </div>
+      <div class="sidebar-item" onclick="openCatalogModal('retire')">
+        <span class="sidebar-icon">🗑️</span> 廃止申請
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">承認・履歴</div>
+      <div class="sidebar-item" id="sb-approval" onclick="showPage('approval',null);highlightSidebar('sb-approval')">
+        <span class="sidebar-icon">✅</span> 承認一覧
+        <span class="sidebar-badge" id="sidebarBadge" style="display:none"></span>
+      </div>
+      <div class="sidebar-item" onclick="showPage('history',null);highlightSidebar(null)">
+        <span class="sidebar-icon">📋</span> 申請履歴
+      </div>
+    </div>
+  </aside>
+
+  <main class="content" id="mainContent">
+    <div id="page-home">
+      <div class="approval-banner" id="approvalBanner">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;color:var(--yellow);font-weight:500;">⏳ 承認待ちの申請があります</span>
+          <span style="background:var(--yellow);color:var(--white);border-radius:12px;padding:2px 8px;font-size:12px;font-weight:700;" id="approvalCountBadge"></span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="showPage('approval',null)">承認画面を開く →</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card green"><div class="stat-label">本番稼働中</div><div class="stat-value" id="statRunning">-</div><div class="stat-sub">アプリケーション</div></div>
+        <div class="stat-card blue"><div class="stat-label">企画・開発中</div><div class="stat-value" id="statDev">-</div><div class="stat-sub">アプリケーション</div></div>
+        <div class="stat-card yellow"><div class="stat-label">承認待ち申請</div><div class="stat-value" id="statPending">-</div><div class="stat-sub">件</div></div>
+        <div class="stat-card red"><div class="stat-label">システム環境</div><div class="stat-value" id="statEnv">-</div><div class="stat-sub">環境登録数</div></div>
+      </div>
+
+      <div id="view-apps" class="table-card">
+        <div class="table-header">
+          <div class="table-header-title">ビジネスアプリケーション一覧</div>
+          <div class="table-search-wrap">
+            <div class="table-search">🔍 <input id="searchApp" placeholder="検索…" oninput="renderAppTable()"></div>
+            <a class="csv-btn" onclick="exportCSV()">⬇️ CSV出力</a>
+            <button class="btn btn-primary btn-sm" onclick="openCatalogModal('register')">＋ 新規登録申請</button>
+          </div>
+        </div>
+        <div class="filter-bar" style="padding:10px 16px 0;">
+          <select class="filter-select" id="filterStatus" onchange="renderAppTable()">
+            <option value="">すべてのステータス</option>
+            <option value="running">本番稼働中</option>
+            <option value="dev">開発中</option>
+            <option value="plan">企画</option>
+            <option value="order">発注中</option>
+            <option value="retire">廃止</option>
+          </select>
+          <select class="filter-select" id="filterDept" onchange="renderAppTable()">
+            <option value="">すべての部門</option>
+          </select>
+        </div>
+        <table style="margin-top:8px;">
+          <thead><tr>
+            <th>システムID</th><th>アプリケーション名</th><th>所属部門</th>
+            <th>ステータス</th><th>ビジネスオーナー</th><th>環境</th><th>サービス開始</th>
+          </tr></thead>
+          <tbody id="appTableBody"></tbody>
+        </table>
+      </div>
+
+      <div id="view-envs" class="table-card" style="display:none;">
+        <div class="table-header">
+          <div class="table-header-title">システム環境一覧</div>
+          <div class="table-search-wrap">
+            <div class="table-search">🔍 <input id="searchEnv" placeholder="検索…" oninput="renderEnvTable()"></div>
+            <button class="btn btn-primary btn-sm" onclick="openEnvModal()">＋ 環境追加</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>対象アプリ</th><th>環境種別</th><th>ロケーション</th>
+            <th>IPアドレス</th><th>OS</th><th>CPU/MEM</th><th>操作</th>
+          </tr></thead>
+          <tbody id="envTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="page-history" style="display:none;">
+      <div class="page-header">
+        <div><div class="page-title">申請履歴</div><div class="page-subtitle">全申請のステータスを確認できます</div></div>
+        <a class="csv-btn" onclick="exportHistoryCSV()">⬇️ CSV出力</a>
+      </div>
+      <div class="table-card">
+        <div class="filter-bar" style="padding:16px 16px 0;">
+          <select class="filter-select" id="filterHistStatus" onchange="renderHistoryTable()">
+            <option value="">すべてのステータス</option>
+            <option value="pending">承認待ち</option>
+            <option value="approved">承認済み</option>
+            <option value="rejected">却下</option>
+          </select>
+          <select class="filter-select" id="filterHistType" onchange="renderHistoryTable()">
+            <option value="">すべての種別</option>
+            <option value="register">新規登録</option>
+            <option value="update">更新</option>
+            <option value="retire">廃止</option>
+          </select>
+        </div>
+        <table style="margin-top:8px;">
+          <thead><tr>
+            <th>申請ID</th><th>種別</th><th>対象アプリ</th><th>申請者</th>
+            <th>申請日時</th><th>ステータス</th><th>承認者</th><th>承認日時</th>
+          </tr></thead>
+          <tbody id="historyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="page-approval" style="display:none;">
+      <div class="page-header">
+        <div><div class="page-title">承認一覧</div><div class="page-subtitle">承認待ちの申請を処理します</div></div>
+      </div>
+      <div id="approvalListWrap"></div>
+    </div>
+  </main>
+</div>
+
+<!-- 詳細パネル -->
+<div class="detail-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetailPanel()">
+  <div class="detail-panel">
+    <div class="detail-header">
+      <div class="detail-header-top">
+        <div>
+          <div class="detail-title" id="detailTitle"></div>
+          <div class="detail-id" id="detailId"></div>
+        </div>
+        <button class="close-btn" onclick="closeDetailPanel()">✕</button>
+      </div>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- 申請モーダル -->
+<div class="modal-overlay" id="catalogModal" onclick="if(event.target===this)closeCatalogModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="catalogModalTitle"></div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeCatalogModal()">✕</button>
+    </div>
+    <div class="modal-body" id="catalogModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCatalogModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitRequest()">申請する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 環境モーダル -->
+<div class="modal-overlay" id="envModal" onclick="if(event.target===this)closeEnvModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">システム環境 登録・更新</div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeEnvModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#1D4ED8;">
+        ℹ️ システム環境の更新は承認不要で即時反映されます
+      </div>
+      <div class="form-group">
+        <label>対象アプリケーション<span class="required">*</span></label>
+        <select class="form-control" id="envAppSelect"></select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>環境種別<span class="required">*</span></label>
+          <select class="form-control" id="envType"><option>本番環境</option><option>ステージング環境</option><option>開発環境</option><option>テスト環境</option></select></div>
+        <div class="form-group"><label>ロケーション<span class="required">*</span></label>
+          <select class="form-control" id="envLoc"><option>東京DC</option><option>大阪DC</option><option>AWS ap-northeast-1</option><option>Azure Japan East</option></select></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>IPアドレス</label><input class="form-control" id="envIP" placeholder="192.168.1.x" style="font-family:'JetBrains Mono',monospace;"></div>
+        <div class="form-group"><label>FQDNホスト名</label><input class="form-control" id="envHost" placeholder="app.example.com" style="font-family:'JetBrains Mono',monospace;"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>OSバージョン</label><input class="form-control" id="envOS" placeholder="RHEL 8.x"></div>
+        <div class="form-group"><label>ミドルウェア</label><input class="form-control" id="envMW" placeholder="Tomcat 10.x / Java 17"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>CPU / メモリ</label><input class="form-control" id="envCPU" placeholder="4vCPU / 16GB"></div>
+        <div class="form-group"><label>ストレージ</label><input class="form-control" id="envStorage" placeholder="500GB SSD"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEnvModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitEnv()">即時反映する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== 定数 ==========
+const API = '';  // 同一オリジン（FastAPI が静的ファイルも配信）
+
+// ========== 状態 ==========
+let currentUser = 'applicant';
+let currentUserId = 1;  // 1:申請者ユーザー, 2:事務局ユーザー
+let currentPage = 'home';
+
+// キャッシュ（API から取得後に保持）
+let apps = [];
+let envs = [];
+let requests = [];
+let depts = [];
+
+// ========== 定数マップ ==========
+const statusMap = {
+  running: {label:'本番稼働中', cls:'badge-running'},
+  plan:    {label:'企画',       cls:'badge-plan'},
+  dev:     {label:'開発中',     cls:'badge-dev'},
+  order:   {label:'発注中',     cls:'badge-order'},
+  retire:  {label:'廃止',       cls:'badge-retire'},
+};
+const envTypeClass = {
+  '本番環境':'env-prod','ステージング環境':'env-stg','開発環境':'env-dev','テスト環境':'env-stg',
+};
+
+// ========== ユーティリティ ==========
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+async function apiFetch(path, opts={}) {
+  const res = await fetch(API + path, {
+    headers: {'Content-Type': 'application/json'},
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ========== データ正規化（API → 旧フィールド名） ==========
+function normalizeApp(a) {
+  return {
+    id:          a.application_id,
+    name:        a.application_name,
+    dept:        a.department_name || '',
+    status:      a.status,
+    bizOwner:    a.business_owner  || '-',
+    sysOwner:    a.system_owner    || '-',
+    opsMgr:      a.ops_manager     || '-',
+    devMgr:      a.dev_manager     || '-',
+    startPlan:   a.start_plan      || '-',
+    startActual: a.start_actual    || '-',
+    endPlan:     a.end_plan        || '-',
+    endActual:   a.end_actual      || '-',
+    vendor:      a.vendor          || '-',
+    envTypes:    a.env_types       || [],
+  };
+}
+function normalizeEnv(e) {
+  return {
+    envId:   e.environment_id,
+    appId:   e.application_id,
+    appName: e.application_name || '',
+    type:    e.env_type,
+    loc:     e.location   || '-',
+    ip:      e.ip         || '-',
+    host:    e.host       || '-',
+    os:      e.os         || '-',
+    mw:      e.middleware  || '-',
+    cpu:     e.cpu_mem    || '-',
+    storage: e.storage    || '-',
+  };
+}
+function normalizeRequest(r) {
+  return {
+    id:          r.request_id,
+    type:        r.type,
+    appId:       r.application_id || 'APM-NEW',
+    appName:     r.application_name || r.app_name || '新規アプリケーション',
+    applicant:   r.applicant_name  || '-',
+    appliedAt:   r.applied_at,
+    status:      r.status,
+    approver:    r.approver_name   || '',
+    approvedAt:  r.approved_at     || '',
+    reason:      r.reason          || '',
+    changes:     Array.isArray(r.changes) ? r.changes : [],
+    dept:        r.dept            || '',
+    bizOwner:    r.biz_owner       || '',
+    newStatus:   r.new_status      || '',
+    startPlan:   r.start_plan      || '',
+    endPlan:     r.end_plan        || '',
+    // 承認表示用（サーバーから付加）
+    appStatus:   r.app_status,
+    appBizOwner: r.app_biz_owner,
+    appSysOwner: r.app_sys_owner,
+    appStartActual: r.app_start_actual,
+    appEnvs:     (r.app_envs || []).map(normalizeEnv),
+  };
+}
+
+// ========== API ロード ==========
+async function loadApps() {
+  const data = await apiFetch('/api/applications');
+  apps = data.map(normalizeApp);
+}
+async function loadEnvs() {
+  const data = await apiFetch('/api/environments');
+  envs = data.map(normalizeEnv);
+}
+async function loadRequests() {
+  const data = await apiFetch('/api/requests');
+  requests = data.map(normalizeRequest);
+}
+async function loadDepts() {
+  const data = await apiFetch('/api/departments');
+  depts = data;
+  const sel = document.getElementById('filterDept');
+  if (sel) {
+    sel.innerHTML = '<option value="">すべての部門</option>' +
+      depts.map(d => `<option value="${escHtml(d.department_name)}">${escHtml(d.department_name)}</option>`).join('');
+  }
+}
+async function loadStats() {
+  const s = await apiFetch('/api/stats');
+  document.getElementById('statRunning').textContent = s.running;
+  document.getElementById('statDev').textContent     = s.dev;
+  document.getElementById('statPending').textContent = s.pending;
+  document.getElementById('statEnv').textContent     = s.env_count;
+  const banner = document.getElementById('approvalBanner');
+  const badge  = document.getElementById('approvalCountBadge');
+  if (currentUser === 'admin' && s.pending > 0) {
+    banner.classList.add('show');
+    badge.textContent = s.pending;
+  } else {
+    banner.classList.remove('show');
+  }
+  const sb = document.getElementById('sidebarBadge');
+  if (currentUser === 'admin' && s.pending > 0) {
+    sb.style.display = 'inline';
+    sb.textContent   = s.pending;
+  } else {
+    sb.style.display = 'none';
+  }
+}
+
+// ========== ユーザー切り替え ==========
+function switchUser(role, btn) {
+  currentUser   = role;
+  currentUserId = role === 'admin' ? 2 : 1;
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadStats();
+  showToast(role === 'admin' ? '事務局モードに切り替えました' : '申請者モードに切り替えました');
+}
+
+// ========== ページ切り替え ==========
+function showPage(page, navEl) {
+  currentPage = page;
+  ['home','history','approval'].forEach(p => {
+    document.getElementById('page-' + p).style.display = p === page ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  if (page === 'history') renderHistoryTable();
+  if (page === 'approval') renderApprovalList();
+}
+function showSidebarView(view, el) {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-apps').style.display = view === 'apps' ? 'block' : 'none';
+  document.getElementById('view-envs').style.display = view === 'envs' ? 'block' : 'none';
+  if (view === 'envs') renderEnvTable();
+}
+function highlightSidebar(id) {
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  if (id) document.getElementById(id)?.classList.add('active');
+}
+
+// ========== アプリ一覧 ==========
+function renderAppTable() {
+  const q  = (document.getElementById('searchApp').value || '').toLowerCase();
+  const st = document.getElementById('filterStatus').value;
+  const dp = document.getElementById('filterDept').value;
+  const filtered = apps.filter(a => {
+    const matchQ  = !q  || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || a.dept.toLowerCase().includes(q);
+    const matchSt = !st || a.status === st;
+    const matchDp = !dp || a.dept === dp;
+    return matchQ && matchSt && matchDp;
+  });
+  const tbody = document.getElementById('appTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔍</div>条件に一致するアプリがありません</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(app => {
+    const st2   = statusMap[app.status];
+    const chips = (app.envTypes || []).slice(0, 3)
+      .map(t => `<span class="env-chip ${envTypeClass[t]||'env-dev'}">${t.replace('環境','')}</span>`)
+      .join('');
+    const startDisp = app.startActual !== '-'
+      ? app.startActual
+      : app.startPlan + '<span style="color:var(--gray-400)">(予定)</span>';
+    return `<tr class="clickable" onclick="openDetail('${app.id}')">
+      <td><span class="sys-id">${app.id}</span></td>
+      <td><strong>${escHtml(app.name)}</strong></td>
+      <td>${escHtml(app.dept)}</td>
+      <td><span class="badge ${st2.cls}">${st2.label}</span></td>
+      <td>${escHtml(app.bizOwner)}</td>
+      <td><div class="env-chips">${chips||'<span style="color:var(--gray-400);font-size:11px;">－</span>'}</div></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${startDisp}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ========== 環境一覧 ==========
+function renderEnvTable() {
+  const q = (document.getElementById('searchEnv').value || '').toLowerCase();
+  const filtered = envs.filter(e => {
+    return !q || e.appId.toLowerCase().includes(q) || e.appName.toLowerCase().includes(q)
+      || e.ip.toLowerCase().includes(q) || e.type.toLowerCase().includes(q);
+  });
+  const tbody = document.getElementById('envTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🖥️</div>環境情報がありません</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(e => `<tr>
+    <td><span class="sys-id">${e.appId}</span> ${escHtml(e.appName)}</td>
+    <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
+    <td>${escHtml(e.loc)}</td>
+    <td><input style="font-family:'JetBrains Mono',monospace;font-size:12px;border:none;background:transparent;width:100%;outline:none;color:var(--gray-800);"
+        value="${escHtml(e.ip)}"
+        onchange="updateEnvField(${e.envId},'ip',this.value)"
+        onfocus="this.style.background='var(--gray-50)'"
+        onblur="this.style.background='transparent'"></td>
+    <td>${escHtml(e.os)}</td>
+    <td>${escHtml(e.cpu)}</td>
+    <td><button class="btn btn-sm" style="background:var(--red-light);color:var(--red);border:1px solid #FCA5A5;font-size:11px;"
+        onclick="deleteEnv(${e.envId})">削除</button></td>
+  </tr>`).join('');
+}
+async function updateEnvField(envId, field, val) {
+  try {
+    await apiFetch(`/api/environments/${envId}`, {method:'PUT', body:{[field]:val}});
+    await loadEnvs();
+    showToast('環境情報を更新しました（即時反映）', 'success');
+  } catch(e) {
+    showToast('更新に失敗しました', 'error');
+  }
+}
+async function deleteEnv(envId) {
+  if (!confirm('この環境情報を削除してもよいですか？')) return;
+  try {
+    await apiFetch(`/api/environments/${envId}`, {method:'DELETE'});
+    await loadEnvs();
+    renderEnvTable();
+    await loadStats();
+    showToast('環境情報を削除しました', 'success');
+  } catch(e) {
+    showToast('削除に失敗しました', 'error');
+  }
+}
+
+// ========== 詳細パネル ==========
+function openDetail(id) {
+  const app = apps.find(a => a.id === id);
+  if (!app) return;
+  const st = statusMap[app.status];
+  const appEnvs = envs.filter(e => e.appId === id);
+  document.getElementById('detailTitle').textContent = app.name;
+  document.getElementById('detailId').textContent    = app.id + ' | ' + app.dept;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-section">
+      <span class="badge ${st.cls}" style="font-size:13px;padding:5px 12px;">${st.label}</span>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">オーナー情報</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>ビジネスオーナー</label><span>${escHtml(app.bizOwner)}</span></div>
+        <div class="detail-field"><label>システムオーナー</label><span>${escHtml(app.sysOwner)}</span></div>
+        <div class="detail-field"><label>運用管理責任者</label><span>${escHtml(app.opsMgr)}</span></div>
+        <div class="detail-field"><label>開発責任者</label><span>${escHtml(app.devMgr)}</span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">ライフサイクル管理</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>サービス開始（予定）</label><span style="font-family:'JetBrains Mono',monospace">${app.startPlan}</span></div>
+        <div class="detail-field"><label>サービス開始（実績）</label><span style="font-family:'JetBrains Mono',monospace">${app.startActual}</span></div>
+        <div class="detail-field"><label>廃止予定日</label><span style="font-family:'JetBrains Mono',monospace">${app.endPlan}</span></div>
+        <div class="detail-field"><label>廃止実績日</label><span style="font-family:'JetBrains Mono',monospace">${app.endActual}</span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">
+        <span>システム環境（${appEnvs.length}件）</span>
+        <button class="btn btn-secondary btn-sm" onclick="openEnvModalFor('${id}')">＋ 環境追加</button>
+      </div>
+      ${appEnvs.length > 0 ? `
+      <table class="env-table">
+        <thead><tr><th>種別</th><th>ロケーション</th><th>IPアドレス</th><th>OS</th><th>CPU/MEM</th></tr></thead>
+        <tbody>${appEnvs.map(e => `
+          <tr>
+            <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
+            <td>${escHtml(e.loc)}</td>
+            <td style="font-family:'JetBrains Mono',monospace">${escHtml(e.ip)}</td>
+            <td>${escHtml(e.os)}</td>
+            <td>${escHtml(e.cpu)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>` : '<p style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px;">環境情報なし</p>'}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">申請</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="openCatalogModal('update')">✏️ 更新申請</button>
+        <button class="btn btn-danger btn-sm" onclick="openCatalogModal('retire')">🗑️ 廃止申請</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function closeDetailPanel() { document.getElementById('detailOverlay').classList.remove('open'); }
+
+// ========== 申請モーダル ==========
+let currentCatalogType = '';
+function openCatalogModal(type) {
+  currentCatalogType = type;
+  const titles = {
+    register: '新規アプリケーション登録申請',
+    update:   'アプリケーション情報 更新申請',
+    retire:   'アプリケーション廃止申請',
+  };
+  document.getElementById('catalogModalTitle').textContent = titles[type];
+
+  const wfHtml = `<div style="background:var(--gray-50);border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:700;color:var(--gray-400);margin-bottom:8px;">申請ワークフロー</div>
+    <div class="workflow-steps">
+      <div class="wf-step done"><span class="wf-step-icon">👤</span>申請者<br>入力</div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step current"><span class="wf-step-icon">📋</span>事務局<br>承認待ち</div>
+      <div class="wf-arrow">→</div>
+      <div class="wf-step pending"><span class="wf-step-icon">✅</span>登録<br>完了</div>
+    </div>
+  </div>`;
+
+  const appOptions = apps.filter(a => a.status !== 'retire')
+    .map(a => `<option value="${a.id}">${a.id} / ${escHtml(a.name)}</option>`).join('');
+  const deptOptions = depts.map(d => `<option value="${escHtml(d.department_name)}">${escHtml(d.department_name)}</option>`).join('');
+
+  let body = wfHtml;
+  if (type === 'register') {
+    body += `<div class="form-grid">
+      <div class="form-group"><label>アプリケーション名<span class="required">*</span></label><input class="form-control" id="f_name" placeholder="例：購買管理システム"></div>
+      <div class="form-group"><label>所属部門<span class="required">*</span></label>
+        <select class="form-control" id="f_dept">${deptOptions}</select></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>ビジネスオーナー<span class="required">*</span></label><input class="form-control" id="f_bizOwner" placeholder="部長名"></div>
+      <div class="form-group"><label>システムオーナー</label><input class="form-control" id="f_sysOwner" placeholder="課長名"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>ステータス<span class="required">*</span></label>
+        <select class="form-control" id="f_status"><option value="plan">企画</option><option value="order">発注中</option><option value="dev">開発中</option><option value="running">本番稼働中</option></select></div>
+      <div class="form-group"><label>サービス開始予定日</label><input class="form-control" id="f_startPlan" type="date"></div>
+    </div>
+    <div class="form-group"><label>申請理由・概要<span class="required">*</span></label><textarea class="form-control" id="f_reason" rows="3" placeholder="新規登録の理由・システム概要を入力してください"></textarea></div>`;
+  } else if (type === 'update') {
+    body += `<div class="form-group"><label>対象アプリケーション<span class="required">*</span></label><select class="form-control" id="f_appId">${appOptions}</select></div>
+    <div class="form-grid">
+      <div class="form-group"><label>ステータス</label>
+        <select class="form-control" id="f_status"><option value="running">本番稼働中</option><option value="plan">企画</option><option value="order">発注中</option><option value="dev">開発中</option><option value="retire">廃止</option></select></div>
+      <div class="form-group"><label>ビジネスオーナー</label><input class="form-control" id="f_bizOwner" placeholder="変更後の担当者名"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>廃止予定日</label><input class="form-control" id="f_endPlan" type="date"></div>
+      <div class="form-group"><label>サービス開始（実績）</label><input class="form-control" id="f_startActual" type="date"></div>
+    </div>
+    <div class="form-group"><label>変更理由<span class="required">*</span></label><textarea class="form-control" id="f_reason" rows="3" placeholder="変更の理由・背景を入力してください"></textarea></div>`;
+  } else {
+    body += `<div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--red);">
+      ⚠️ 廃止申請は事務局承認後、ステータスが「廃止」に変更されます。
+    </div>
+    <div class="form-group"><label>廃止対象<span class="required">*</span></label><select class="form-control" id="f_appId">${appOptions}</select></div>
+    <div class="form-group"><label>廃止予定日<span class="required">*</span></label><input class="form-control" id="f_endPlan" type="date"></div>
+    <div class="form-group"><label>廃止理由<span class="required">*</span></label><textarea class="form-control" id="f_reason" rows="3" placeholder="廃止の理由・代替システム情報を入力してください"></textarea></div>`;
+  }
+  document.getElementById('catalogModalBody').innerHTML = body;
+  document.getElementById('catalogModal').classList.add('open');
+}
+function closeCatalogModal() { document.getElementById('catalogModal').classList.remove('open'); }
+
+async function submitRequest() {
+  const reason = document.getElementById('f_reason')?.value || '';
+  if (!reason.trim()) { showToast('申請理由を入力してください', 'error'); return; }
+
+  const appIdEl = document.getElementById('f_appId');
+  const payload = {
+    type: currentCatalogType,
+    applicant_user_id: currentUserId,
+    reason,
+  };
+
+  if (currentCatalogType === 'register') {
+    payload.app_name   = document.getElementById('f_name')?.value || '';
+    payload.dept       = document.getElementById('f_dept')?.value || '';
+    payload.biz_owner  = document.getElementById('f_bizOwner')?.value || '';
+    payload.new_status = document.getElementById('f_status')?.value || 'plan';
+    payload.start_plan = document.getElementById('f_startPlan')?.value || '';
+  } else if (currentCatalogType === 'update') {
+    payload.application_id  = appIdEl?.value;
+    payload.upd_status      = document.getElementById('f_status')?.value;
+    payload.upd_biz_owner   = document.getElementById('f_bizOwner')?.value;
+    payload.upd_end_plan    = document.getElementById('f_endPlan')?.value;
+    payload.upd_start_actual = document.getElementById('f_startActual')?.value;
+  } else {
+    payload.application_id = appIdEl?.value;
+    payload.end_plan       = document.getElementById('f_endPlan')?.value;
+  }
+
+  try {
+    await apiFetch('/api/requests', {method:'POST', body:payload});
+    closeCatalogModal();
+    await loadRequests();
+    await loadStats();
+    showToast('申請を送信しました。事務局の承認をお待ちください。', 'success');
+  } catch(e) {
+    showToast('申請の送信に失敗しました', 'error');
+  }
+}
+
+// ========== 環境モーダル ==========
+function openEnvModal(appId='') {
+  const sel = document.getElementById('envAppSelect');
+  sel.innerHTML = apps.map(a => `<option value="${a.id}" ${a.id===appId?'selected':''}>${a.id} / ${escHtml(a.name)}</option>`).join('');
+  document.getElementById('envModal').classList.add('open');
+}
+function openEnvModalFor(appId) { openEnvModal(appId); }
+function closeEnvModal() { document.getElementById('envModal').classList.remove('open'); }
+
+async function submitEnv() {
+  const payload = {
+    application_id: document.getElementById('envAppSelect').value,
+    env_type:   document.getElementById('envType').value,
+    location:   document.getElementById('envLoc').value,
+    ip:         document.getElementById('envIP').value    || '（未割当）',
+    host:       document.getElementById('envHost').value  || '-',
+    os:         document.getElementById('envOS').value    || '-',
+    middleware: document.getElementById('envMW').value    || '-',
+    cpu_mem:    document.getElementById('envCPU').value   || '-',
+    storage:    document.getElementById('envStorage').value || '-',
+  };
+  try {
+    await apiFetch('/api/environments', {method:'POST', body:payload});
+    closeEnvModal();
+    await loadEnvs();
+    await loadApps();
+    renderAppTable();
+    await loadStats();
+    showToast('システム環境情報を即時反映しました。', 'success');
+  } catch(e) {
+    showToast('環境の追加に失敗しました', 'error');
+  }
+}
+
+// ========== 申請履歴 ==========
+function renderHistoryTable() {
+  const st = document.getElementById('filterHistStatus').value;
+  const tp = document.getElementById('filterHistType').value;
+  const filtered = requests.filter(r => (!st || r.status === st) && (!tp || r.type === tp));
+  const statusCls   = {pending:'badge-pending', approved:'badge-approved', rejected:'badge-rejected'};
+  const statusLabel = {pending:'承認待ち', approved:'承認済み', rejected:'却下'};
+  const typeLabel   = {register:'新規登録', update:'更新', retire:'廃止'};
+  const typeCls     = {register:'type-register', update:'type-update', retire:'type-retire'};
+  const tbody = document.getElementById('historyTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📋</div>申請履歴がありません</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(r => `<tr>
+    <td><span class="sys-id">${r.id}</span></td>
+    <td><span class="history-type ${typeCls[r.type]}">${typeLabel[r.type]}</span></td>
+    <td><span class="sys-id">${r.appId}</span> ${escHtml(r.appName)}</td>
+    <td>${escHtml(r.applicant)}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${r.appliedAt}</td>
+    <td><span class="badge ${statusCls[r.status]}">${statusLabel[r.status]}</span></td>
+    <td>${escHtml(r.approver) || '－'}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${r.approvedAt || '－'}</td>
+  </tr>`).join('');
+}
+
+// ========== 承認一覧 ==========
+function buildDetailRows(r) {
+  const app = apps.find(a => a.id === r.appId);
+  // 承認待ちの場合は API から取得した現在値を優先
+  const appStatus     = r.appStatus     || app?.status;
+  const appBizOwner   = r.appBizOwner   || app?.bizOwner;
+  const appSysOwner   = r.appSysOwner   || app?.sysOwner;
+  const appStartActual = r.appStartActual || app?.startActual;
+  const appEnvs       = r.appEnvs.length ? r.appEnvs : envs.filter(e => e.appId === r.appId);
+  const st = appStatus ? statusMap[appStatus] : null;
+
+  if (r.type === 'register') {
+    return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">アプリケーション名</div>
+        <div style="font-size:12px;color:var(--gray-800);font-weight:600;">${escHtml(r.appName)}</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">所属部門</div>
+        <div style="font-size:12px;color:var(--gray-800);">${escHtml(r.dept||'（申請フォーム参照）')}</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">希望ステータス</div>
+        <div style="font-size:12px;color:var(--gray-800);">${escHtml(r.newStatus||'企画')}</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">ビジネスオーナー</div>
+        <div style="font-size:12px;color:var(--gray-800);">${escHtml(r.bizOwner||'（申請フォーム参照）')}</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">サービス開始予定日</div>
+        <div style="font-size:12px;color:var(--gray-800);font-family:'JetBrains Mono',monospace;">${escHtml(r.startPlan||'（未定）')}</div>
+      </div>
+    </div>`;
+  } else if (r.type === 'update') {
+    const changes = r.changes || [];
+    return `<div style="margin-bottom:8px;">
+      <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">変更内容（変更前 → 変更後）</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        ${changes.length > 0 ? changes.map(ch => `
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;">
+            <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">${escHtml(ch.label)}</div>
+            <div style="font-size:11px;color:var(--red);text-decoration:line-through;margin-bottom:2px;">${escHtml(ch.before)}</div>
+            <div style="font-size:12px;color:var(--green);font-weight:600;">${escHtml(ch.after)}</div>
+          </div>`).join('') : `
+          <div style="background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:8px 12px;grid-column:span 3;">
+            <div style="font-size:10px;color:var(--gray-400);font-weight:700;margin-bottom:3px;">対象アプリ 現在の情報</div>
+            <div style="display:flex;gap:16px;font-size:12px;color:var(--gray-800);">
+              <span>ステータス：<span class="badge ${st?st.cls:''}" style="font-size:10px;">${st?st.label:'-'}</span></span>
+              <span>ビジネスオーナー：${escHtml(appBizOwner)}</span>
+              <span>システムオーナー：${escHtml(appSysOwner)}</span>
+            </div>
+          </div>`}
+      </div>
+    </div>`;
+  } else if (r.type === 'retire') {
+    return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:3px;">現在のステータス</div>
+        <div><span class="badge ${st?st.cls:''}" style="font-size:11px;">${st?st.label:'-'}</span></div>
+      </div>
+      <div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:3px;">ビジネスオーナー</div>
+        <div style="font-size:12px;color:var(--gray-800);">${escHtml(appBizOwner)}</div>
+      </div>
+      <div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:3px;">廃止予定日</div>
+        <div style="font-size:12px;color:var(--gray-800);font-family:'JetBrains Mono',monospace;">${escHtml(r.endPlan||'申請フォーム参照')}</div>
+      </div>
+      <div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:3px;">サービス開始（実績）</div>
+        <div style="font-size:12px;color:var(--gray-800);font-family:'JetBrains Mono',monospace;">${escHtml(appStartActual)}</div>
+      </div>
+      <div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;grid-column:span 2;">
+        <div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:3px;">稼働中のシステム環境</div>
+        <div style="font-size:12px;color:var(--gray-800);">${appEnvs.map(e=>`<span style="margin-right:8px;">${e.type}（${e.loc}）</span>`).join('')||'なし'}</div>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+function renderApprovalList() {
+  const pending = requests.filter(r => r.status === 'pending');
+  const wrap = document.getElementById('approvalListWrap');
+  if (!pending.length) {
+    wrap.innerHTML = `<div class="table-card" style="padding:40px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">✅</div><div style="color:var(--gray-400);">承認待ちの申請はありません</div></div>`;
+    return;
+  }
+  if (currentUser !== 'admin') {
+    wrap.innerHTML = `<div class="table-card" style="padding:40px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🔒</div><div style="color:var(--gray-400);">承認操作は事務局のみ実行できます</div><div style="margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="document.querySelectorAll('.user-btn')[1].click()">事務局に切り替える</button></div></div>`;
+    return;
+  }
+  const typeLabel  = {register:'新規登録', update:'更新', retire:'廃止'};
+  const typeCls    = {register:'type-register', update:'type-update', retire:'type-retire'};
+  const typeBorder = {register:'#BFDBFE', update:'#FDE68A', retire:'#FCA5A5'};
+  const typeHdrBg  = {register:'#EFF6FF', update:'#FFFBEB', retire:'#FEF2F2'};
+
+  wrap.innerHTML = pending.map(r => `
+    <div class="approval-item" style="border-color:${typeBorder[r.type]};">
+      <div style="background:${typeHdrBg[r.type]};margin:-16px -16px 14px;padding:14px 16px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+            <span class="sys-id">${r.id}</span>
+            <span class="history-type ${typeCls[r.type]}">${typeLabel[r.type]}申請</span>
+            <span class="sys-id">${r.appId}</span>
+          </div>
+          <div style="font-size:16px;font-weight:700;color:var(--navy);">${escHtml(r.appName)}</div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:2px;">申請者：${escHtml(r.applicant)}　　申請日時：${r.appliedAt}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button class="btn btn-success" onclick="approveRequest('${r.id}',true)" style="font-size:13px;padding:8px 20px;">✓ 承認</button>
+          <button class="btn btn-danger"  onclick="approveRequest('${r.id}',false)" style="font-size:13px;padding:8px 20px;">✕ 却下</button>
+        </div>
+      </div>
+      ${buildDetailRows(r)}
+      <div style="background:var(--gray-50);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--gray-600);border-left:3px solid var(--gray-300);">
+        <span style="font-weight:700;color:var(--gray-800);">申請理由：</span>${escHtml(r.reason)}
+      </div>
+    </div>`).join('');
+}
+
+async function approveRequest(id, approved) {
+  const endpoint = approved ? 'approve' : 'reject';
+  try {
+    await apiFetch(`/api/requests/${id}/${endpoint}?approver_user_id=${currentUserId}`, {method:'PUT'});
+    await Promise.all([loadRequests(), loadApps()]);
+    renderApprovalList();
+    renderAppTable();
+    await loadStats();
+    showToast(approved ? '申請を承認しました。データに反映されました。' : '申請を却下しました。', approved ? 'success' : 'error');
+  } catch(e) {
+    showToast('処理に失敗しました', 'error');
+  }
+}
+
+// ========== CSV出力 ==========
+function exportCSV() {
+  const headers = ['システムID','アプリケーション名','所属部門','ステータス','ビジネスオーナー','システムオーナー','運用管理責任者','開発責任者','サービス開始予定','サービス開始実績','廃止予定日','廃止実績日'];
+  const rows = apps.map(a => [a.id, a.name, a.dept, statusMap[a.status].label, a.bizOwner, a.sysOwner, a.opsMgr, a.devMgr, a.startPlan, a.startActual, a.endPlan, a.endActual]);
+  downloadCSV('ビジネスアプリケーション一覧.csv', [headers, ...rows]);
+}
+function exportHistoryCSV() {
+  const headers = ['申請ID','種別','対象アプリID','アプリ名','申請者','申請日時','ステータス','承認者','承認日時','申請理由'];
+  const typeLabel = {register:'新規登録', update:'更新', retire:'廃止'};
+  const statusLabel = {pending:'承認待ち', approved:'承認済み', rejected:'却下'};
+  const rows = requests.map(r => [r.id, typeLabel[r.type], r.appId, r.appName, r.applicant, r.appliedAt, statusLabel[r.status], r.approver||'', r.approvedAt||'', r.reason]);
+  downloadCSV('申請履歴.csv', [headers, ...rows]);
+}
+function downloadCSV(filename, rows) {
+  const bom = '﻿';
+  const csv = bom + rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  showToast('CSVをダウンロードしました', 'success');
+}
+
+// ========== 初期化 ==========
+async function init() {
+  try {
+    await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts()]);
+    renderAppTable();
+    await loadStats();
+  } catch(e) {
+    showToast('データの読み込みに失敗しました。サーバーを確認してください。', 'error');
+  }
+}
+init();
+</script>
+</body>
+</html>

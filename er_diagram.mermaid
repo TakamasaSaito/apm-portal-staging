@@ -1,0 +1,64 @@
+erDiagram
+    DEPARTMENT {
+        int department_id PK
+        string department_name
+    }
+
+    USER {
+        int user_id PK
+        string user_name
+        int department_id FK
+        string role
+    }
+
+    APPLICATION {
+        int application_id PK
+        string application_name
+        int owner_department_id FK
+        string status
+        string vendor
+        string business_owner
+        string system_owner
+        string ops_manager
+        string dev_manager
+        date start_plan
+        date start_actual
+        date end_plan
+        date end_actual
+    }
+
+    ENVIRONMENT {
+        int environment_id PK
+        int application_id FK
+        string env_type
+        string location
+        string ip
+        string host
+        string os
+        string middleware
+        string cpu_mem
+        string storage
+    }
+
+    APM_REQUEST {
+        string request_id PK
+        string type
+        int application_id FK
+        int applicant_user_id FK
+        datetime applied_at
+        string status
+        int approver_user_id FK
+        datetime approved_at
+        string reason
+        string changes
+    }
+
+    %% Relationships
+    DEPARTMENT ||--o{ USER : "所属"
+    DEPARTMENT ||--o{ APPLICATION : "所管"
+
+    APPLICATION ||--o{ ENVIRONMENT : "環境を持つ"
+    APPLICATION ||--o{ APM_REQUEST : "対象"
+
+    USER ||--o{ APM_REQUEST : "申請者"
+    USER ||--o{ APM_REQUEST : "承認者"
