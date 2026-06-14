@@ -94,3 +94,39 @@ class ConfigurationItemUpdate(BaseModel):
     model: Optional[str] = None
     status: Optional[str] = None
     note: Optional[str] = None
+
+
+class DashboardSummary(BaseModel):
+    status_counts: dict
+    category_counts: list
+    dept_counts: list
+    retiring_soon: list
+    pending_requests: int
+    env_count: int
+    ci_count: int
+
+
+class BubbleApp(BaseModel):
+    application_id: str
+    application_name: str
+    status: Optional[str] = None
+    portfolio_area: Optional[int] = None
+    annual_cost_million: Optional[int] = None
+    is_infrastructure: Optional[int] = 0
+    migration_target_id: Optional[str] = None
+    app_category: Optional[str] = None
+    vendor: Optional[str] = None
+    department_name: Optional[str] = None
+
+
+class BubbleDependency(BaseModel):
+    dependency_id: int
+    app_id: str
+    depends_on_app_id: str
+    dependency_type: Optional[str] = None
+    note: Optional[str] = None
+
+
+class BubbleData(BaseModel):
+    apps: list
+    dependencies: list

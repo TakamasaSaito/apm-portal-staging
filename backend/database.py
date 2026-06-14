@@ -32,20 +32,32 @@ CREATE TABLE IF NOT EXISTS user (
 );
 
 CREATE TABLE IF NOT EXISTS application (
-    application_id      TEXT PRIMARY KEY,
-    application_name    TEXT NOT NULL,
-    owner_department_id INTEGER REFERENCES department(department_id),
-    status              TEXT NOT NULL DEFAULT 'plan',
-    vendor              TEXT,
-    business_owner      TEXT,
-    system_owner        TEXT,
-    ops_manager         TEXT,
-    dev_manager         TEXT,
-    start_plan          TEXT,
-    start_actual        TEXT,
-    end_plan            TEXT,
-    end_actual          TEXT,
-    app_category        TEXT
+    application_id       TEXT PRIMARY KEY,
+    application_name     TEXT NOT NULL,
+    owner_department_id  INTEGER REFERENCES department(department_id),
+    status               TEXT NOT NULL DEFAULT 'plan',
+    vendor               TEXT,
+    business_owner       TEXT,
+    system_owner         TEXT,
+    ops_manager          TEXT,
+    dev_manager          TEXT,
+    start_plan           TEXT,
+    start_actual         TEXT,
+    end_plan             TEXT,
+    end_actual           TEXT,
+    app_category         TEXT,
+    portfolio_area       INTEGER,
+    migration_target_id  TEXT REFERENCES application(application_id),
+    annual_cost_million  INTEGER,
+    is_infrastructure    INTEGER DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS application_dependency (
+    dependency_id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    app_id            TEXT REFERENCES application(application_id),
+    depends_on_app_id TEXT REFERENCES application(application_id),
+    dependency_type   TEXT,
+    note              TEXT
 );
 
 CREATE TABLE IF NOT EXISTS environment (
@@ -100,11 +112,15 @@ CREATE TABLE IF NOT EXISTS apm_request (
     app_category      TEXT
 );
         """)
-        # Migration: add login columns to existing databases
         for stmt in (
             "ALTER TABLE user ADD COLUMN login_id TEXT",
             "ALTER TABLE user ADD COLUMN password_hash TEXT",
             "ALTER TABLE application ADD COLUMN app_category TEXT",
+            "ALTER TABLE application ADD COLUMN portfolio_area INTEGER",
+            "ALTER TABLE application ADD COLUMN migration_target_id TEXT",
+            "ALTER TABLE application ADD COLUMN annual_cost_million INTEGER",
+            "ALTER TABLE application ADD COLUMN is_infrastructure INTEGER DEFAULT 0",
+            "ALTER TABLE application ADD COLUMN vendor TEXT",
             "ALTER TABLE apm_request ADD COLUMN app_category TEXT",
         ):
             try:

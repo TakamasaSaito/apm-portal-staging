@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>APM システム管理ポータル</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap');
 :root {
@@ -191,6 +192,39 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .pagination-bar .pg-nav button:hover:not(:disabled){background:var(--gray-100);}
 .pagination-bar .pg-nav button:disabled{opacity:.4;cursor:default;}
 .pagination-bar .pg-label{font-weight:600;color:var(--gray-800);}
+/* ── Dashboard ── */
+.dash-tabs{display:flex;gap:0;border-bottom:1px solid var(--gray-200);padding:0 24px;background:var(--white);border-radius:10px 10px 0 0;}
+.dash-tab{padding:14px 20px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.dash-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.dash-tab:hover:not(.active){color:var(--gray-700);}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:20px 24px 0;}
+.kpi-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.kpi-label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.kpi-value{font-size:36px;font-weight:700;line-height:1;margin-bottom:4px;}
+.kpi-sub{font-size:11px;color:var(--gray-400);}
+.kpi-green .kpi-value{color:#10B981;}
+.kpi-yellow .kpi-value{color:#F59E0B;}
+.kpi-red .kpi-value{color:#EF4444;}
+.kpi-blue .kpi-value{color:#3B82F6;}
+.charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 24px;}
+.chart-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.chart-title{font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:12px;}
+.retiring-section{padding:0 24px 24px;}
+.retiring-title{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.bubble-filter-bar{display:flex;align-items:center;gap:8px;padding:14px 24px;flex-wrap:wrap;border-bottom:1px solid var(--gray-200);background:var(--gray-50);}
+.bubble-filter-label{font-size:11px;color:var(--gray-600);font-weight:600;}
+.bubble-filter-sep{width:1px;height:20px;background:var(--gray-300);margin:0 4px;}
+.bubble-filter-btn{padding:4px 12px;border:1px solid var(--gray-300);border-radius:20px;background:var(--white);font-size:11px;cursor:pointer;color:var(--gray-600);transition:all .1s;}
+.bubble-filter-btn:hover{border-color:var(--accent);color:var(--accent);}
+.bubble-filter-btn.active{background:var(--accent);color:white;border-color:var(--accent);}
+.bubble-main{display:flex;min-height:560px;}
+.bubble-svg-wrap{flex:1;overflow:auto;padding:16px 24px;background:var(--gray-50);}
+.bubble-svg-wrap svg{border-radius:8px;border:1px solid var(--gray-200);background:white;}
+.bubble-detail-panel{width:300px;padding:20px;border-left:1px solid var(--gray-200);overflow-y:auto;max-height:560px;background:var(--white);}
+.bubble-legend{display:flex;align-items:center;gap:16px;padding:10px 24px;border-top:1px solid var(--gray-200);background:var(--gray-50);font-size:11px;color:var(--gray-600);flex-wrap:wrap;border-radius:0 0 10px 10px;}
+.legend-title{font-weight:700;color:var(--gray-700);}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.legend-dash{display:inline-block;width:24px;height:2px;vertical-align:middle;margin-right:4px;border-top:2px dashed currentColor;}
 </style>
 </head>
 <body>
@@ -218,8 +252,13 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 <div class="main">
   <aside class="sidebar">
     <div class="sidebar-section">
+      <div class="sidebar-item active" id="sb-dashboard" onclick="showSidebarView('dashboard',this)">
+        <span class="sidebar-icon">📊</span> ダッシュボード
+      </div>
+    </div>
+    <div class="sidebar-section">
       <div class="sidebar-title">ITアセット管理</div>
-      <div class="sidebar-item active" id="sb-apps" onclick="showSidebarView('apps',this)">
+      <div class="sidebar-item" id="sb-apps" onclick="showSidebarView('apps',this)">
         <span class="sidebar-icon">🖥️</span> システム（アプリ）
       </div>
       <div class="sidebar-item" id="sb-envs" onclick="showSidebarView('envs',this)">
@@ -263,14 +302,82 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <button class="btn btn-primary btn-sm" onclick="showPage('approval',null)">承認画面を開く →</button>
       </div>
 
-      <div class="stats-grid">
+      <div id="pageHomeStats" class="stats-grid" style="display:none;">
         <div class="stat-card green"><div class="stat-label">本番稼働中</div><div class="stat-value" id="statRunning">-</div><div class="stat-sub">アプリケーション</div></div>
         <div class="stat-card blue"><div class="stat-label">企画・開発中</div><div class="stat-value" id="statDev">-</div><div class="stat-sub">アプリケーション</div></div>
         <div class="stat-card yellow"><div class="stat-label">承認待ち申請</div><div class="stat-value" id="statPending">-</div><div class="stat-sub">件</div></div>
         <div class="stat-card red"><div class="stat-label">システム環境</div><div class="stat-value" id="statEnv">-</div><div class="stat-sub">環境登録数</div></div>
       </div>
 
-      <div id="view-apps" class="table-card">
+      <!-- ダッシュボード -->
+      <div id="view-dashboard" class="table-card" style="padding:0;">
+        <div class="dash-tabs">
+          <button class="dash-tab active" data-tab="overview" onclick="switchDashTab('overview')">📊 概要ダッシュボード</button>
+          <button class="dash-tab" data-tab="bubble" onclick="switchDashTab('bubble')">🗺️ 依存関係・移行マップ</button>
+        </div>
+        <!-- Tab 概要 -->
+        <div id="dash-overview">
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-green"><div class="kpi-label">本番稼働中</div><div class="kpi-value" id="kpiRunning">-</div><div class="kpi-sub">アプリケーション</div></div>
+            <div class="kpi-card kpi-yellow"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
+            <div class="kpi-card kpi-red"><div class="kpi-label">廃止予定</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">12ヶ月以内</div></div>
+            <div class="kpi-card kpi-blue"><div class="kpi-label">環境数</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
+          </div>
+          <div class="charts-row">
+            <div class="chart-card"><div class="chart-title">ステータス別アプリ数</div><canvas id="statusChart"></canvas></div>
+            <div class="chart-card"><div class="chart-title">カテゴリ別アプリ分布</div><canvas id="categoryChart"></canvas></div>
+            <div class="chart-card"><div class="chart-title">部署別アプリ数</div><canvas id="deptChart"></canvas></div>
+          </div>
+          <div class="retiring-section">
+            <div class="retiring-title">⚠️ 廃止予定システム（12ヶ月以内）</div>
+            <div class="table-scroll-wrap">
+              <table id="retiringTable">
+                <thead><tr>
+                  <th style="min-width:100px">システムID</th>
+                  <th style="min-width:200px">アプリケーション名</th>
+                  <th style="min-width:120px">部門</th>
+                  <th style="min-width:100px">ステータス</th>
+                  <th style="min-width:150px">ビジネスオーナー</th>
+                  <th style="min-width:110px">廃止予定日</th>
+                </tr></thead>
+                <tbody id="retiringTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- Tab 依存関係マップ -->
+        <div id="dash-bubble" style="display:none;">
+          <div class="bubble-filter-bar">
+            <span class="bubble-filter-label">エリア:</span>
+            <button class="bubble-filter-btn active" data-area="" onclick="setBubbleAreaFilter(this,'')">すべて</button>
+            <button class="bubble-filter-btn" data-area="1" onclick="setBubbleAreaFilter(this,'1')">① 廃止予定</button>
+            <button class="bubble-filter-btn" data-area="2" onclick="setBubbleAreaFilter(this,'2')">② 移行中</button>
+            <button class="bubble-filter-btn" data-area="3" onclick="setBubbleAreaFilter(this,'3')">③ 部門固有</button>
+            <button class="bubble-filter-btn" data-area="4" onclick="setBubbleAreaFilter(this,'4')">④ グローバル標準</button>
+            <span class="bubble-filter-sep"></span>
+            <span class="bubble-filter-label">種別:</span>
+            <button class="bubble-filter-btn active" data-infra="" onclick="setBubbleInfraFilter(this,'')">すべて</button>
+            <button class="bubble-filter-btn" data-infra="0" onclick="setBubbleInfraFilter(this,'0')">業務アプリ</button>
+            <button class="bubble-filter-btn" data-infra="1" onclick="setBubbleInfraFilter(this,'1')">インフラ・基盤</button>
+          </div>
+          <div class="bubble-main">
+            <div class="bubble-svg-wrap"><svg id="bubbleSvg"></svg></div>
+            <div id="bubbleDetailPanel" class="bubble-detail-panel" style="display:none;"></div>
+          </div>
+          <div class="bubble-legend">
+            <span class="legend-title">凡例 —</span>
+            <span><span class="legend-dot" style="background:#7C3AED;"></span>グローバル基盤サービス</span>
+            <span><span class="legend-dot" style="background:#2563EB;"></span>国内インフラ</span>
+            <span><span class="legend-dot" style="background:#DC2626;"></span>移行対象アプリ</span>
+            <span><span class="legend-dot" style="background:#059669;"></span>業務アプリ</span>
+            <span style="margin-left:12px;"><span class="legend-dash" style="color:#7C3AED;"></span>インフラ依存</span>
+            <span><span class="legend-dash" style="color:#2563EB;"></span>認証連携</span>
+            <span><span class="legend-dash" style="color:#059669;"></span>API依存</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-apps" class="table-card" style="display:none;">
         <div class="table-header">
           <div class="table-header-title">ビジネスアプリケーション一覧</div>
           <div class="table-search-wrap">
@@ -882,12 +989,16 @@ function showPage(page, navEl) {
 }
 function showSidebarView(view, el) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
+  const isDash = view === 'dashboard';
+  document.getElementById('view-dashboard').style.display = isDash ? 'block' : 'none';
+  document.getElementById('pageHomeStats').style.display  = isDash ? 'none' : 'block';
   document.getElementById('view-apps').style.display = view === 'apps' ? 'block' : 'none';
   document.getElementById('view-envs').style.display = view === 'envs' ? 'block' : 'none';
   document.getElementById('view-ci').style.display   = view === 'ci'   ? 'block' : 'none';
-  if (view === 'envs') renderEnvTable();
-  if (view === 'ci')   initCiView();
+  if (view === 'envs')      renderEnvTable();
+  if (view === 'ci')        initCiView();
+  if (isDash && bubbleData) renderBubbleChart();
 }
 function highlightSidebar(id) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -1863,7 +1974,7 @@ function makeResizable(table) {
 // ========== 初期化 ==========
 async function initApp() {
   try {
-    await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts()]);
+    await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts(), loadDashboardSummary(), loadBubbleData()]);
     renderAppTable();
     await loadStats();
   } catch(e) {
@@ -1882,6 +1993,314 @@ async function init() {
   await initApp();
 }
 init();
+
+// ========== ダッシュボード ==========
+let dashSummaryData = null;
+let bubbleData = null;
+let bubbleAreaFilter = '';
+let bubbleInfraFilter = '';
+let bubblePositions = {};
+let bubbleRadii = {};
+let _statusChart = null, _categoryChart = null, _deptChart = null;
+
+const BUBBLE_Q = {
+  1: { x:0,    y:0,   w:800, h:480, label:'① 廃止予定',     bg:'#FEF2F2' },
+  2: { x:800,  y:0,   w:800, h:480, label:'② 移行中',       bg:'#EFF6FF' },
+  3: { x:0,    y:480, w:800, h:480, label:'③ 部門固有',     bg:'#F0FDF4' },
+  4: { x:800,  y:480, w:800, h:480, label:'④ グローバル標準', bg:'#FAF5FF' },
+};
+const SVG_W = 1600, SVG_H = 960;
+
+async function loadDashboardSummary() {
+  const d = await apiFetch('/api/dashboard/summary');
+  if (!d) return;
+  dashSummaryData = d;
+  renderDashboardSummary(d);
+}
+
+async function loadBubbleData() {
+  const d = await apiFetch('/api/dashboard/bubble');
+  if (!d) return;
+  bubbleData = d;
+  renderBubbleChart();
+}
+
+function renderDashboardSummary(d) {
+  document.getElementById('kpiRunning').textContent  = d.status_counts['running'] || 0;
+  document.getElementById('kpiPending').textContent  = d.pending_requests;
+  document.getElementById('kpiRetiring').textContent = d.retiring_soon.length;
+  document.getElementById('kpiEnvs').textContent     = d.env_count;
+  renderStatusChart(d.status_counts);
+  renderCategoryChart(d.category_counts);
+  renderDeptChart(d.dept_counts);
+  renderRetiringTable(d.retiring_soon);
+}
+
+function renderStatusChart(sc) {
+  if (_statusChart) _statusChart.destroy();
+  const KEYS = ['running','dev','plan','order','retire'];
+  const LABELS = {running:'稼働中',dev:'開発中',plan:'企画',order:'発注中',retire:'廃止'};
+  const COLORS = {running:'#10B981',dev:'#3B82F6',plan:'#F59E0B',order:'#8B5CF6',retire:'#EF4444'};
+  const ctx = document.getElementById('statusChart').getContext('2d');
+  _statusChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: KEYS.map(k => LABELS[k]),
+      datasets:[{ data: KEYS.map(k => sc[k]||0), backgroundColor: KEYS.map(k => COLORS[k]), borderRadius:4 }]
+    },
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{stepSize:1}}} }
+  });
+}
+
+function renderCategoryChart(cc) {
+  if (_categoryChart) _categoryChart.destroy();
+  const top = cc.slice(0,10);
+  const COLORS = ['#10B981','#3B82F6','#F59E0B','#8B5CF6','#EF4444','#06B6D4','#F97316','#84CC16','#EC4899','#6B7280'];
+  const ctx = document.getElementById('categoryChart').getContext('2d');
+  _categoryChart = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels: top.map(c => c.category.replace(/（[^）]*）/,'').trim()),
+      datasets:[{ data: top.map(c => c.count), backgroundColor: COLORS, borderWidth:2, borderColor:'#fff' }]
+    },
+    options:{ responsive:true, cutout:'58%', plugins:{ legend:{ position:'right', labels:{ boxWidth:10, font:{size:9} } } } }
+  });
+}
+
+function renderDeptChart(dc) {
+  if (_deptChart) _deptChart.destroy();
+  const ctx = document.getElementById('deptChart').getContext('2d');
+  _deptChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: dc.map(d => d.dept),
+      datasets:[{ data: dc.map(d => d.count), backgroundColor:'#3B82F6', borderRadius:4 }]
+    },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{stepSize:1}}} }
+  });
+}
+
+function renderRetiringTable(retiring) {
+  const tbody = document.getElementById('retiringTableBody');
+  if (!retiring.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-state-icon">✅</div>廃止予定のシステムはありません</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = retiring.map(a => {
+    const st = statusMap[a.status] || {label:a.status, cls:'badge-plan'};
+    return `<tr>
+      <td><span class="sys-id">${escHtml(a.application_id)}</span></td>
+      <td><strong>${escHtml(a.application_name)}</strong></td>
+      <td>${escHtml(a.department_name||'-')}</td>
+      <td><span class="badge ${st.cls}">${st.label}</span></td>
+      <td>${escHtml(a.business_owner||'-')}</td>
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--red);font-weight:600;">${escHtml(a.end_plan)}</td>
+    </tr>`;
+  }).join('');
+  makeResizable(document.getElementById('retiringTable'));
+}
+
+function switchDashTab(tab) {
+  document.getElementById('dash-overview').style.display = tab==='overview' ? 'block' : 'none';
+  document.getElementById('dash-bubble').style.display   = tab==='bubble'   ? 'block' : 'none';
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
+  if (tab==='bubble' && bubbleData) renderBubbleChart();
+}
+
+// ── バブルチャート ──
+function getBubbleColor(app) {
+  if (app.is_infrastructure && app.portfolio_area===4) return '#7C3AED';
+  if (app.is_infrastructure) return '#2563EB';
+  if (app.migration_target_id) return '#DC2626';
+  return '#059669';
+}
+
+function getBubbleRadius(cost, maxCost) {
+  const mn=20, mx=56;
+  if (!cost || !maxCost) return mn;
+  return mn + (mx-mn) * Math.sqrt(cost/maxCost);
+}
+
+function setBubbleAreaFilter(btn, area) {
+  document.querySelectorAll('[data-area]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  bubbleAreaFilter = area;
+  renderBubbleChart();
+}
+
+function setBubbleInfraFilter(btn, infra) {
+  document.querySelectorAll('[data-infra]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  bubbleInfraFilter = infra;
+  renderBubbleChart();
+}
+
+function renderBubbleChart() {
+  if (!bubbleData) return;
+  const {apps: allApps, dependencies} = bubbleData;
+
+  const filtered = allApps.filter(a => {
+    if (bubbleAreaFilter && String(a.portfolio_area) !== bubbleAreaFilter) return false;
+    if (bubbleInfraFilter !== '' && String(a.is_infrastructure) !== bubbleInfraFilter) return false;
+    return true;
+  });
+
+  const maxCost = Math.max(...allApps.map(a => a.annual_cost_million||0));
+
+  // グループ分け
+  const byArea = {1:[],2:[],3:[],4:[]};
+  filtered.forEach(a => { if (byArea[a.portfolio_area]) byArea[a.portfolio_area].push(a); });
+
+  // 位置計算
+  bubblePositions = {};
+  bubbleRadii = {};
+  Object.entries(BUBBLE_Q).forEach(([area, q]) => {
+    const list = byArea[area] || [];
+    if (!list.length) return;
+    const PAD_X=60, PAD_TOP=55, PAD_BOT=30;
+    const aW = q.w - 2*PAD_X;
+    const aH = q.h - PAD_TOP - PAD_BOT;
+    const n = list.length;
+    const cols = Math.max(1, Math.ceil(Math.sqrt(n * aW / Math.max(aH,1))));
+    const rows = Math.ceil(n/cols);
+    const cellW = aW/cols, cellH = aH/rows;
+    list.forEach((a, i) => {
+      const col = i%cols, row = Math.floor(i/cols);
+      bubblePositions[a.application_id] = {
+        x: q.x + PAD_X + cellW*(col+0.5),
+        y: q.y + PAD_TOP + cellH*(row+0.5),
+      };
+      bubbleRadii[a.application_id] = getBubbleRadius(a.annual_cost_million, maxCost);
+    });
+  });
+
+  // SVG 生成
+  const svg = document.getElementById('bubbleSvg');
+  svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
+  svg.setAttribute('width', SVG_W);
+  svg.setAttribute('height', SVG_H);
+
+  const DEP_STYLE = {
+    infra: {color:'#7C3AED', dash:'8,4',  marker:'arr-infra'},
+    auth:  {color:'#2563EB', dash:'5,3',  marker:'arr-auth'},
+    api:   {color:'#059669', dash:'4,3',  marker:'arr-api'},
+    data:  {color:'#F59E0B', dash:'8,4',  marker:'arr-data'},
+  };
+
+  let html = `<defs>
+    ${['infra:#7C3AED','auth:#2563EB','api:#059669','data:#F59E0B'].map(s=>{
+      const [id,c]=s.split(':');
+      return `<marker id="arr-${id}" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L7,3 z" fill="${c}" opacity=".85"/></marker>`;
+    }).join('')}
+  </defs>`;
+
+  // 象限背景
+  Object.entries(BUBBLE_Q).forEach(([area, q]) => {
+    const dim = bubbleAreaFilter && bubbleAreaFilter!==area ? 0.25 : 1;
+    html += `<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}"
+      fill="${q.bg}" stroke="#E5E7EB" stroke-width="1" opacity="${dim}"/>
+      <text x="${q.x+14}" y="${q.y+30}" font-size="14" font-weight="700" fill="#374151"
+      font-family="sans-serif" opacity="${dim}">${q.label}</text>`;
+  });
+
+  // 中心線
+  html += `<line x1="${SVG_W/2}" y1="0" x2="${SVG_W/2}" y2="${SVG_H}" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="6,4"/>
+    <line x1="0" y1="${SVG_H/2}" x2="${SVG_W}" y2="${SVG_H/2}" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="6,4"/>`;
+
+  // 依存矢印
+  dependencies.forEach(dep => {
+    const from = bubblePositions[dep.app_id];
+    const to   = bubblePositions[dep.depends_on_app_id];
+    if (!from || !to) return;
+    const r1 = bubbleRadii[dep.app_id]||24;
+    const r2 = bubbleRadii[dep.depends_on_app_id]||24;
+    const dx=to.x-from.x, dy=to.y-from.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if (dist < r1+r2+4) return;
+    const ux=dx/dist, uy=dy/dist;
+    const x1=(from.x+ux*r1).toFixed(1), y1=(from.y+uy*r1).toFixed(1);
+    const x2=(to.x-ux*(r2+6)).toFixed(1), y2=(to.y-uy*(r2+6)).toFixed(1);
+    const st = DEP_STYLE[dep.dependency_type] || DEP_STYLE.api;
+    html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+      stroke="${st.color}" stroke-width="1.5" stroke-dasharray="${st.dash}"
+      opacity=".5" marker-end="url(#${st.marker})"/>`;
+  });
+
+  // バブル
+  filtered.forEach(app => {
+    const pos = bubblePositions[app.application_id];
+    if (!pos) return;
+    const r = bubbleRadii[app.application_id] || 24;
+    const color = getBubbleColor(app);
+    const name = app.application_name;
+    const short = name.length>8 ? name.slice(0,8)+'…' : name;
+    const cost = app.annual_cost_million ? `¥${app.annual_cost_million}M` : '';
+    const cx=pos.x.toFixed(1), cy=pos.y.toFixed(1);
+    html += `<g onclick="showBubbleDetail('${app.application_id}')" style="cursor:pointer;" title="${escHtml(name)}">
+      <circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${color}" stroke="white" stroke-width="2" opacity=".9"/>
+      <text x="${cx}" y="${(pos.y-(cost?8:3)).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="600"
+        fill="white" font-family="sans-serif" pointer-events="none">${escHtml(short)}</text>
+      <text x="${cx}" y="${(pos.y+6).toFixed(1)}" text-anchor="middle" font-size="9" fill="white" opacity=".85"
+        font-family="monospace" pointer-events="none">${escHtml(app.application_id)}</text>
+      ${cost?`<text x="${cx}" y="${(pos.y+17).toFixed(1)}" text-anchor="middle" font-size="8" fill="white" opacity=".75"
+        font-family="sans-serif" pointer-events="none">${cost}</text>`:''}
+    </g>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+function showBubbleDetail(appId) {
+  if (!bubbleData) return;
+  const app = bubbleData.apps.find(a => a.application_id===appId);
+  if (!app) return;
+  const panel = document.getElementById('bubbleDetailPanel');
+  panel.style.display = 'block';
+
+  const areaLabel = {1:'① 廃止予定',2:'② 移行中',3:'③ 部門固有',4:'④ グローバル標準'};
+  const migApp = app.migration_target_id
+    ? (bubbleData.apps.find(a => a.application_id===app.migration_target_id)?.application_name || app.migration_target_id)
+    : null;
+
+  const depsOn = bubbleData.dependencies.filter(d => d.app_id===appId);
+  const depsBy = bubbleData.dependencies.filter(d => d.depends_on_app_id===appId);
+
+  const depTypeLabel = {infra:'インフラ',auth:'認証連携',api:'API連携',data:'データ連携'};
+  const depColor = {infra:'#7C3AED',auth:'#2563EB',api:'#059669',data:'#F59E0B'};
+
+  const fmtDeps = (list, keyId, keyName) => list.map(d => {
+    const target = bubbleData.apps.find(a => a.application_id===d[keyId]);
+    const n = target ? target.application_name : d[keyId];
+    const tc = depColor[d.dependency_type]||'#9CA3AF';
+    return `<div style="padding:5px 0;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:6px;">
+      <span style="width:6px;height:6px;border-radius:50%;background:${tc};display:inline-block;flex-shrink:0;"></span>
+      <span style="font-size:11px;color:var(--gray-700);">${escHtml(n)}</span>
+      <span style="font-size:10px;color:var(--gray-400);margin-left:auto;">${depTypeLabel[d.dependency_type]||d.dependency_type}</span>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:2px;">${escHtml(app.application_name)}</div>
+        <span class="sys-id">${escHtml(appId)}</span>
+      </div>
+      <button onclick="document.getElementById('bubbleDetailPanel').style.display='none'"
+        style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--gray-400);line-height:1;">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div class="detail-field"><label>ポートフォリオ</label><span style="font-size:11px;">${areaLabel[app.portfolio_area]||'-'}</span></div>
+      <div class="detail-field"><label>種別</label><span style="font-size:11px;">${app.is_infrastructure?'インフラ・基盤':'業務アプリ'}</span></div>
+      <div class="detail-field"><label>年間コスト</label><span style="font-weight:700;color:var(--accent);">${app.annual_cost_million?`¥${app.annual_cost_million}M`:'-'}</span></div>
+      <div class="detail-field"><label>ステータス</label><span class="badge ${statusMap[app.status]?.cls||'badge-plan'}" style="font-size:10px;">${statusMap[app.status]?.label||app.status}</span></div>
+    </div>
+    ${migApp?`<div class="detail-field" style="margin-bottom:10px;"><label>移行先</label><span style="font-size:11px;color:var(--red);">→ ${escHtml(migApp)}</span></div>`:''}
+    <div class="detail-field" style="margin-bottom:10px;"><label>カテゴリ</label><span style="font-size:10px;">${escHtml(app.app_category||'-')}</span></div>
+    ${depsOn.length?`<div style="margin-bottom:10px;"><div class="ed-field-label" style="margin-bottom:4px;">依存先（このシステムが利用）</div>${fmtDeps(depsOn,'depends_on_app_id','depends_on_app_id')}</div>`:''}
+    ${depsBy.length?`<div><div class="ed-field-label" style="margin-bottom:4px;">被依存（利用されるシステム）</div>${fmtDeps(depsBy,'app_id','app_id')}</div>`:''}
+  `;
+}
 </script>
 </body>
 </html>
