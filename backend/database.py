@@ -61,6 +61,25 @@ CREATE TABLE IF NOT EXISTS environment (
     storage        TEXT
 );
 
+CREATE TABLE IF NOT EXISTS configuration_item (
+    ci_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    ci_name        TEXT NOT NULL,
+    ci_type        TEXT,
+    environment_id INTEGER REFERENCES environment(environment_id),
+    hostname       TEXT,
+    ip_address     TEXT,
+    bmc_ip         TEXT,
+    os             TEXT,
+    os_version     TEXT,
+    cpu            TEXT,
+    memory         TEXT,
+    storage        TEXT,
+    vendor         TEXT,
+    model          TEXT,
+    status         TEXT DEFAULT 'active',
+    note           TEXT
+);
+
 CREATE TABLE IF NOT EXISTS apm_request (
     request_id        TEXT PRIMARY KEY,
     type              TEXT NOT NULL,

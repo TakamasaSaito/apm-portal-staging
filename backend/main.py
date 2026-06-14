@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import init_db
-from .routers import applications, environments, requests as req_router, auth
+from .routers import applications, environments, requests as req_router, auth, ci as ci_router
 
 _SEED_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "seed.py")
 
@@ -39,6 +39,7 @@ app.include_router(auth.router)
 app.include_router(applications.router)
 app.include_router(environments.router)
 app.include_router(req_router.router)
+app.include_router(ci_router.router)
 
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="static")

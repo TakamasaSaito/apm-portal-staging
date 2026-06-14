@@ -41,3 +41,39 @@ class RequestCreate(BaseModel):
     # retire
     end_plan: Optional[str] = None
     app_category: Optional[str] = None
+
+
+class ConfigurationItemCreate(BaseModel):
+    ci_name: str
+    ci_type: Optional[str] = None
+    environment_id: int
+    hostname: Optional[str] = None
+    ip_address: Optional[str] = None
+    bmc_ip: Optional[str] = None
+    os: Optional[str] = None
+    os_version: Optional[str] = None
+    cpu: Optional[str] = None
+    memory: Optional[str] = None
+    storage: Optional[str] = None
+    vendor: Optional[str] = None
+    model: Optional[str] = None
+    status: Optional[str] = "active"
+    note: Optional[str] = None
+
+
+class ConfigurationItemUpdate(BaseModel):
+    ci_name: Optional[str] = None
+    ci_type: Optional[str] = None
+    environment_id: Optional[int] = None
+    hostname: Optional[str] = None
+    ip_address: Optional[str] = None
+    bmc_ip: Optional[str] = None
+    os: Optional[str] = None
+    os_version: Optional[str] = None
+    cpu: Optional[str] = None
+    memory: Optional[str] = None
+    storage: Optional[str] = None
+    vendor: Optional[str] = None
+    model: Optional[str] = None
+    status: Optional[str] = None
+    note: Optional[str] = None

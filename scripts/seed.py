@@ -63,6 +63,24 @@ CREATE TABLE IF NOT EXISTS environment (
     cpu_mem        TEXT,
     storage        TEXT
 );
+CREATE TABLE IF NOT EXISTS configuration_item (
+    ci_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    ci_name        TEXT NOT NULL,
+    ci_type        TEXT,
+    environment_id INTEGER REFERENCES environment(environment_id),
+    hostname       TEXT,
+    ip_address     TEXT,
+    bmc_ip         TEXT,
+    os             TEXT,
+    os_version     TEXT,
+    cpu            TEXT,
+    memory         TEXT,
+    storage        TEXT,
+    vendor         TEXT,
+    model          TEXT,
+    status         TEXT DEFAULT 'active',
+    note           TEXT
+);
 CREATE TABLE IF NOT EXISTS apm_request (
     request_id        TEXT PRIMARY KEY,
     type              TEXT NOT NULL,
@@ -97,7 +115,7 @@ CREATE TABLE IF NOT EXISTS apm_request (
             pass
 
     # 既存データクリア
-    for table in ["apm_request", "environment", "application", "user", "department"]:
+    for table in ["apm_request", "configuration_item", "environment", "application", "user", "department"]:
         cur.execute(f"DELETE FROM {table}")
 
     # ---------- 部署 ----------
@@ -268,6 +286,7 @@ CREATE TABLE IF NOT EXISTS apm_request (
         ("APM-004", "開発環境",       "AWS ap-northeast-1",   "52.195.x.x",   "expense-dev.corp.local",  "Amazon Linux 2",      "Node.js 18/PM2",        "2vCPU/4GB",  "100GB SSD"),
         ("APM-005", "開発環境",       "AWS ap-northeast-1",   "（未割当）",    "crm-dev.corp.local",      "Amazon Linux 2",      "Python 3.11/FastAPI",   "2vCPU/4GB",  "100GB SSD"),
     ]
+    env_ids: dict[tuple, int] = {}
     for row in envs:
         cur.execute(
             """
@@ -276,6 +295,52 @@ CREATE TABLE IF NOT EXISTS apm_request (
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             list(row),
+        )
+        env_ids[(row[0], row[1])] = cur.lastrowid
+
+    # ---------- 構成情報（CI） ----------
+    def eid(app_id, env_type):
+        return env_ids.get((app_id, env_type))
+
+    ci_data = [
+        # APM-001 本番環境: Webサーバー・DBサーバー・LB
+        (eid("APM-001","本番環境"), "hr-web-prod-01",  "Server",     "hr-web-prod-01.corp.local",  "10.1.1.11",  "10.1.1.200", "RHEL 8.6", "8.6.0",  "Intel Xeon Gold 6248R 3.0GHz 20C", "32GB DDR4 ECC", "500GB SSD",  "Dell",  "PowerEdge R650", "active", "APサーバー兼任"),
+        (eid("APM-001","本番環境"), "hr-db-prod-01",   "DB",         "hr-db-prod-01.corp.local",   "10.1.1.12",  "10.1.1.201", "RHEL 8.6", "8.6.0",  "Intel Xeon Gold 6248R 3.0GHz 20C", "64GB DDR4 ECC", "2TB SSD RAID1","Dell","PowerEdge R650","active","PostgreSQL 15"),
+        (eid("APM-001","本番環境"), "hr-lb-prod-01",   "Network",    "hr-lb-prod-01.corp.local",   "10.1.1.10",  "10.1.1.202", None,       None,     None,                               None,            None,          "F5",   "BIG-IP i2600",   "active","ロードバランサー VIP 10.1.1.10"),
+        # APM-001 ステージング環境
+        (eid("APM-001","ステージング環境"), "hr-web-stg-01","Server",  "hr-web-stg-01.corp.local", "10.1.2.11",  "10.1.2.200", "RHEL 8.6", "8.6.0",  "Intel Xeon Silver 4214R 2.4GHz 12C","16GB DDR4",    "300GB SSD",  "Dell", "PowerEdge R550", "active","Web/APサーバー"),
+        (eid("APM-001","ステージング環境"), "hr-db-stg-01", "DB",      "hr-db-stg-01.corp.local",  "10.1.2.12",  "10.1.2.201", "RHEL 8.6", "8.6.0",  "Intel Xeon Silver 4214R 2.4GHz 12C","32GB DDR4",    "1TB SSD",    "Dell", "PowerEdge R550", "active","PostgreSQL 15"),
+        # APM-002 本番環境: APサーバー・DBサーバー
+        (eid("APM-002","本番環境"), "sfa-ap-prod-01",  "Server",     "sfa-ap-prod-01.corp.local",  "40.79.180.11",None,         "Windows Server 2022","21H2","Intel Xeon E-2388G 3.2GHz 8C","16GB DDR4 ECC","500GB SSD","HP","ProLiant DL360 Gen10","active","IIS/.NET 7 APサーバー"),
+        (eid("APM-002","本番環境"), "sfa-db-prod-01",  "DB",         "sfa-db-prod-01.corp.local",  "40.79.180.12",None,         "Windows Server 2022","21H2","Intel Xeon E-2388G 3.2GHz 8C","32GB DDR4 ECC","2TB SSD",  "HP","ProLiant DL360 Gen10","active","SQL Server 2022"),
+        (eid("APM-002","本番環境"), "sfa-stor-prod-01","Storage",    "sfa-stor-prod-01.corp.local", "40.79.180.20",None,         None,       None,     None,                               None,            "50TB NAS",   "NetApp","FAS2720",        "active","共有ストレージ"),
+        # APM-002 テスト環境
+        (eid("APM-002","テスト環境"), "sfa-ap-test-01","Server",     "sfa-ap-test-01.corp.local",  "40.79.181.11",None,         "Windows Server 2022","21H2","Intel Xeon E-2324G 3.1GHz 4C","8GB DDR4",     "200GB SSD",  "HP","ProLiant DL360 Gen10","active","テスト用APサーバー"),
+        (eid("APM-002","テスト環境"), "sfa-db-test-01","DB",         "sfa-db-test-01.corp.local",  "40.79.181.12",None,         "Windows Server 2022","21H2","Intel Xeon E-2324G 3.1GHz 4C","16GB DDR4",    "500GB SSD",  "HP","ProLiant DL360 Gen10","active","SQL Server 2022 テスト用"),
+        # APM-003 本番環境: Webサーバー・DBサーバー・ストレージ
+        (eid("APM-003","本番環境"), "inv-web-prod-01", "Server",     "inv-prod.corp.local",        "192.168.10.21","192.168.10.200","CentOS 7.9","7.9.2009","Intel Xeon E5-2680v4 2.4GHz 14C","16GB DDR4","1TB HDD","Fujitsu","PRIMERGY RX2530 M4","active","Apache/PHP Webサーバー"),
+        (eid("APM-003","本番環境"), "inv-db-prod-01",  "DB",         "inv-db-prod-01.corp.local",  "192.168.10.22","192.168.10.201","CentOS 7.9","7.9.2009","Intel Xeon E5-2680v4 2.4GHz 14C","32GB DDR4","2TB HDD RAID5","Fujitsu","PRIMERGY RX2540 M4","active","MySQL 8.0"),
+        (eid("APM-003","本番環境"), "inv-stor-prod-01","Storage",    "inv-stor-prod-01.corp.local", "192.168.10.30","192.168.10.210",None,      None,     None,                               None,            "20TB NAS",   "Synology","RS3621RPxs","active","ファイルサーバー"),
+        # APM-004 本番環境
+        (eid("APM-004","本番環境"), "exp-ap-prod-01",  "Server",     "expense-prod.corp.local",    "52.194.1.1",  None,         "Amazon Linux 2","2","2vCPU (t3.large)","8GB","100GB SSD","AWS","EC2 t3.large","active","Node.js 18/PM2 本番"),
+        (eid("APM-004","本番環境"), "exp-db-prod-01",  "DB",         "expense-db-prod-01.corp.local","52.194.1.2", None,         "Amazon Linux 2","2","2vCPU (db.t3.medium)","4GB","100GB SSD","AWS","RDS MySQL 8.0","active","RDS マルチAZ"),
+        # APM-005 開発環境
+        (eid("APM-005","開発環境"), "crm-dev-ap-01",   "Server",     "crm-dev.corp.local",         "172.16.0.11", None,         "Amazon Linux 2","2","2vCPU (t3.small)","4GB","50GB SSD","AWS","EC2 t3.small","active","FastAPI 開発サーバー"),
+        (eid("APM-005","開発環境"), "crm-dev-db-01",   "DB",         "crm-dev-db-01.corp.local",   "172.16.0.12", None,         "Amazon Linux 2","2","1vCPU (db.t3.micro)","1GB","20GB SSD","AWS","RDS PostgreSQL 15","active","開発用DB"),
+    ]
+    for (env_id, ci_name, ci_type, hostname, ip_address, bmc_ip,
+         os_, os_version, cpu, memory, storage, vendor, model, status, note) in ci_data:
+        if env_id is None:
+            continue
+        cur.execute(
+            """
+            INSERT INTO configuration_item
+                (ci_name, ci_type, environment_id, hostname, ip_address, bmc_ip,
+                 os, os_version, cpu, memory, storage, vendor, model, status, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [ci_name, ci_type, env_id, hostname, ip_address, bmc_ip,
+             os_, os_version, cpu, memory, storage, vendor, model, status, note],
         )
 
     # ---------- 申請 ----------
@@ -355,7 +420,7 @@ CREATE TABLE IF NOT EXISTS apm_request (
     conn.close()
     print("✓ シードデータを投入しました")
     print(f"  部署: {len(departments)}件, ユーザー: {len(users)}件")
-    print(f"  アプリケーション: {len(apps)}件, 環境: {len(envs)}件, 申請: {len(requests)}件")
+    print(f"  アプリケーション: {len(apps)}件, 環境: {len(envs)}件, CI: {len(ci_data)}件, 申請: {len(requests)}件")
 
 
 if __name__ == "__main__":

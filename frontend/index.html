@@ -204,6 +204,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <div class="sidebar-item" id="sb-envs" onclick="showSidebarView('envs',this)">
         <span class="sidebar-icon">🖥️</span> システム環境
       </div>
+      <div class="sidebar-item" id="sb-ci" onclick="showSidebarView('ci',this)">
+        <span class="sidebar-icon">🗂️</span> 構成情報（CI）
+      </div>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-title">申請カタログ</div>
@@ -291,6 +294,44 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <th>IPアドレス</th><th>OS</th><th>CPU/MEM</th><th>操作</th>
           </tr></thead>
           <tbody id="envTableBody"></tbody>
+        </table>
+      </div>
+
+      <div id="view-ci" class="table-card" style="display:none;">
+        <div class="table-header">
+          <div class="table-header-title">構成情報（CI）一覧</div>
+          <div class="table-search-wrap">
+            <button class="btn btn-primary btn-sm" onclick="openCiModal()">＋ CI登録</button>
+          </div>
+        </div>
+        <div class="filter-bar" style="padding:10px 16px 0;flex-wrap:wrap;gap:8px;">
+          <select class="filter-select" id="ciFilterApp" onchange="onCiAppChange()">
+            <option value="">すべてのアプリ</option>
+          </select>
+          <select class="filter-select" id="ciFilterEnv" onchange="loadAndRenderCi()">
+            <option value="">すべての環境</option>
+          </select>
+          <select class="filter-select" id="ciFilterType" onchange="renderCiTable()">
+            <option value="">すべての種別</option>
+            <option value="Server">Server</option>
+            <option value="DB">DB</option>
+            <option value="Middleware">Middleware</option>
+            <option value="Network">Network</option>
+            <option value="Storage">Storage</option>
+            <option value="Other">Other</option>
+          </select>
+          <select class="filter-select" id="ciFilterStatus" onchange="renderCiTable()">
+            <option value="">すべてのステータス</option>
+            <option value="active">active</option>
+            <option value="stopped">stopped</option>
+            <option value="retired">retired</option>
+          </select>
+        </div>
+        <table style="margin-top:8px;">
+          <thead><tr>
+            <th>CI名</th><th>種別</th><th>ホスト名</th><th>IPアドレス</th><th>OS</th><th>ステータス</th><th>操作</th>
+          </tr></thead>
+          <tbody id="ciTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -402,6 +443,93 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeEnvModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="submitEnv()">即時反映する</button>
+    </div>
+  </div>
+</div>
+
+<!-- CI 詳細パネル -->
+<div class="detail-overlay" id="ciDetailOverlay" onclick="if(event.target===this)closeCiDetail()">
+  <div class="detail-panel">
+    <div class="detail-header">
+      <div>
+        <div class="detail-title" id="ciDetailTitle"></div>
+        <div class="detail-subtitle" id="ciDetailSubtitle"></div>
+      </div>
+      <button class="close-btn" onclick="closeCiDetail()">✕</button>
+    </div>
+    <div class="detail-body" id="ciDetailBody"></div>
+  </div>
+</div>
+
+<!-- CI 登録・編集モーダル -->
+<div class="modal-overlay" id="ciModal" onclick="if(event.target===this)closeCiModal()">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <div class="modal-title" id="ciModalTitle">CI 登録</div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeCiModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ciEditId">
+      <div class="form-grid">
+        <div class="form-group"><label>CI名<span class="required">*</span></label>
+          <input class="form-control" id="ci_name" placeholder="例：web-prod-01"></div>
+        <div class="form-group"><label>種別</label>
+          <select class="form-control" id="ci_type">
+            <option value="">-- 選択 --</option>
+            <option value="Server">Server</option>
+            <option value="DB">DB</option>
+            <option value="Middleware">Middleware</option>
+            <option value="Network">Network</option>
+            <option value="Storage">Storage</option>
+            <option value="Other">Other</option>
+          </select></div>
+      </div>
+      <div class="form-group"><label>対象環境<span class="required">*</span></label>
+        <select class="form-control" id="ci_env_select"></select></div>
+      <div class="form-grid">
+        <div class="form-group"><label>ホスト名</label>
+          <input class="form-control" id="ci_hostname" placeholder="host.example.local" style="font-family:'JetBrains Mono',monospace;"></div>
+        <div class="form-group"><label>IPアドレス</label>
+          <input class="form-control" id="ci_ip_address" placeholder="192.168.1.x" style="font-family:'JetBrains Mono',monospace;"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>BMC / iLO IPアドレス</label>
+          <input class="form-control" id="ci_bmc_ip" placeholder="管理用IPアドレス" style="font-family:'JetBrains Mono',monospace;"></div>
+        <div class="form-group"><label>ステータス</label>
+          <select class="form-control" id="ci_status">
+            <option value="active">active</option>
+            <option value="stopped">stopped</option>
+            <option value="retired">retired</option>
+          </select></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>OS</label>
+          <input class="form-control" id="ci_os" placeholder="RHEL 8.6"></div>
+        <div class="form-group"><label>OSバージョン</label>
+          <input class="form-control" id="ci_os_version" placeholder="8.6.0"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>CPU</label>
+          <input class="form-control" id="ci_cpu" placeholder="Intel Xeon Gold 6248R 3.0GHz 20C"></div>
+        <div class="form-group"><label>メモリ</label>
+          <input class="form-control" id="ci_memory" placeholder="32GB DDR4 ECC"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>ストレージ</label>
+          <input class="form-control" id="ci_storage" placeholder="1TB SSD"></div>
+        <div class="form-group"><label>ベンダー</label>
+          <input class="form-control" id="ci_vendor" placeholder="Dell"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>モデル</label>
+          <input class="form-control" id="ci_model" placeholder="PowerEdge R650"></div>
+      </div>
+      <div class="form-group"><label>備考</label>
+        <textarea class="form-control" id="ci_note" rows="2" placeholder="特記事項があれば入力"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCiModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="submitCi()">保存する</button>
     </div>
   </div>
 </div>
@@ -691,7 +819,9 @@ function showSidebarView(view, el) {
   el.classList.add('active');
   document.getElementById('view-apps').style.display = view === 'apps' ? 'block' : 'none';
   document.getElementById('view-envs').style.display = view === 'envs' ? 'block' : 'none';
+  document.getElementById('view-ci').style.display   = view === 'ci'   ? 'block' : 'none';
   if (view === 'envs') renderEnvTable();
+  if (view === 'ci')   initCiView();
 }
 function highlightSidebar(id) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -828,7 +958,7 @@ function openDetail(id) {
       </div>
       ${appEnvs.length > 0 ? `
       <table class="env-table">
-        <thead><tr><th>種別</th><th>ロケーション</th><th>IPアドレス</th><th>OS</th><th>CPU/MEM</th></tr></thead>
+        <thead><tr><th>種別</th><th>ロケーション</th><th>IPアドレス</th><th>OS</th><th>CPU/MEM</th><th></th></tr></thead>
         <tbody>${appEnvs.map(e => `
           <tr>
             <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
@@ -836,6 +966,7 @@ function openDetail(id) {
             <td style="font-family:'JetBrains Mono',monospace">${escHtml(e.ip)}</td>
             <td>${escHtml(e.os)}</td>
             <td>${escHtml(e.cpu)}</td>
+            <td><button class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 8px;" onclick="event.stopPropagation();openCiViewForEnv(${e.envId},'${escHtml(e.type)}')">🗂️ CI一覧</button></td>
           </tr>`).join('')}
         </tbody>
       </table>` : '<p style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px;">環境情報なし</p>'}
@@ -1214,6 +1345,221 @@ function downloadCSV(filename, rows) {
   a.download = filename;
   a.click();
   showToast('CSVをダウンロードしました', 'success');
+}
+
+// ========== CI 管理 ==========
+const ciTypeColor = {
+  Server:'#3B82F6', DB:'#8B5CF6', Middleware:'#F59E0B',
+  Network:'#10B981', Storage:'#EF4444', Other:'#6B7280',
+};
+const ciStatusColor = {active:'badge-running', stopped:'badge-order', retired:'badge-retire'};
+const ciStatusLabel = {active:'稼働中', stopped:'停止中', retired:'廃止済み'};
+
+let ciList = [];
+let ciEditingId = null;
+
+function initCiView() {
+  const appSel = document.getElementById('ciFilterApp');
+  appSel.innerHTML = '<option value="">すべてのアプリ</option>' +
+    apps.map(a => `<option value="${a.id}">${a.id} / ${escHtml(a.name)}</option>`).join('');
+  document.getElementById('ciFilterEnv').innerHTML = '<option value="">すべての環境</option>';
+  loadAndRenderCi();
+}
+
+function onCiAppChange() {
+  const appId = document.getElementById('ciFilterApp').value;
+  const envSel = document.getElementById('ciFilterEnv');
+  const filtered = appId ? envs.filter(e => e.appId === appId) : envs;
+  envSel.innerHTML = '<option value="">すべての環境</option>' +
+    filtered.map(e => `<option value="${e.envId}">${escHtml(e.type)}</option>`).join('');
+  loadAndRenderCi();
+}
+
+async function loadAndRenderCi() {
+  const envId = document.getElementById('ciFilterEnv').value;
+  const url = envId ? `/api/ci?environment_id=${envId}` : '/api/ci';
+  const data = await apiFetch(url);
+  if (!data) return;
+  ciList = data;
+  renderCiTable();
+}
+
+function renderCiTable() {
+  const typeF   = document.getElementById('ciFilterType').value;
+  const statusF = document.getElementById('ciFilterStatus').value;
+  const filtered = ciList.filter(c =>
+    (!typeF   || c.ci_type === typeF) &&
+    (!statusF || c.status  === statusF)
+  );
+  const tbody = document.getElementById('ciTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🗂️</div>CIが登録されていません</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(c => {
+    const typeColor = ciTypeColor[c.ci_type] || '#6B7280';
+    const stCls = ciStatusColor[c.status] || 'badge-plan';
+    return `<tr class="clickable" onclick="openCiDetail(${c.ci_id})">
+      <td><strong>${escHtml(c.ci_name)}</strong><div style="font-size:10px;color:var(--gray-400);">${escHtml(c.application_name||'')} / ${escHtml(c.env_type||'')}</div></td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:${typeColor};">${escHtml(c.ci_type||'-')}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(c.hostname||'-')}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(c.ip_address||'-')}</td>
+      <td>${escHtml(c.os||'-')}</td>
+      <td><span class="badge ${stCls}">${ciStatusLabel[c.status]||c.status}</span></td>
+      <td><button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="event.stopPropagation();openCiModal(${c.ci_id})">編集</button>
+          <button class="btn btn-danger btn-sm" style="font-size:11px;" onclick="event.stopPropagation();deleteCi(${c.ci_id})">削除</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function openCiDetail(ciId) {
+  const c = await apiFetch(`/api/ci/${ciId}`);
+  if (!c) return;
+  const typeColor = ciTypeColor[c.ci_type] || '#6B7280';
+  const stCls = ciStatusColor[c.status] || 'badge-plan';
+  document.getElementById('ciDetailTitle').textContent = c.ci_name;
+  document.getElementById('ciDetailSubtitle').textContent = `${c.application_name || ''} / ${c.env_type || ''}`;
+  document.getElementById('ciDetailBody').innerHTML = `
+    <div class="detail-section">
+      <span style="display:inline-block;padding:3px 10px;border-radius:4px;font-size:12px;font-weight:600;color:#fff;background:${typeColor};margin-right:8px;">${escHtml(c.ci_type||'-')}</span>
+      <span class="badge ${stCls}">${ciStatusLabel[c.status]||c.status}</span>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">ネットワーク情報</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>ホスト名</label><span style="font-family:'JetBrains Mono',monospace">${escHtml(c.hostname||'-')}</span></div>
+        <div class="detail-field"><label>IPアドレス</label><span style="font-family:'JetBrains Mono',monospace">${escHtml(c.ip_address||'-')}</span></div>
+        <div class="detail-field"><label>BMC / iLO IP</label><span style="font-family:'JetBrains Mono',monospace">${escHtml(c.bmc_ip||'-')}</span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">ハードウェア・OS</div>
+      <div class="detail-grid">
+        <div class="detail-field"><label>OS</label><span>${escHtml(c.os||'-')}</span></div>
+        <div class="detail-field"><label>OSバージョン</label><span>${escHtml(c.os_version||'-')}</span></div>
+        <div class="detail-field"><label>CPU</label><span>${escHtml(c.cpu||'-')}</span></div>
+        <div class="detail-field"><label>メモリ</label><span>${escHtml(c.memory||'-')}</span></div>
+        <div class="detail-field"><label>ストレージ</label><span>${escHtml(c.storage||'-')}</span></div>
+        <div class="detail-field"><label>ベンダー</label><span>${escHtml(c.vendor||'-')}</span></div>
+        <div class="detail-field"><label>モデル</label><span>${escHtml(c.model||'-')}</span></div>
+      </div>
+    </div>
+    ${c.note ? `<div class="detail-section"><div class="detail-section-title">備考</div><p style="font-size:13px;color:var(--gray-700);">${escHtml(c.note)}</p></div>` : ''}
+    <div class="detail-section">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="closeCiDetail();openCiModal(${c.ci_id})">✏️ 編集</button>
+        <button class="btn btn-danger btn-sm" onclick="closeCiDetail();deleteCi(${c.ci_id})">🗑️ 削除</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('ciDetailOverlay').classList.add('open');
+}
+function closeCiDetail() { document.getElementById('ciDetailOverlay').classList.remove('open'); }
+
+function buildCiEnvOptions(selectedId) {
+  return envs.map(e => {
+    const app = apps.find(a => a.id === e.appId);
+    const label = `${e.appId} / ${escHtml(e.type)}`;
+    return `<option value="${e.envId}" ${e.envId === selectedId ? 'selected' : ''}>${label}</option>`;
+  }).join('');
+}
+
+async function openCiModal(ciId) {
+  ciEditingId = ciId || null;
+  document.getElementById('ciModalTitle').textContent = ciId ? 'CI 編集' : 'CI 登録';
+  document.getElementById('ci_env_select').innerHTML = buildCiEnvOptions(null);
+  ['ci_name','ci_type','ci_env_select','ci_hostname','ci_ip_address','ci_bmc_ip',
+   'ci_os','ci_os_version','ci_cpu','ci_memory','ci_storage',
+   'ci_vendor','ci_model','ci_note'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('ci_status').value = 'active';
+  if (ciId) {
+    const c = await apiFetch(`/api/ci/${ciId}`);
+    if (c) {
+      document.getElementById('ci_name').value      = c.ci_name    || '';
+      document.getElementById('ci_type').value      = c.ci_type    || '';
+      document.getElementById('ci_env_select').innerHTML = buildCiEnvOptions(c.environment_id);
+      document.getElementById('ci_hostname').value  = c.hostname   || '';
+      document.getElementById('ci_ip_address').value= c.ip_address || '';
+      document.getElementById('ci_bmc_ip').value    = c.bmc_ip     || '';
+      document.getElementById('ci_os').value        = c.os         || '';
+      document.getElementById('ci_os_version').value= c.os_version || '';
+      document.getElementById('ci_cpu').value       = c.cpu        || '';
+      document.getElementById('ci_memory').value    = c.memory     || '';
+      document.getElementById('ci_storage').value   = c.storage    || '';
+      document.getElementById('ci_vendor').value    = c.vendor     || '';
+      document.getElementById('ci_model').value     = c.model      || '';
+      document.getElementById('ci_status').value    = c.status     || 'active';
+      document.getElementById('ci_note').value      = c.note       || '';
+    }
+  }
+  document.getElementById('ciModal').classList.add('open');
+}
+function closeCiModal() { document.getElementById('ciModal').classList.remove('open'); }
+
+async function submitCi() {
+  const ciName = document.getElementById('ci_name').value.trim();
+  const envId  = parseInt(document.getElementById('ci_env_select').value);
+  if (!ciName) { showToast('CI名を入力してください', 'error'); return; }
+  if (!envId)  { showToast('対象環境を選択してください', 'error'); return; }
+  const payload = {
+    ci_name:       ciName,
+    ci_type:       document.getElementById('ci_type').value       || null,
+    environment_id: envId,
+    hostname:      document.getElementById('ci_hostname').value   || null,
+    ip_address:    document.getElementById('ci_ip_address').value || null,
+    bmc_ip:        document.getElementById('ci_bmc_ip').value     || null,
+    os:            document.getElementById('ci_os').value         || null,
+    os_version:    document.getElementById('ci_os_version').value || null,
+    cpu:           document.getElementById('ci_cpu').value        || null,
+    memory:        document.getElementById('ci_memory').value     || null,
+    storage:       document.getElementById('ci_storage').value    || null,
+    vendor:        document.getElementById('ci_vendor').value     || null,
+    model:         document.getElementById('ci_model').value      || null,
+    status:        document.getElementById('ci_status').value     || 'active',
+    note:          document.getElementById('ci_note').value       || null,
+  };
+  try {
+    if (ciEditingId) {
+      await apiFetch(`/api/ci/${ciEditingId}`, {method:'PUT', body:payload});
+      showToast('CIを更新しました', 'success');
+    } else {
+      await apiFetch('/api/ci', {method:'POST', body:payload});
+      showToast('CIを登録しました', 'success');
+    }
+    closeCiModal();
+    loadAndRenderCi();
+  } catch(e) {
+    showToast('保存に失敗しました', 'error');
+  }
+}
+
+async function deleteCi(ciId) {
+  if (!confirm('このCIを削除しますか？')) return;
+  try {
+    await apiFetch(`/api/ci/${ciId}`, {method:'DELETE'});
+    showToast('CIを削除しました', 'success');
+    loadAndRenderCi();
+  } catch(e) {
+    showToast('削除に失敗しました', 'error');
+  }
+}
+
+function openCiViewForEnv(envId, envType) {
+  closeDetailPanel();
+  const sbCi = document.getElementById('sb-ci');
+  showSidebarView('ci', sbCi);
+  const env = envs.find(e => e.envId === envId);
+  if (env) {
+    document.getElementById('ciFilterApp').value = env.appId;
+    onCiAppChange();
+    setTimeout(() => {
+      document.getElementById('ciFilterEnv').value = String(envId);
+      loadAndRenderCi();
+    }, 50);
+  }
 }
 
 // ========== 初期化 ==========
