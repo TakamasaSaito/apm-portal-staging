@@ -1,3 +1,5 @@
+import asyncio
+import importlib.util
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
@@ -6,10 +8,20 @@ from fastapi.staticfiles import StaticFiles
 from .database import init_db
 from .routers import applications, environments, requests as req_router
 
+_SEED_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "seed.py")
+
+
+def _run_seed():
+    spec = importlib.util.spec_from_file_location("seed", os.path.abspath(_SEED_PATH))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.seed()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    await asyncio.to_thread(_run_seed)
     yield
 
 
