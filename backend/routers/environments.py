@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import aiosqlite
 from ..database import get_db
 from ..models import EnvironmentCreate, EnvironmentUpdate
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
 
@@ -13,7 +14,11 @@ _JOIN = """
 
 
 @router.get("/environments")
-async def list_environments(q: str = "", db: aiosqlite.Connection = Depends(get_db)):
+async def list_environments(
+    q: str = "",
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
     query = _JOIN + " WHERE 1=1"
     params = []
     if q:
@@ -29,7 +34,9 @@ async def list_environments(q: str = "", db: aiosqlite.Connection = Depends(get_
 
 @router.post("/environments", status_code=201)
 async def create_environment(
-    data: EnvironmentCreate, db: aiosqlite.Connection = Depends(get_db)
+    data: EnvironmentCreate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
 ):
     async with db.execute(
         """
@@ -50,7 +57,10 @@ async def create_environment(
 
 @router.put("/environments/{env_id}")
 async def update_environment(
-    env_id: int, data: EnvironmentUpdate, db: aiosqlite.Connection = Depends(get_db)
+    env_id: int,
+    data: EnvironmentUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
 ):
     updates = {k: v for k, v in data.model_dump().items() if v is not None}
     if not updates:
@@ -66,6 +76,10 @@ async def update_environment(
 
 
 @router.delete("/environments/{env_id}", status_code=204)
-async def delete_environment(env_id: int, db: aiosqlite.Connection = Depends(get_db)):
+async def delete_environment(
+    env_id: int,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
     await db.execute("DELETE FROM environment WHERE environment_id = ?", [env_id])
     await db.commit()

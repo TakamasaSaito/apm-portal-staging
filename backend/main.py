@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import init_db
-from .routers import applications, environments, requests as req_router
+from .routers import applications, environments, requests as req_router, auth
 
 _SEED_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "seed.py")
 
@@ -21,7 +21,8 @@ def _run_seed():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    await asyncio.to_thread(_run_seed)
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, _run_seed)
     yield
 
 
@@ -34,6 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
 app.include_router(applications.router)
 app.include_router(environments.router)
 app.include_router(req_router.router)

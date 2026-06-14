@@ -153,6 +153,23 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
 .filter-select{padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;font-family:'Noto Sans JP',sans-serif;color:var(--gray-600);background:var(--white);cursor:pointer;}
 .filter-select:focus{outline:none;border-color:var(--accent);}
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.login-card{background:var(--white);border-radius:16px;padding:40px;width:360px;box-shadow:0 24px 64px rgba(0,0,0,.4);}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .logo-text{font-size:24px;font-weight:700;color:var(--navy);}
+.login-logo .logo-text span{font-weight:300;color:var(--navy-light);}
+.login-logo .logo-sub{font-size:12px;color:var(--gray-400);margin-top:6px;}
+.login-error{color:var(--red);font-size:12px;margin-bottom:12px;padding:8px 12px;background:var(--red-light);border-radius:6px;display:none;}
+.demo-accounts{margin-top:20px;padding:12px 14px;background:#f7f8fa;border:1px solid #e4e6ea;border-radius:8px;}
+.demo-accounts-title{font-size:11px;color:var(--gray-400);text-align:center;margin-bottom:8px;letter-spacing:.05em;}
+.demo-account-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;color:var(--gray-500);}
+.demo-role{font-weight:500;color:var(--gray-500);}
+.demo-creds{color:var(--gray-400);}
+.demo-creds code{font-family:'Courier New',monospace;font-size:11px;background:#edf0f4;padding:1px 5px;border-radius:3px;color:var(--navy-light);}
+.user-info{display:flex;align-items:center;gap:10px;}
+.user-name-disp{color:var(--white);font-size:13px;font-weight:500;}
+.logout-btn{padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:var(--white);font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;}
+.logout-btn:hover{background:rgba(255,255,255,.2);}
 </style>
 </head>
 <body>
@@ -166,12 +183,14 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <div class="nav-item" onclick="showPage('approval',this)">承認</div>
     </nav>
   </div>
-  <div class="user-switcher">
-    <span class="user-label">表示ユーザー：</span>
+  <div class="user-info">
+    <span class="user-label">ロール：</span>
     <div class="user-toggle">
-      <button class="user-btn active" onclick="switchUser('applicant',this)">申請者</button>
-      <button class="user-btn" onclick="switchUser('admin',this)">事務局</button>
+      <button class="user-btn active" id="btnApplicant">申請者</button>
+      <button class="user-btn" id="btnAdmin">事務局</button>
     </div>
+    <span class="user-name-disp" id="loginUserName"></span>
+    <button class="logout-btn" onclick="doLogout()">ログアウト</button>
   </div>
 </header>
 
@@ -252,7 +271,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <table style="margin-top:8px;">
           <thead><tr>
             <th>システムID</th><th>アプリケーション名</th><th>所属部門</th>
-            <th>ステータス</th><th>ビジネスオーナー</th><th>環境</th><th>サービス開始</th>
+            <th>ステータス</th><th>カテゴリ</th><th>ビジネスオーナー</th><th>環境</th><th>サービス開始</th><th>廃止予定日</th>
           </tr></thead>
           <tbody id="appTableBody"></tbody>
         </table>
@@ -389,13 +408,46 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 
 <div class="toast" id="toast"></div>
 
+<!-- ログイン画面 -->
+<div class="login-overlay" id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-text">APM <span>Portal</span></div>
+      <div class="logo-sub">ITアセット管理システム</div>
+    </div>
+    <div class="form-group">
+      <label>ログインID</label>
+      <input class="form-control" id="loginId" placeholder="ログインIDを入力"
+             autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label>パスワード</label>
+      <input class="form-control" id="loginPassword" type="password" placeholder="パスワードを入力"
+             autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="btn btn-primary" style="width:100%;padding:10px;" onclick="doLogin()">ログイン</button>
+    <div class="demo-accounts">
+      <div class="demo-accounts-title">― デモアカウント ―</div>
+      <div class="demo-account-row">
+        <span class="demo-role">事務局ユーザー</span>
+        <span class="demo-creds">ID: <code>admin</code> &nbsp; PW: <code>admin</code></span>
+      </div>
+      <div class="demo-account-row">
+        <span class="demo-role">申請者ユーザー</span>
+        <span class="demo-creds">ID: <code>user</code> &nbsp;&nbsp; PW: <code>user</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ========== 定数 ==========
 const API = '';  // 同一オリジン（FastAPI が静的ファイルも配信）
 
 // ========== 状態 ==========
 let currentUser = 'applicant';
-let currentUserId = 1;  // 1:申請者ユーザー, 2:事務局ユーザー
+let currentUserId = 1;
 let currentPage = 'home';
 
 // キャッシュ（API から取得後に保持）
@@ -427,11 +479,19 @@ function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 async function apiFetch(path, opts={}) {
+  const token = localStorage.getItem('apm_token');
   const res = await fetch(API + path, {
-    headers: {'Content-Type': 'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? {'Authorization': `Bearer ${token}`} : {}),
+    },
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
+  if (res.status === 401) {
+    showLoginPage();
+    return null;
+  }
   if (!res.ok) throw new Error(`API error ${res.status}`);
   if (res.status === 204) return null;
   return res.json();
@@ -452,6 +512,7 @@ function normalizeApp(a) {
     startActual: a.start_actual    || '-',
     endPlan:     a.end_plan        || '-',
     endActual:   a.end_actual      || '-',
+    appCategory: a.app_category    || '-',
     vendor:      a.vendor          || '-',
     envTypes:    a.env_types       || [],
   };
@@ -501,18 +562,22 @@ function normalizeRequest(r) {
 // ========== API ロード ==========
 async function loadApps() {
   const data = await apiFetch('/api/applications');
+  if (!data) return;
   apps = data.map(normalizeApp);
 }
 async function loadEnvs() {
   const data = await apiFetch('/api/environments');
+  if (!data) return;
   envs = data.map(normalizeEnv);
 }
 async function loadRequests() {
   const data = await apiFetch('/api/requests');
+  if (!data) return;
   requests = data.map(normalizeRequest);
 }
 async function loadDepts() {
   const data = await apiFetch('/api/departments');
+  if (!data) return;
   depts = data;
   const sel = document.getElementById('filterDept');
   if (sel) {
@@ -522,6 +587,7 @@ async function loadDepts() {
 }
 async function loadStats() {
   const s = await apiFetch('/api/stats');
+  if (!s) return;
   document.getElementById('statRunning').textContent = s.running;
   document.getElementById('statDev').textContent     = s.dev;
   document.getElementById('statPending').textContent = s.pending;
@@ -543,14 +609,70 @@ async function loadStats() {
   }
 }
 
-// ========== ユーザー切り替え ==========
-function switchUser(role, btn) {
-  currentUser   = role;
-  currentUserId = role === 'admin' ? 2 : 1;
-  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  loadStats();
-  showToast(role === 'admin' ? '事務局モードに切り替えました' : '申請者モードに切り替えました');
+// ========== 認証 ==========
+function showLoginPage() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginError').style.display = 'none';
+}
+function hideLoginPage() {
+  document.getElementById('loginPage').style.display = 'none';
+}
+
+function setUserFromStorage() {
+  const user = JSON.parse(localStorage.getItem('apm_user') || '{}');
+  currentUser   = user.role === 'admin' ? 'admin' : 'applicant';
+  currentUserId = user.user_id || 1;
+  document.getElementById('loginUserName').textContent = user.user_name || '';
+  document.getElementById('btnApplicant').classList.toggle('active', currentUser !== 'admin');
+  document.getElementById('btnAdmin').classList.toggle('active', currentUser === 'admin');
+}
+
+async function doLogin() {
+  const loginId  = document.getElementById('loginId').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  if (!loginId || !password) {
+    errEl.textContent = 'ログインIDとパスワードを入力してください';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({login_id: loginId, password}),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      errEl.textContent = data.detail || 'ログインに失敗しました';
+      errEl.style.display = 'block';
+      return;
+    }
+    const data = await res.json();
+    localStorage.setItem('apm_token', data.access_token);
+    localStorage.setItem('apm_user', JSON.stringify({
+      user_id:   data.user_id,
+      user_name: data.user_name,
+      role:      data.role,
+    }));
+    setUserFromStorage();
+    hideLoginPage();
+    document.getElementById('loginPassword').value = '';
+    await initApp();
+  } catch(e) {
+    errEl.textContent = 'サーバーに接続できません';
+    errEl.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('apm_token');
+  localStorage.removeItem('apm_user');
+  apps = []; envs = []; requests = []; depts = [];
+  showLoginPage();
 }
 
 // ========== ページ切り替え ==========
@@ -589,7 +711,7 @@ function renderAppTable() {
   });
   const tbody = document.getElementById('appTableBody');
   if (!filtered.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🔍</div>条件に一致するアプリがありません</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">🔍</div>条件に一致するアプリがありません</div></td></tr>`;
     return;
   }
   tbody.innerHTML = filtered.map(app => {
@@ -605,9 +727,11 @@ function renderAppTable() {
       <td><strong>${escHtml(app.name)}</strong></td>
       <td>${escHtml(app.dept)}</td>
       <td><span class="badge ${st2.cls}">${st2.label}</span></td>
+      <td style="font-size:11px;color:var(--gray-600);">${app.appCategory !== '-' ? escHtml(app.appCategory) : '<span style="color:var(--gray-400);">－</span>'}</td>
       <td>${escHtml(app.bizOwner)}</td>
       <td><div class="env-chips">${chips||'<span style="color:var(--gray-400);font-size:11px;">－</span>'}</div></td>
       <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${startDisp}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${app.endPlan !== '-' ? escHtml(app.endPlan) : '<span style="color:var(--gray-400);">－</span>'}</td>
     </tr>`;
   }).join('');
 }
@@ -672,6 +796,12 @@ function openDetail(id) {
   document.getElementById('detailBody').innerHTML = `
     <div class="detail-section">
       <span class="badge ${st.cls}" style="font-size:13px;padding:5px 12px;">${st.label}</span>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">基本情報</div>
+      <div class="detail-grid">
+        <div class="detail-field" style="grid-column:1/-1"><label>アプリケーションカテゴリ</label><span>${escHtml(app.appCategory)}</span></div>
+      </div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">オーナー情報</div>
@@ -755,6 +885,42 @@ function openCatalogModal(type) {
       <div class="form-group"><label>所属部門<span class="required">*</span></label>
         <select class="form-control" id="f_dept">${deptOptions}</select></div>
     </div>
+    <div class="form-group"><label>アプリケーションカテゴリ</label>
+      <select class="form-control" id="f_appCategory">
+        <option value="">-- 選択してください --</option>
+        <optgroup label="業務系 Business Application">
+          <option value="ERP（基幹業務）">ERP（基幹業務）</option>
+          <option value="HRM（人事・労務・給与）">HRM（人事・労務・給与）</option>
+          <option value="CRM（顧客管理・営業支援）">CRM（顧客管理・営業支援）</option>
+          <option value="SCM（サプライチェーン・購買・在庫）">SCM（サプライチェーン・購買・在庫）</option>
+          <option value="Finance（経理・財務・予算）">Finance（経理・財務・予算）</option>
+          <option value="Marketing（マーケティング）">Marketing（マーケティング）</option>
+          <option value="Legal / Compliance（法務・コンプライアンス）">Legal / Compliance（法務・コンプライアンス）</option>
+        </optgroup>
+        <optgroup label="協働・生産性系 Productivity">
+          <option value="Collaboration（グループウェア・社内コミュニケーション）">Collaboration（グループウェア・社内コミュニケーション）</option>
+          <option value="Document Management（文書・コンテンツ管理）">Document Management（文書・コンテンツ管理）</option>
+        </optgroup>
+        <optgroup label="IT管理系 IT Management">
+          <option value="ITSM / ITOM（ITサービス・運用管理）">ITSM / ITOM（ITサービス・運用管理）</option>
+          <option value="APM（アプリケーション資産管理）">APM（アプリケーション資産管理）</option>
+          <option value="Security（セキュリティ管理）">Security（セキュリティ管理）</option>
+          <option value="Monitoring（監視・ログ管理）">Monitoring（監視・ログ管理）</option>
+        </optgroup>
+        <optgroup label="インフラ系 Infrastructure">
+          <option value="Network（ネットワーク）">Network（ネットワーク）</option>
+          <option value="Cloud Platform（クラウド基盤）">Cloud Platform（クラウド基盤）</option>
+          <option value="Database（データベース）">Database（データベース）</option>
+        </optgroup>
+        <optgroup label="データ・分析系 Data &amp; Analytics">
+          <option value="BI / Analytics（分析・レポート）">BI / Analytics（分析・レポート）</option>
+          <option value="Data Integration（データ連携・ETL）">Data Integration（データ連携・ETL）</option>
+        </optgroup>
+        <optgroup label="その他">
+          <option value="Other（その他）">Other（その他）</option>
+        </optgroup>
+      </select>
+    </div>
     <div class="form-grid">
       <div class="form-group"><label>ビジネスオーナー<span class="required">*</span></label><input class="form-control" id="f_bizOwner" placeholder="部長名"></div>
       <div class="form-group"><label>システムオーナー</label><input class="form-control" id="f_sysOwner" placeholder="課長名"></div>
@@ -802,11 +968,12 @@ async function submitRequest() {
   };
 
   if (currentCatalogType === 'register') {
-    payload.app_name   = document.getElementById('f_name')?.value || '';
-    payload.dept       = document.getElementById('f_dept')?.value || '';
-    payload.biz_owner  = document.getElementById('f_bizOwner')?.value || '';
-    payload.new_status = document.getElementById('f_status')?.value || 'plan';
-    payload.start_plan = document.getElementById('f_startPlan')?.value || '';
+    payload.app_name     = document.getElementById('f_name')?.value || '';
+    payload.dept         = document.getElementById('f_dept')?.value || '';
+    payload.biz_owner    = document.getElementById('f_bizOwner')?.value || '';
+    payload.new_status   = document.getElementById('f_status')?.value || 'plan';
+    payload.start_plan   = document.getElementById('f_startPlan')?.value || '';
+    payload.app_category = document.getElementById('f_appCategory')?.value || '';
   } else if (currentCatalogType === 'update') {
     payload.application_id  = appIdEl?.value;
     payload.upd_status      = document.getElementById('f_status')?.value;
@@ -979,7 +1146,7 @@ function renderApprovalList() {
     return;
   }
   if (currentUser !== 'admin') {
-    wrap.innerHTML = `<div class="table-card" style="padding:40px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🔒</div><div style="color:var(--gray-400);">承認操作は事務局のみ実行できます</div><div style="margin-top:12px;"><button class="btn btn-primary btn-sm" onclick="document.querySelectorAll('.user-btn')[1].click()">事務局に切り替える</button></div></div>`;
+    wrap.innerHTML = `<div class="table-card" style="padding:40px;text-align:center;"><div style="font-size:40px;margin-bottom:8px;">🔒</div><div style="color:var(--gray-400);">承認操作は事務局のみ実行できます</div></div>`;
     return;
   }
   const typeLabel  = {register:'新規登録', update:'更新', retire:'廃止'};
@@ -1014,7 +1181,7 @@ function renderApprovalList() {
 async function approveRequest(id, approved) {
   const endpoint = approved ? 'approve' : 'reject';
   try {
-    await apiFetch(`/api/requests/${id}/${endpoint}?approver_user_id=${currentUserId}`, {method:'PUT'});
+    await apiFetch(`/api/requests/${id}/${endpoint}`, {method:'PUT'});
     await Promise.all([loadRequests(), loadApps()]);
     renderApprovalList();
     renderAppTable();
@@ -1027,8 +1194,8 @@ async function approveRequest(id, approved) {
 
 // ========== CSV出力 ==========
 function exportCSV() {
-  const headers = ['システムID','アプリケーション名','所属部門','ステータス','ビジネスオーナー','システムオーナー','運用管理責任者','開発責任者','サービス開始予定','サービス開始実績','廃止予定日','廃止実績日'];
-  const rows = apps.map(a => [a.id, a.name, a.dept, statusMap[a.status].label, a.bizOwner, a.sysOwner, a.opsMgr, a.devMgr, a.startPlan, a.startActual, a.endPlan, a.endActual]);
+  const headers = ['システムID','アプリケーション名','所属部門','ステータス','カテゴリ','ビジネスオーナー','システムオーナー','運用管理責任者','開発責任者','サービス開始予定','サービス開始実績','廃止予定日','廃止実績日'];
+  const rows = apps.map(a => [a.id, a.name, a.dept, statusMap[a.status].label, a.appCategory, a.bizOwner, a.sysOwner, a.opsMgr, a.devMgr, a.startPlan, a.startActual, a.endPlan, a.endActual]);
   downloadCSV('ビジネスアプリケーション一覧.csv', [headers, ...rows]);
 }
 function exportHistoryCSV() {
@@ -1050,7 +1217,7 @@ function downloadCSV(filename, rows) {
 }
 
 // ========== 初期化 ==========
-async function init() {
+async function initApp() {
   try {
     await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts()]);
     renderAppTable();
@@ -1058,6 +1225,17 @@ async function init() {
   } catch(e) {
     showToast('データの読み込みに失敗しました。サーバーを確認してください。', 'error');
   }
+}
+
+async function init() {
+  const token = localStorage.getItem('apm_token');
+  if (!token) {
+    showLoginPage();
+    return;
+  }
+  setUserFromStorage();
+  hideLoginPage();
+  await initApp();
 }
 init();
 </script>

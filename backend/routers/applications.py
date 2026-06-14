@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 import aiosqlite
 from ..database import get_db
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
 
@@ -11,6 +12,7 @@ async def list_applications(
     status: str = "",
     dept: str = "",
     db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
 ):
     query = """
         SELECT a.*, d.department_name
@@ -44,7 +46,11 @@ async def list_applications(
 
 
 @router.get("/applications/{app_id}")
-async def get_application(app_id: str, db: aiosqlite.Connection = Depends(get_db)):
+async def get_application(
+    app_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
     async with db.execute(
         """
         SELECT a.*, d.department_name
@@ -70,7 +76,10 @@ async def get_application(app_id: str, db: aiosqlite.Connection = Depends(get_db
 
 
 @router.get("/stats")
-async def get_stats(db: aiosqlite.Connection = Depends(get_db)):
+async def get_stats(
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
     async with db.execute(
         "SELECT COUNT(*) AS c FROM application WHERE status = 'running'"
     ) as cur:
@@ -89,7 +98,10 @@ async def get_stats(db: aiosqlite.Connection = Depends(get_db)):
 
 
 @router.get("/departments")
-async def list_departments(db: aiosqlite.Connection = Depends(get_db)):
+async def list_departments(
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
     async with db.execute(
         "SELECT * FROM department ORDER BY department_id"
     ) as cur:

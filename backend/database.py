@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS user (
     user_id       INTEGER PRIMARY KEY AUTOINCREMENT,
     user_name     TEXT NOT NULL,
     department_id INTEGER REFERENCES department(department_id),
-    role          TEXT NOT NULL DEFAULT 'applicant'
+    role          TEXT NOT NULL DEFAULT 'applicant',
+    login_id      TEXT,
+    password_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS application (
@@ -42,7 +44,8 @@ CREATE TABLE IF NOT EXISTS application (
     start_plan          TEXT,
     start_actual        TEXT,
     end_plan            TEXT,
-    end_actual          TEXT
+    end_actual          TEXT,
+    app_category        TEXT
 );
 
 CREATE TABLE IF NOT EXISTS environment (
@@ -74,7 +77,19 @@ CREATE TABLE IF NOT EXISTS apm_request (
     biz_owner         TEXT,
     new_status        TEXT,
     start_plan        TEXT,
-    end_plan          TEXT
+    end_plan          TEXT,
+    app_category      TEXT
 );
         """)
+        # Migration: add login columns to existing databases
+        for stmt in (
+            "ALTER TABLE user ADD COLUMN login_id TEXT",
+            "ALTER TABLE user ADD COLUMN password_hash TEXT",
+            "ALTER TABLE application ADD COLUMN app_category TEXT",
+            "ALTER TABLE apm_request ADD COLUMN app_category TEXT",
+        ):
+            try:
+                await db.execute(stmt)
+            except Exception:
+                pass
         await db.commit()

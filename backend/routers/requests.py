@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from ..database import get_db
 from ..models import RequestCreate
+from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
 
@@ -46,6 +47,7 @@ async def list_requests(
     status: str = "",
     type: str = "",
     db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
 ):
     query = """
         SELECT r.*,
@@ -95,7 +97,9 @@ async def list_requests(
 
 @router.post("/requests", status_code=201)
 async def create_request(
-    data: RequestCreate, db: aiosqlite.Connection = Depends(get_db)
+    data: RequestCreate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
 ):
     req_id = await _next_request_id(db)
     applied_at = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -134,14 +138,14 @@ async def create_request(
         """
         INSERT INTO apm_request
             (request_id, type, application_id, applicant_user_id, applied_at, status,
-             reason, changes, app_name, dept, biz_owner, new_status, start_plan, end_plan)
-        VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?)
+             reason, changes, app_name, dept, biz_owner, new_status, start_plan, end_plan, app_category)
+        VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             req_id, data.type, data.application_id, data.applicant_user_id,
             applied_at, data.reason, changes,
             data.app_name, data.dept, data.biz_owner,
-            data.new_status, data.start_plan, data.end_plan,
+            data.new_status, data.start_plan, data.end_plan, data.app_category,
         ],
     )
     await db.commit()
@@ -151,8 +155,8 @@ async def create_request(
 @router.put("/requests/{req_id}/approve")
 async def approve_request(
     req_id: str,
-    approver_user_id: int,
     db: aiosqlite.Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     async with db.execute(
         "SELECT * FROM apm_request WHERE request_id = ?", [req_id]
@@ -163,7 +167,10 @@ async def approve_request(
     req = dict(row)
     if req["status"] != "pending":
         raise HTTPException(400, "Request is not pending")
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "承認権限がありません")
 
+    approver_user_id = current_user["user_id"]
     approved_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     await db.execute(
         "UPDATE apm_request SET status='approved', approver_user_id=?, approved_at=? WHERE request_id=?",
@@ -199,11 +206,12 @@ async def approve_request(
         await db.execute(
             """
             INSERT INTO application
-                (application_id, application_name, owner_department_id, status, business_owner, start_plan)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (application_id, application_name, owner_department_id, status,
+                 business_owner, start_plan, app_category)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             [new_app_id, req["app_name"] or "新規アプリ", dept_id, new_status,
-             req["biz_owner"], req["start_plan"]],
+             req["biz_owner"], req["start_plan"], req.get("app_category")],
         )
         await db.execute(
             "UPDATE apm_request SET application_id=? WHERE request_id=?",
@@ -217,8 +225,8 @@ async def approve_request(
 @router.put("/requests/{req_id}/reject")
 async def reject_request(
     req_id: str,
-    approver_user_id: int,
     db: aiosqlite.Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ):
     async with db.execute(
         "SELECT status FROM apm_request WHERE request_id = ?", [req_id]
@@ -228,7 +236,10 @@ async def reject_request(
         raise HTTPException(404, "Request not found")
     if dict(row)["status"] != "pending":
         raise HTTPException(400, "Request is not pending")
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "承認権限がありません")
 
+    approver_user_id = current_user["user_id"]
     approved_at = datetime.now().strftime("%Y-%m-%d %H:%M")
     await db.execute(
         "UPDATE apm_request SET status='rejected', approver_user_id=?, approved_at=? WHERE request_id=?",

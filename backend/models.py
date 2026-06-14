@@ -40,3 +40,4 @@ class RequestCreate(BaseModel):
     upd_start_actual: Optional[str] = None
     # retire
     end_plan: Optional[str] = None
+    app_category: Optional[str] = None
