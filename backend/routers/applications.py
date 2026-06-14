@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 import aiosqlite
 from ..database import get_db
+from ..models import ApplicationUpdate
 from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
@@ -73,6 +74,64 @@ async def get_application(
         app["environments"] = [dict(r) for r in await cur.fetchall()]
 
     return app
+
+
+@router.put("/applications/{app_id}")
+async def update_application(
+    app_id: str,
+    data: ApplicationUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute(
+        "SELECT application_id FROM application WHERE application_id = ?", [app_id]
+    ) as cur:
+        if not await cur.fetchone():
+            raise HTTPException(404, "Application not found")
+
+    updates: dict = {}
+    if data.application_name is not None:
+        updates["application_name"] = data.application_name
+    if data.status is not None:
+        updates["status"] = data.status
+    if data.vendor is not None:
+        updates["vendor"] = data.vendor
+    if data.business_owner is not None:
+        updates["business_owner"] = data.business_owner
+    if data.system_owner is not None:
+        updates["system_owner"] = data.system_owner
+    if data.ops_manager is not None:
+        updates["ops_manager"] = data.ops_manager
+    if data.dev_manager is not None:
+        updates["dev_manager"] = data.dev_manager
+    if data.start_plan is not None:
+        updates["start_plan"] = data.start_plan or None
+    if data.start_actual is not None:
+        updates["start_actual"] = data.start_actual or None
+    if data.end_plan is not None:
+        updates["end_plan"] = data.end_plan or None
+    if data.end_actual is not None:
+        updates["end_actual"] = data.end_actual or None
+    if data.app_category is not None:
+        updates["app_category"] = data.app_category or None
+
+    if data.department_name is not None:
+        async with db.execute(
+            "SELECT department_id FROM department WHERE department_name = ?",
+            [data.department_name],
+        ) as cur:
+            row = await cur.fetchone()
+        if row:
+            updates["owner_department_id"] = row["department_id"]
+
+    if updates:
+        sets = ", ".join(f"{k} = ?" for k in updates)
+        await db.execute(
+            f"UPDATE application SET {sets} WHERE application_id = ?",
+            [*updates.values(), app_id],
+        )
+        await db.commit()
+    return {"status": "updated"}
 
 
 @router.get("/stats")

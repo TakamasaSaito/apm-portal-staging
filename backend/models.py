@@ -43,6 +43,22 @@ class RequestCreate(BaseModel):
     app_category: Optional[str] = None
 
 
+class ApplicationUpdate(BaseModel):
+    application_name: Optional[str] = None
+    department_name: Optional[str] = None
+    status: Optional[str] = None
+    vendor: Optional[str] = None
+    business_owner: Optional[str] = None
+    system_owner: Optional[str] = None
+    ops_manager: Optional[str] = None
+    dev_manager: Optional[str] = None
+    start_plan: Optional[str] = None
+    start_actual: Optional[str] = None
+    end_plan: Optional[str] = None
+    end_actual: Optional[str] = None
+    app_category: Optional[str] = None
+
+
 class ConfigurationItemCreate(BaseModel):
     ci_name: str
     ci_type: Optional[str] = None

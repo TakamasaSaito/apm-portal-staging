@@ -170,6 +170,20 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .user-name-disp{color:var(--white);font-size:13px;font-weight:500;}
 .logout-btn{padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:var(--white);font-size:12px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;}
 .logout-btn:hover{background:rgba(255,255,255,.2);}
+/* ── 横スクロール ── */
+.table-scroll-wrap{overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--gray-300) transparent;}
+.table-scroll-wrap::-webkit-scrollbar{height:6px;}
+.table-scroll-wrap::-webkit-scrollbar-track{background:transparent;}
+.table-scroll-wrap::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:3px;}
+.table-scroll-wrap table{width:max-content;min-width:100%;}
+/* ── 列幅リサイズハンドル ── */
+.col-resize-handle{position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;user-select:none;z-index:2;border-right:2px solid transparent;transition:border-color .15s;}
+.col-resize-handle:hover,.col-resize-handle.dragging{border-right-color:var(--accent);}
+/* ── 編集パネル内フォーム調整 ── */
+.panel-form .form-group{margin-bottom:12px;}
+.panel-form .form-control{padding:7px 10px;font-size:12px;}
+.panel-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.panel-save-bar{padding:16px 24px;border-top:1px solid var(--gray-200);background:var(--white);position:sticky;bottom:0;display:flex;gap:8px;justify-content:flex-end;}
 </style>
 </head>
 <body>
@@ -271,13 +285,15 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <option value="">すべての部門</option>
           </select>
         </div>
-        <table style="margin-top:8px;">
+        <div class="table-scroll-wrap" style="margin-top:8px;">
+        <table id="appTable">
           <thead><tr>
-            <th>システムID</th><th>アプリケーション名</th><th>所属部門</th>
-            <th>ステータス</th><th>カテゴリ</th><th>ビジネスオーナー</th><th>環境</th><th>サービス開始</th><th>廃止予定日</th>
+            <th style="min-width:90px">システムID</th><th style="min-width:180px">アプリケーション名</th><th style="min-width:100px">所属部門</th>
+            <th style="min-width:110px">ステータス</th><th style="min-width:200px">カテゴリ</th><th style="min-width:120px">ビジネスオーナー</th><th style="min-width:120px">環境</th><th style="min-width:120px">サービス開始</th><th style="min-width:110px">廃止予定日</th>
           </tr></thead>
           <tbody id="appTableBody"></tbody>
         </table>
+        </div>
       </div>
 
       <div id="view-envs" class="table-card" style="display:none;">
@@ -288,13 +304,15 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <button class="btn btn-primary btn-sm" onclick="openEnvModal()">＋ 環境追加</button>
           </div>
         </div>
-        <table>
+        <div class="table-scroll-wrap">
+        <table id="envTable">
           <thead><tr>
-            <th>対象アプリ</th><th>環境種別</th><th>ロケーション</th>
-            <th>IPアドレス</th><th>OS</th><th>CPU/MEM</th><th>操作</th>
+            <th style="min-width:200px">対象アプリ</th><th style="min-width:120px">環境種別</th><th style="min-width:150px">ロケーション</th>
+            <th style="min-width:140px">IPアドレス</th><th style="min-width:120px">OS</th><th style="min-width:120px">CPU/MEM</th><th style="min-width:70px">操作</th>
           </tr></thead>
           <tbody id="envTableBody"></tbody>
         </table>
+        </div>
       </div>
 
       <div id="view-ci" class="table-card" style="display:none;">
@@ -327,12 +345,14 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <option value="retired">retired</option>
           </select>
         </div>
-        <table style="margin-top:8px;">
+        <div class="table-scroll-wrap" style="margin-top:8px;">
+        <table id="ciTable">
           <thead><tr>
-            <th>CI名</th><th>種別</th><th>ホスト名</th><th>IPアドレス</th><th>OS</th><th>ステータス</th><th>操作</th>
+            <th style="min-width:200px">CI名</th><th style="min-width:100px">種別</th><th style="min-width:180px">ホスト名</th><th style="min-width:130px">IPアドレス</th><th style="min-width:130px">OS</th><th style="min-width:100px">ステータス</th><th style="min-width:120px">操作</th>
           </tr></thead>
           <tbody id="ciTableBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -356,13 +376,15 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <option value="retire">廃止</option>
           </select>
         </div>
-        <table style="margin-top:8px;">
+        <div class="table-scroll-wrap" style="margin-top:8px;">
+        <table id="historyTable">
           <thead><tr>
-            <th>申請ID</th><th>種別</th><th>対象アプリ</th><th>申請者</th>
-            <th>申請日時</th><th>ステータス</th><th>承認者</th><th>承認日時</th>
+            <th style="min-width:90px">申請ID</th><th style="min-width:80px">種別</th><th style="min-width:220px">対象アプリ</th><th style="min-width:120px">申請者</th>
+            <th style="min-width:130px">申請日時</th><th style="min-width:100px">ステータス</th><th style="min-width:120px">承認者</th><th style="min-width:130px">承認日時</th>
           </tr></thead>
           <tbody id="historyTableBody"></tbody>
         </table>
+        </div>
       </div>
     </div>
 
@@ -387,7 +409,11 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <button class="close-btn" onclick="closeDetailPanel()">✕</button>
       </div>
     </div>
-    <div class="detail-body" id="detailBody"></div>
+    <div class="detail-body" id="detailBody" style="padding-bottom:0;"></div>
+    <div class="panel-save-bar">
+      <button class="btn btn-secondary" onclick="closeDetailPanel()">閉じる</button>
+      <button class="btn btn-primary" onclick="saveAppEdit(document.getElementById('detailId').textContent.split(' ')[0])">💾 保存する</button>
+    </div>
   </div>
 </div>
 
@@ -458,6 +484,24 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <button class="close-btn" onclick="closeCiDetail()">✕</button>
     </div>
     <div class="detail-body" id="ciDetailBody"></div>
+  </div>
+</div>
+
+<!-- 環境 詳細・編集パネル -->
+<div class="detail-overlay" id="envDetailOverlay" onclick="if(event.target===this)closeEnvDetail()">
+  <div class="detail-panel">
+    <div class="detail-header">
+      <div>
+        <div class="detail-title" id="envDetailTitle"></div>
+        <div class="detail-subtitle" id="envDetailSubtitle"></div>
+      </div>
+      <button class="close-btn" onclick="closeEnvDetail()">✕</button>
+    </div>
+    <div class="detail-body panel-form" id="envDetailBody" style="padding-bottom:0;"></div>
+    <div class="panel-save-bar">
+      <button class="btn btn-secondary" onclick="closeEnvDetail()">閉じる</button>
+      <button class="btn btn-primary" onclick="saveEnvEdit()">💾 保存する</button>
+    </div>
   </div>
 </div>
 
@@ -572,6 +616,18 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 <script>
 // ========== 定数 ==========
 const API = '';  // 同一オリジン（FastAPI が静的ファイルも配信）
+const APP_CATEGORIES = [
+  '','ERP（基幹業務）','HRM（人事・労務・給与）','CRM（顧客管理・営業支援）',
+  'SCM（サプライチェーン・購買・在庫）','Finance（経理・財務・予算）',
+  'Marketing（マーケティング）','Legal / Compliance（法務・コンプライアンス）',
+  'Collaboration（グループウェア・社内コミュニケーション）',
+  'Document Management（文書・コンテンツ管理）',
+  'ITSM / ITOM（ITサービス・運用管理）','APM（アプリケーション資産管理）',
+  'Security（セキュリティ管理）','Monitoring（監視・ログ管理）',
+  'Network（ネットワーク）','Cloud Platform（クラウド基盤）',
+  'Database（データベース）','BI / Analytics（分析・レポート）',
+  'Data Integration（データ連携・ETL）','Other（その他）',
+];
 
 // ========== 状態 ==========
 let currentUser = 'applicant';
@@ -864,6 +920,7 @@ function renderAppTable() {
       <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${app.endPlan !== '-' ? escHtml(app.endPlan) : '<span style="color:var(--gray-400);">－</span>'}</td>
     </tr>`;
   }).join('');
+  makeResizable(document.getElementById('appTable'));
 }
 
 // ========== 環境一覧 ==========
@@ -878,20 +935,17 @@ function renderEnvTable() {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🖥️</div>環境情報がありません</div></td></tr>`;
     return;
   }
-  tbody.innerHTML = filtered.map(e => `<tr>
+  tbody.innerHTML = filtered.map(e => `<tr class="clickable" onclick="openEnvDetail(${e.envId})">
     <td><span class="sys-id">${e.appId}</span> ${escHtml(e.appName)}</td>
     <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
     <td>${escHtml(e.loc)}</td>
-    <td><input style="font-family:'JetBrains Mono',monospace;font-size:12px;border:none;background:transparent;width:100%;outline:none;color:var(--gray-800);"
-        value="${escHtml(e.ip)}"
-        onchange="updateEnvField(${e.envId},'ip',this.value)"
-        onfocus="this.style.background='var(--gray-50)'"
-        onblur="this.style.background='transparent'"></td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(e.ip)}</td>
     <td>${escHtml(e.os)}</td>
     <td>${escHtml(e.cpu)}</td>
     <td><button class="btn btn-sm" style="background:var(--red-light);color:var(--red);border:1px solid #FCA5A5;font-size:11px;"
-        onclick="deleteEnv(${e.envId})">削除</button></td>
+        onclick="event.stopPropagation();deleteEnv(${e.envId})">削除</button></td>
   </tr>`).join('');
+  makeResizable(document.getElementById('envTable'));
 }
 async function updateEnvField(envId, field, val) {
   try {
@@ -915,73 +969,210 @@ async function deleteEnv(envId) {
   }
 }
 
-// ========== 詳細パネル ==========
+// ========== アプリ詳細・編集パネル ==========
 function openDetail(id) {
   const app = apps.find(a => a.id === id);
   if (!app) return;
-  const st = statusMap[app.status];
   const appEnvs = envs.filter(e => e.appId === id);
   document.getElementById('detailTitle').textContent = app.name;
   document.getElementById('detailId').textContent    = app.id + ' | ' + app.dept;
+
+  const deptOpts = depts.map(d =>
+    `<option value="${escHtml(d.department_name)}" ${d.department_name===app.dept?'selected':''}>${escHtml(d.department_name)}</option>`
+  ).join('');
+  const catOpts = APP_CATEGORIES.map(c =>
+    `<option value="${escHtml(c)}" ${c===(app.appCategory==='-'?'':app.appCategory)?'selected':''}>${escHtml(c)||'-- 選択なし --'}</option>`
+  ).join('');
+  const toVal = v => (v === '-' ? '' : v);
+
   document.getElementById('detailBody').innerHTML = `
-    <div class="detail-section">
-      <span class="badge ${st.cls}" style="font-size:13px;padding:5px 12px;">${st.label}</span>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">基本情報</div>
-      <div class="detail-grid">
-        <div class="detail-field" style="grid-column:1/-1"><label>アプリケーションカテゴリ</label><span>${escHtml(app.appCategory)}</span></div>
+    <div class="panel-form" style="padding:0;">
+      <div class="detail-section">
+        <div class="detail-section-title">基本情報</div>
+        <div class="form-group"><label class="ed-field-label">アプリケーション名</label>
+          <input class="form-control" id="ed_name" value="${escHtml(app.name)}"></div>
+        <div class="panel-form" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label class="ed-field-label">所属部門</label>
+            <select class="form-control" id="ed_dept">${deptOpts}</select></div>
+          <div class="form-group"><label class="ed-field-label">ステータス</label>
+            <select class="form-control" id="ed_status">
+              <option value="plan"    ${app.status==='plan'   ?'selected':''}>企画</option>
+              <option value="order"   ${app.status==='order'  ?'selected':''}>発注中</option>
+              <option value="dev"     ${app.status==='dev'    ?'selected':''}>開発中</option>
+              <option value="running" ${app.status==='running'?'selected':''}>本番稼働中</option>
+              <option value="retire"  ${app.status==='retire' ?'selected':''}>廃止</option>
+            </select></div>
+        </div>
+        <div class="form-group"><label class="ed-field-label">アプリケーションカテゴリ</label>
+          <select class="form-control" id="ed_category">${catOpts}</select></div>
       </div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">オーナー情報</div>
-      <div class="detail-grid">
-        <div class="detail-field"><label>ビジネスオーナー</label><span>${escHtml(app.bizOwner)}</span></div>
-        <div class="detail-field"><label>システムオーナー</label><span>${escHtml(app.sysOwner)}</span></div>
-        <div class="detail-field"><label>運用管理責任者</label><span>${escHtml(app.opsMgr)}</span></div>
-        <div class="detail-field"><label>開発責任者</label><span>${escHtml(app.devMgr)}</span></div>
+      <div class="detail-section">
+        <div class="detail-section-title">オーナー情報</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label class="ed-field-label">ビジネスオーナー</label>
+            <input class="form-control" id="ed_bizOwner" value="${escHtml(toVal(app.bizOwner))}"></div>
+          <div class="form-group"><label class="ed-field-label">システムオーナー</label>
+            <input class="form-control" id="ed_sysOwner" value="${escHtml(toVal(app.sysOwner))}"></div>
+          <div class="form-group"><label class="ed-field-label">運用管理責任者</label>
+            <input class="form-control" id="ed_opsMgr" value="${escHtml(toVal(app.opsMgr))}"></div>
+          <div class="form-group"><label class="ed-field-label">開発責任者</label>
+            <input class="form-control" id="ed_devMgr" value="${escHtml(toVal(app.devMgr))}"></div>
+        </div>
       </div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">ライフサイクル管理</div>
-      <div class="detail-grid">
-        <div class="detail-field"><label>サービス開始（予定）</label><span style="font-family:'JetBrains Mono',monospace">${app.startPlan}</span></div>
-        <div class="detail-field"><label>サービス開始（実績）</label><span style="font-family:'JetBrains Mono',monospace">${app.startActual}</span></div>
-        <div class="detail-field"><label>廃止予定日</label><span style="font-family:'JetBrains Mono',monospace">${app.endPlan}</span></div>
-        <div class="detail-field"><label>廃止実績日</label><span style="font-family:'JetBrains Mono',monospace">${app.endActual}</span></div>
+      <div class="detail-section">
+        <div class="detail-section-title">ライフサイクル管理</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group"><label class="ed-field-label">サービス開始（予定）</label>
+            <input class="form-control" type="date" id="ed_startPlan" value="${toVal(app.startPlan)}"></div>
+          <div class="form-group"><label class="ed-field-label">サービス開始（実績）</label>
+            <input class="form-control" type="date" id="ed_startActual" value="${toVal(app.startActual)}"></div>
+          <div class="form-group"><label class="ed-field-label">廃止予定日</label>
+            <input class="form-control" type="date" id="ed_endPlan" value="${toVal(app.endPlan)}"></div>
+          <div class="form-group"><label class="ed-field-label">廃止実績日</label>
+            <input class="form-control" type="date" id="ed_endActual" value="${toVal(app.endActual)}"></div>
+        </div>
       </div>
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">
-        <span>システム環境（${appEnvs.length}件）</span>
-        <button class="btn btn-secondary btn-sm" onclick="openEnvModalFor('${id}')">＋ 環境追加</button>
+      <div class="detail-section">
+        <div class="detail-section-title">
+          <span>システム環境（${appEnvs.length}件）</span>
+          <button class="btn btn-secondary btn-sm" onclick="openEnvModalFor('${id}')">＋ 環境追加</button>
+        </div>
+        ${appEnvs.length > 0 ? `
+        <table class="env-table">
+          <thead><tr><th>種別</th><th>ロケーション</th><th>IPアドレス</th><th>OS</th><th>CPU/MEM</th><th></th></tr></thead>
+          <tbody>${appEnvs.map(e => `
+            <tr style="cursor:pointer;" onclick="closeDetailPanel();openEnvDetail(${e.envId})">
+              <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
+              <td>${escHtml(e.loc)}</td>
+              <td style="font-family:'JetBrains Mono',monospace">${escHtml(e.ip)}</td>
+              <td>${escHtml(e.os)}</td>
+              <td>${escHtml(e.cpu)}</td>
+              <td><button class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 8px;" onclick="event.stopPropagation();openCiViewForEnv(${e.envId},'${escHtml(e.type)}')">🗂️ CI一覧</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>` : '<p style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px;">環境情報なし</p>'}
       </div>
-      ${appEnvs.length > 0 ? `
-      <table class="env-table">
-        <thead><tr><th>種別</th><th>ロケーション</th><th>IPアドレス</th><th>OS</th><th>CPU/MEM</th><th></th></tr></thead>
-        <tbody>${appEnvs.map(e => `
-          <tr>
-            <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
-            <td>${escHtml(e.loc)}</td>
-            <td style="font-family:'JetBrains Mono',monospace">${escHtml(e.ip)}</td>
-            <td>${escHtml(e.os)}</td>
-            <td>${escHtml(e.cpu)}</td>
-            <td><button class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 8px;" onclick="event.stopPropagation();openCiViewForEnv(${e.envId},'${escHtml(e.type)}')">🗂️ CI一覧</button></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>` : '<p style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px;">環境情報なし</p>'}
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">申請</div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-secondary btn-sm" onclick="openCatalogModal('update')">✏️ 更新申請</button>
-        <button class="btn btn-danger btn-sm" onclick="openCatalogModal('retire')">🗑️ 廃止申請</button>
+      <div class="detail-section">
+        <div class="detail-section-title">申請</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" onclick="openCatalogModal('update')">✏️ 更新申請</button>
+          <button class="btn btn-danger btn-sm" onclick="openCatalogModal('retire')">🗑️ 廃止申請</button>
+        </div>
       </div>
     </div>
   `;
   document.getElementById('detailOverlay').classList.add('open');
 }
+
+async function saveAppEdit(id) {
+  const payload = {
+    application_name: document.getElementById('ed_name').value.trim() || undefined,
+    department_name:  document.getElementById('ed_dept').value || undefined,
+    status:           document.getElementById('ed_status').value || undefined,
+    app_category:     document.getElementById('ed_category').value || null,
+    business_owner:   document.getElementById('ed_bizOwner').value || null,
+    system_owner:     document.getElementById('ed_sysOwner').value || null,
+    ops_manager:      document.getElementById('ed_opsMgr').value || null,
+    dev_manager:      document.getElementById('ed_devMgr').value || null,
+    start_plan:       document.getElementById('ed_startPlan').value || null,
+    start_actual:     document.getElementById('ed_startActual').value || null,
+    end_plan:         document.getElementById('ed_endPlan').value || null,
+    end_actual:       document.getElementById('ed_endActual').value || null,
+  };
+  try {
+    await apiFetch(`/api/applications/${id}`, {method:'PUT', body:payload});
+    await loadApps();
+    renderAppTable();
+    const updated = apps.find(a => a.id === id);
+    if (updated) {
+      document.getElementById('detailTitle').textContent = updated.name;
+      document.getElementById('detailId').textContent    = updated.id + ' | ' + updated.dept;
+    }
+    showToast('アプリケーション情報を保存しました', 'success');
+  } catch(e) {
+    showToast('保存に失敗しました', 'error');
+  }
+}
+
 function closeDetailPanel() { document.getElementById('detailOverlay').classList.remove('open'); }
+
+// ========== 環境 詳細・編集パネル ==========
+function openEnvDetail(envId) {
+  const e = envs.find(ev => ev.envId === envId);
+  if (!e) return;
+  document.getElementById('envDetailTitle').textContent    = e.type;
+  document.getElementById('envDetailSubtitle').textContent = e.appId + ' / ' + e.appName;
+
+  const locOpts = ['東京DC','大阪DC','AWS ap-northeast-1','Azure Japan East','GCP asia-northeast1','オンプレミス','その他'].map(l =>
+    `<option ${l===e.loc?'selected':''}>${l}</option>`
+  ).join('');
+  const typeOpts = ['本番環境','ステージング環境','開発環境','テスト環境'].map(t =>
+    `<option ${t===e.type?'selected':''}>${t}</option>`
+  ).join('');
+
+  document.getElementById('envDetailBody').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">環境情報</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group"><label class="ed-field-label">環境種別</label>
+          <select class="form-control" id="envEd_type">${typeOpts}</select></div>
+        <div class="form-group"><label class="ed-field-label">ロケーション</label>
+          <select class="form-control" id="envEd_loc">${locOpts}</select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group"><label class="ed-field-label">IPアドレス</label>
+          <input class="form-control" id="envEd_ip" value="${escHtml(e.ip==='-'?'':e.ip)}" style="font-family:'JetBrains Mono',monospace;"></div>
+        <div class="form-group"><label class="ed-field-label">FQDNホスト名</label>
+          <input class="form-control" id="envEd_host" value="${escHtml(e.host==='-'?'':e.host)}" style="font-family:'JetBrains Mono',monospace;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group"><label class="ed-field-label">OSバージョン</label>
+          <input class="form-control" id="envEd_os" value="${escHtml(e.os==='-'?'':e.os)}"></div>
+        <div class="form-group"><label class="ed-field-label">ミドルウェア</label>
+          <input class="form-control" id="envEd_mw" value="${escHtml(e.mw==='-'?'':e.mw)}"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group"><label class="ed-field-label">CPU / メモリ</label>
+          <input class="form-control" id="envEd_cpu" value="${escHtml(e.cpu==='-'?'':e.cpu)}"></div>
+        <div class="form-group"><label class="ed-field-label">ストレージ</label>
+          <input class="form-control" id="envEd_storage" value="${escHtml(e.storage==='-'?'':e.storage)}"></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <button class="btn btn-danger btn-sm" onclick="if(confirm('この環境を削除しますか？'))deleteEnv(${envId}).then(()=>closeEnvDetail())">🗑️ 環境削除</button>
+    </div>
+  `;
+  document.getElementById('envDetailOverlay').classList.add('open');
+  document.getElementById('envDetailOverlay').dataset.envId = envId;
+}
+function closeEnvDetail() { document.getElementById('envDetailOverlay').classList.remove('open'); }
+
+async function saveEnvEdit() {
+  const envId = parseInt(document.getElementById('envDetailOverlay').dataset.envId);
+  const payload = {
+    env_type:   document.getElementById('envEd_type').value,
+    location:   document.getElementById('envEd_loc').value,
+    ip:         document.getElementById('envEd_ip').value || null,
+    host:       document.getElementById('envEd_host').value || null,
+    os:         document.getElementById('envEd_os').value || null,
+    middleware: document.getElementById('envEd_mw').value || null,
+    cpu_mem:    document.getElementById('envEd_cpu').value || null,
+    storage:    document.getElementById('envEd_storage').value || null,
+  };
+  try {
+    await apiFetch(`/api/environments/${envId}`, {method:'PUT', body:payload});
+    await loadEnvs();
+    renderEnvTable();
+    const e = envs.find(ev => ev.envId === envId);
+    if (e) {
+      document.getElementById('envDetailTitle').textContent    = e.type;
+      document.getElementById('envDetailSubtitle').textContent = e.appId + ' / ' + e.appName;
+    }
+    showToast('環境情報を保存しました', 'success');
+  } catch(e) {
+    showToast('保存に失敗しました', 'error');
+  }
+}
 
 // ========== 申請モーダル ==========
 let currentCatalogType = '';
@@ -1185,6 +1376,7 @@ function renderHistoryTable() {
     <td>${escHtml(r.approver) || '－'}</td>
     <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${r.approvedAt || '－'}</td>
   </tr>`).join('');
+  makeResizable(document.getElementById('historyTable'));
 }
 
 // ========== 承認一覧 ==========
@@ -1410,6 +1602,7 @@ function renderCiTable() {
           <button class="btn btn-danger btn-sm" style="font-size:11px;" onclick="event.stopPropagation();deleteCi(${c.ci_id})">削除</button></td>
     </tr>`;
   }).join('');
+  makeResizable(document.getElementById('ciTable'));
 }
 
 async function openCiDetail(ciId) {
@@ -1560,6 +1753,39 @@ function openCiViewForEnv(envId, envType) {
       loadAndRenderCi();
     }, 50);
   }
+}
+
+// ========== 列幅リサイズ ==========
+function makeResizable(table) {
+  if (!table) return;
+  const ths = table.querySelectorAll('thead th');
+  ths.forEach(th => {
+    if (th.querySelector('.col-resize-handle')) return;
+    th.style.position = 'relative';
+    const handle = document.createElement('div');
+    handle.className = 'col-resize-handle';
+    th.appendChild(handle);
+    let startX, startW;
+    handle.addEventListener('mousedown', e => {
+      startX = e.pageX;
+      startW = th.offsetWidth;
+      handle.classList.add('dragging');
+      e.preventDefault();
+      e.stopPropagation();
+      const onMove = mv => {
+        const w = Math.max(50, startW + mv.pageX - startX);
+        th.style.width = w + 'px';
+        th.style.minWidth = w + 'px';
+      };
+      const onUp = () => {
+        handle.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+  });
 }
 
 // ========== 初期化 ==========
