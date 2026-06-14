@@ -56,6 +56,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--gray-50);color:var(-
 .btn-success:hover{background:#A7F3D0;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+@media(max-width:480px){.stats-grid{grid-template-columns:repeat(2,1fr);}}
 .stat-card{background:var(--white);border-radius:10px;padding:16px 20px;box-shadow:var(--shadow);border-left:4px solid transparent;}
 .stat-card.green{border-left-color:var(--green);}
 .stat-card.blue{border-left-color:var(--accent);}
@@ -211,17 +212,17 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .chart-title{font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:12px;}
 .retiring-section{padding:0 24px 24px;}
 .retiring-title{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-.bubble-filter-bar{display:flex;align-items:center;gap:8px;padding:14px 24px;flex-wrap:wrap;border-bottom:1px solid var(--gray-200);background:var(--gray-50);}
+.bubble-filter-bar{display:flex;align-items:center;gap:8px;padding:10px 24px;flex-wrap:wrap;border-bottom:1px solid #E2E8F0;background:#ffffff;}
 .bubble-filter-label{font-size:11px;color:var(--gray-600);font-weight:600;}
 .bubble-filter-sep{width:1px;height:20px;background:var(--gray-300);margin:0 4px;}
-.bubble-filter-btn{padding:4px 12px;border:1px solid var(--gray-300);border-radius:20px;background:var(--white);font-size:11px;cursor:pointer;color:var(--gray-600);transition:all .1s;}
-.bubble-filter-btn:hover{border-color:var(--accent);color:var(--accent);}
-.bubble-filter-btn.active{background:var(--accent);color:white;border-color:var(--accent);}
-.bubble-main{display:flex;min-height:560px;}
-.bubble-svg-wrap{flex:1;overflow:auto;padding:16px 24px;background:var(--gray-50);}
-.bubble-svg-wrap svg{border-radius:8px;border:1px solid var(--gray-200);background:white;}
-.bubble-detail-panel{width:300px;padding:20px;border-left:1px solid var(--gray-200);overflow-y:auto;max-height:560px;background:var(--white);}
-.bubble-legend{display:flex;align-items:center;gap:16px;padding:10px 24px;border-top:1px solid var(--gray-200);background:var(--gray-50);font-size:11px;color:var(--gray-600);flex-wrap:wrap;border-radius:0 0 10px 10px;}
+.bubble-filter-btn{padding:4px 12px;border:1px solid #CBD5E0;border-radius:20px;background:#ffffff;font-size:11px;cursor:pointer;color:#4A5568;transition:all .1s;}
+.bubble-filter-btn:hover{border-color:#1E3A8A;color:#1E3A8A;}
+.bubble-filter-btn.active{background:#1E3A8A;color:white;border-color:#1E3A8A;}
+.bubble-main{display:flex;}
+.bubble-svg-wrap{flex:1;overflow:hidden;padding:8px 16px;background:#f8fafc;}
+.bubble-svg-wrap svg{border-radius:8px;border:1px solid #CBD5E0;background:#f8fafc;display:block;}
+.bubble-detail-panel{width:300px;padding:20px;border-left:1px solid #E2E8F0;overflow-y:auto;background:#ffffff;box-shadow:-4px 0 16px rgba(0,0,0,0.08);}
+.bubble-legend{display:flex;align-items:center;gap:16px;padding:8px 24px;border-top:1px solid #E2E8F0;background:#ffffff;font-size:11px;color:#4A5568;flex-wrap:wrap;border-radius:0 0 10px 10px;}
 .legend-title{font-weight:700;color:var(--gray-700);}
 .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle;}
 .legend-dash{display:inline-block;width:24px;height:2px;vertical-align:middle;margin-right:4px;border-top:2px dashed currentColor;}
@@ -366,13 +367,14 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </div>
           <div class="bubble-legend">
             <span class="legend-title">凡例 —</span>
-            <span><span class="legend-dot" style="background:#7C3AED;"></span>グローバル基盤サービス</span>
-            <span><span class="legend-dot" style="background:#2563EB;"></span>国内インフラ</span>
-            <span><span class="legend-dot" style="background:#DC2626;"></span>移行対象アプリ</span>
-            <span><span class="legend-dot" style="background:#059669;"></span>業務アプリ</span>
-            <span style="margin-left:12px;"><span class="legend-dash" style="color:#7C3AED;"></span>インフラ依存</span>
-            <span><span class="legend-dash" style="color:#2563EB;"></span>認証連携</span>
-            <span><span class="legend-dash" style="color:#059669;"></span>API依存</span>
+            <span><span class="legend-dot" style="background:#E8D4F0;border:2px solid #6A1B9A;"></span>グローバル基盤</span>
+            <span><span class="legend-dot" style="background:#C8D8F0;border:2px solid #1565C0;"></span>国内インフラ</span>
+            <span><span class="legend-dot" style="background:#F0D4D4;border:2px solid #C62828;"></span>移行対象</span>
+            <span><span class="legend-dot" style="background:#D4EDD4;border:2px solid #2E7D32;"></span>業務アプリ</span>
+            <span style="margin-left:12px;"><span class="legend-dash" style="color:#9C27B0;border-color:#9C27B0;"></span>インフラ依存</span>
+            <span><span class="legend-dash" style="color:#1565C0;border-color:#1565C0;"></span>認証連携</span>
+            <span><span class="legend-dash" style="color:#2E7D32;border-color:#2E7D32;"></span>API連携</span>
+            <span><span class="legend-dash" style="color:#C62828;border-top-style:solid;border-color:#C62828;"></span>移行先</span>
           </div>
         </div>
       </div>
@@ -992,7 +994,7 @@ function showSidebarView(view, el) {
   if (el) el.classList.add('active');
   const isDash = view === 'dashboard';
   document.getElementById('view-dashboard').style.display = isDash ? 'block' : 'none';
-  document.getElementById('pageHomeStats').style.display  = isDash ? 'none' : 'block';
+  document.getElementById('pageHomeStats').style.display  = isDash ? 'none' : 'grid';
   document.getElementById('view-apps').style.display = view === 'apps' ? 'block' : 'none';
   document.getElementById('view-envs').style.display = view === 'envs' ? 'block' : 'none';
   document.getElementById('view-ci').style.display   = view === 'ci'   ? 'block' : 'none';
@@ -1999,17 +2001,12 @@ let dashSummaryData = null;
 let bubbleData = null;
 let bubbleAreaFilter = '';
 let bubbleInfraFilter = '';
-let bubblePositions = {};
-let bubbleRadii = {};
+let selectedBubbleId = null;
+let _bubbleResizeObs = null;
 let _statusChart = null, _categoryChart = null, _deptChart = null;
 
-const BUBBLE_Q = {
-  1: { x:0,    y:0,   w:800, h:480, label:'① 廃止予定',     bg:'#FEF2F2' },
-  2: { x:800,  y:0,   w:800, h:480, label:'② 移行中',       bg:'#EFF6FF' },
-  3: { x:0,    y:480, w:800, h:480, label:'③ 部門固有',     bg:'#F0FDF4' },
-  4: { x:800,  y:480, w:800, h:480, label:'④ グローバル標準', bg:'#FAF5FF' },
-};
-const SVG_W = 1600, SVG_H = 960;
+const DEP_COLORS = {infra:'#b03ae8', auth:'#74b9ff', api:'#55efc4', migration:'#e74c3c', data:'#fdcb6e'};
+const DEP_LABELS = {infra:'インフラ依存', auth:'認証連携', api:'API連携', migration:'移行先', data:'データ連携'};
 
 async function loadDashboardSummary() {
   const d = await apiFetch('/api/dashboard/summary');
@@ -2022,7 +2019,9 @@ async function loadBubbleData() {
   const d = await apiFetch('/api/dashboard/bubble');
   if (!d) return;
   bubbleData = d;
-  renderBubbleChart();
+  // Render only if the bubble tab is already visible
+  const bubbleTab = document.getElementById('dash-bubble');
+  if (bubbleTab && bubbleTab.style.display !== 'none') renderBubbleChart();
 }
 
 function renderDashboardSummary(d) {
@@ -2104,27 +2103,39 @@ function switchDashTab(tab) {
   document.getElementById('dash-overview').style.display = tab==='overview' ? 'block' : 'none';
   document.getElementById('dash-bubble').style.display   = tab==='bubble'   ? 'block' : 'none';
   document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.tab===tab));
-  if (tab==='bubble' && bubbleData) renderBubbleChart();
+  if (tab==='bubble' && bubbleData) {
+    renderBubbleChart();
+    if (!_bubbleResizeObs) initBubbleResizeObserver();
+  }
 }
 
 // ── バブルチャート ──
-function getBubbleColor(app) {
-  if (app.is_infrastructure && app.portfolio_area===4) return '#7C3AED';
-  if (app.is_infrastructure) return '#2563EB';
-  if (app.migration_target_id) return '#DC2626';
-  return '#059669';
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
 }
 
-function getBubbleRadius(cost, maxCost) {
-  const mn=20, mx=56;
-  if (!cost || !maxCost) return mn;
-  return mn + (mx-mn) * Math.sqrt(cost/maxCost);
+function getBubbleStyle(app) {
+  if (app.is_infrastructure && app.portfolio_area === 4) return {fill:'#E8D4F0', stroke:'#6A1B9A'};
+  if (app.is_infrastructure)   return {fill:'#C8D8F0', stroke:'#1565C0'};
+  if (app.migration_target_id) return {fill:'#F0D4D4', stroke:'#C62828'};
+  return {fill:'#D4EDD4', stroke:'#2E7D32'};
+}
+
+function getBubbleR(cost, maxCost) {
+  if (!cost || !maxCost) return 14;
+  return 14 + (cost / maxCost) * 54;
 }
 
 function setBubbleAreaFilter(btn, area) {
   document.querySelectorAll('[data-area]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   bubbleAreaFilter = area;
+  selectedBubbleId = null;
+  document.getElementById('bubbleDetailPanel').style.display = 'none';
   renderBubbleChart();
 }
 
@@ -2132,128 +2143,285 @@ function setBubbleInfraFilter(btn, infra) {
   document.querySelectorAll('[data-infra]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   bubbleInfraFilter = infra;
+  selectedBubbleId = null;
+  document.getElementById('bubbleDetailPanel').style.display = 'none';
   renderBubbleChart();
+}
+
+function initBubbleResizeObserver() {
+  const wrap = document.querySelector('.bubble-svg-wrap');
+  if (!wrap) return;
+  let timer = null;
+  const onResize = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (document.getElementById('dash-bubble').style.display !== 'none') renderBubbleChart();
+    }, 150);
+  };
+  if (window.ResizeObserver) {
+    _bubbleResizeObs = new ResizeObserver(onResize);
+    _bubbleResizeObs.observe(wrap);
+  }
+  window.addEventListener('resize', onResize);
 }
 
 function renderBubbleChart() {
   if (!bubbleData) return;
-  const {apps: allApps, dependencies} = bubbleData;
+  const wrap = document.querySelector('.bubble-svg-wrap');
+  if (!wrap) return;
+  const W = wrap.clientWidth > 0 ? wrap.clientWidth - 32 : 0;
+  if (W < 100) return;
+  const H = Math.max(400, window.innerHeight - 168);
+  const QW = W / 2, QH = H / 2;
 
+  const {apps: allApps, dependencies} = bubbleData;
   const filtered = allApps.filter(a => {
     if (bubbleAreaFilter && String(a.portfolio_area) !== bubbleAreaFilter) return false;
     if (bubbleInfraFilter !== '' && String(a.is_infrastructure) !== bubbleInfraFilter) return false;
     return true;
   });
+  const maxCost = Math.max(...allApps.map(a => a.annual_cost_million || 0), 1);
 
-  const maxCost = Math.max(...allApps.map(a => a.annual_cost_million||0));
+  // ①左上 ②左下 ③右上 ④右下
+  const QUAD = {
+    1:{x:0,  y:0,  w:QW, h:QH, label:'① 廃止予定',     fill:'#FFF0F0', stroke:'#E8C0C0', labelColor:'#C0392B'},
+    2:{x:0,  y:QH, w:QW, h:QH, label:'② 移行中',       fill:'#FFFBF0', stroke:'#E8DEB0', labelColor:'#8B6914'},
+    3:{x:QW, y:0,  w:QW, h:QH, label:'③ 部門固有',     fill:'#F0FFF4', stroke:'#B0D8BE', labelColor:'#1A6B3A'},
+    4:{x:QW, y:QH, w:QW, h:QH, label:'④ グローバル標準', fill:'#F0F4FF', stroke:'#B0C4E8', labelColor:'#1A3A8B'},
+  };
 
-  // グループ分け
+  // Group and sort by area descending cost
   const byArea = {1:[],2:[],3:[],4:[]};
   filtered.forEach(a => { if (byArea[a.portfolio_area]) byArea[a.portfolio_area].push(a); });
+  Object.values(byArea).forEach(list => list.sort((a,b) => (b.annual_cost_million||0) - (a.annual_cost_million||0)));
 
-  // 位置計算
-  bubblePositions = {};
-  bubbleRadii = {};
-  Object.entries(BUBBLE_Q).forEach(([area, q]) => {
+  // ─── STEP1: Center/outer corners per area (local quadrant coordinates) ───
+  // Center corner = the side touching the canvas center (adjacent to other areas)
+  const CENTER_CORNER = {
+    1: {cx: QW, cy: QH},  // ①左上: center corner at bottom-right (toward canvas center)
+    2: {cx: QW, cy: 0},   // ②左下: center corner at top-right
+    3: {cx: 0,  cy: QH},  // ③右上: center corner at bottom-left
+    4: {cx: 0,  cy: 0},   // ④右下: center corner at top-left
+  };
+  const OUTER_CORNER = {
+    1: {cx: 0,  cy: 0},   // ①左上: outer corner at top-left
+    2: {cx: 0,  cy: QH},  // ②左下: outer corner at bottom-left
+    3: {cx: QW, cy: 0},   // ③右上: outer corner at top-right
+    4: {cx: QW, cy: QH},  // ④右下: outer corner at bottom-right
+  };
+
+  const pos = {}, radii = {};
+  const PAD_LABEL = 28;  // label height reserved at top of each quadrant
+
+  Object.entries(QUAD).forEach(([areaStr, q]) => {
+    const area = Number(areaStr);
     const list = byArea[area] || [];
     if (!list.length) return;
-    const PAD_X=60, PAD_TOP=55, PAD_BOT=30;
-    const aW = q.w - 2*PAD_X;
-    const aH = q.h - PAD_TOP - PAD_BOT;
-    const n = list.length;
-    const cols = Math.max(1, Math.ceil(Math.sqrt(n * aW / Math.max(aH,1))));
-    const rows = Math.ceil(n/cols);
-    const cellW = aW/cols, cellH = aH/rows;
-    list.forEach((a, i) => {
-      const col = i%cols, row = Math.floor(i/cols);
-      bubblePositions[a.application_id] = {
-        x: q.x + PAD_X + cellW*(col+0.5),
-        y: q.y + PAD_TOP + cellH*(row+0.5),
+
+    const cc = CENTER_CORNER[area];
+    const oc = OUTER_CORNER[area];
+    const areaMaxCost = Math.max(...list.map(a => a.annual_cost_million || 0), 1);
+    const rand = seededRand(area * 7919);
+
+    // ─── STEP2: Initial positions based on cost ───
+    const nodes = list.map(app => {
+      const cost = app.annual_cost_million || 0;
+      const r = getBubbleR(cost, maxCost);
+      const costRatio = cost / areaMaxCost;
+      const t = 1 - Math.pow(costRatio, 0.45);
+
+      const bx = cc.cx + (oc.cx - cc.cx) * t;
+      const by = cc.cy + (oc.cy - cc.cy) * t;
+
+      const spreadFactor = 0.08 + (1 - costRatio) * 0.38;
+      const angle = rand() * Math.PI * 2;
+      const jitterR = (rand() * spreadFactor + 0.04) * Math.min(QW, QH);
+
+      const margin = r + 8;
+      return {
+        id: app.application_id,
+        r,
+        x:     Math.max(margin,            Math.min(QW - margin, bx + Math.cos(angle) * jitterR)),
+        y:     Math.max(margin + PAD_LABEL, Math.min(QH - margin, by + Math.sin(angle) * jitterR)),
+        homeX: Math.max(margin,            Math.min(QW - margin, bx)),
+        homeY: Math.max(margin + PAD_LABEL, Math.min(QH - margin, by)),
       };
-      bubbleRadii[a.application_id] = getBubbleRadius(a.annual_cost_million, maxCost);
+    });
+
+    // ─── STEP3: Collision resolution (force-directed) ───
+    const HOME_STRENGTH = 0.04;
+    const COLL_PAD = 3;
+
+    for (let iter = 0; iter < 120; iter++) {
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist = Math.sqrt(dx*dx + dy*dy) || 0.001;
+          const minDist = a.r + b.r + COLL_PAD;
+          if (dist < minDist) {
+            const overlap = (minDist - dist) / 2;
+            const nx = dx / dist * overlap;
+            const ny = dy / dist * overlap;
+            const wa = b.r / (a.r + b.r);
+            const wb = a.r / (a.r + b.r);
+            a.x -= nx * wa; a.y -= ny * wa;
+            b.x += nx * wb; b.y += ny * wb;
+          }
+        }
+      }
+      nodes.forEach(n => {
+        n.x += (n.homeX - n.x) * HOME_STRENGTH;
+        n.y += (n.homeY - n.y) * HOME_STRENGTH;
+        const margin = n.r + 8;
+        n.x = Math.max(margin,            Math.min(QW - margin, n.x));
+        n.y = Math.max(margin + PAD_LABEL, Math.min(QH - margin, n.y));
+      });
+    }
+
+    // ─── STEP4: Convert local quadrant coords to global SVG coords ───
+    nodes.forEach(n => {
+      pos[n.id]   = {x: q.x + n.x, y: q.y + n.y};
+      radii[n.id] = n.r;
     });
   });
 
-  // SVG 生成
-  const svg = document.getElementById('bubbleSvg');
-  svg.setAttribute('viewBox', `0 0 ${SVG_W} ${SVG_H}`);
-  svg.setAttribute('width', SVG_W);
-  svg.setAttribute('height', SVG_H);
+  // Selection-related sets
+  const related = new Set();
+  if (selectedBubbleId) {
+    dependencies.forEach(d => {
+      if (d.app_id === selectedBubbleId) related.add(d.depends_on_app_id);
+      if (d.depends_on_app_id === selectedBubbleId) related.add(d.app_id);
+    });
+  }
 
+  // Build SVG markup
   const DEP_STYLE = {
-    infra: {color:'#7C3AED', dash:'8,4',  marker:'arr-infra'},
-    auth:  {color:'#2563EB', dash:'5,3',  marker:'arr-auth'},
-    api:   {color:'#059669', dash:'4,3',  marker:'arr-api'},
-    data:  {color:'#F59E0B', dash:'8,4',  marker:'arr-data'},
+    infra:     {color:'#9C27B0', dash:'8,4',  w:1.5, op:0.6},
+    auth:      {color:'#1565C0', dash:'5,3',  w:1.5, op:0.6},
+    api:       {color:'#2E7D32', dash:'4,3',  w:1.5, op:0.6},
+    migration: {color:'#C62828', dash:'',     w:2,   op:0.8},
+    data:      {color:'#8B4513', dash:'8,4',  w:1.5, op:0.6},
   };
 
   let html = `<defs>
-    ${['infra:#7C3AED','auth:#2563EB','api:#059669','data:#F59E0B'].map(s=>{
-      const [id,c]=s.split(':');
-      return `<marker id="arr-${id}" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
-        <path d="M0,0 L0,6 L7,3 z" fill="${c}" opacity=".85"/></marker>`;
-    }).join('')}
-  </defs>`;
+    ${Object.entries(DEP_STYLE).map(([k,s])=>`<marker id="arr-${k}" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L7,3 z" fill="${s.color}"/></marker>`).join('')}
+  </defs>
+  <rect width="${W}" height="${H}" fill="#f8fafc" rx="8"/>`;
 
-  // 象限背景
-  Object.entries(BUBBLE_Q).forEach(([area, q]) => {
-    const dim = bubbleAreaFilter && bubbleAreaFilter!==area ? 0.25 : 1;
+  // Quadrant backgrounds + label boxes
+  Object.entries(QUAD).forEach(([area, q]) => {
+    const dim = bubbleAreaFilter && bubbleAreaFilter !== String(area);
+    const fop = dim ? 0.4 : 1;
+    const labelW = Math.min(q.w - 16, q.label.length * 10 + 20);
     html += `<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}"
-      fill="${q.bg}" stroke="#E5E7EB" stroke-width="1" opacity="${dim}"/>
-      <text x="${q.x+14}" y="${q.y+30}" font-size="14" font-weight="700" fill="#374151"
-      font-family="sans-serif" opacity="${dim}">${q.label}</text>`;
+      fill="${q.fill}" stroke="${q.stroke}" stroke-width="1" opacity="${fop}"/>
+      <rect x="${q.x+8}" y="${q.y+6}" width="${labelW}" height="22" rx="4"
+        fill="rgba(255,255,255,0.85)" stroke="${q.stroke}" stroke-width="0.5" opacity="${fop}"/>
+      <text x="${q.x+16}" y="${q.y+21}" font-size="12" font-weight="700"
+        fill="${q.labelColor}" font-family="sans-serif" opacity="${fop}">${q.label}</text>`;
   });
 
-  // 中心線
-  html += `<line x1="${SVG_W/2}" y1="0" x2="${SVG_W/2}" y2="${SVG_H}" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="6,4"/>
-    <line x1="0" y1="${SVG_H/2}" x2="${SVG_W}" y2="${SVG_H/2}" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="6,4"/>`;
+  // Center dividers
+  html += `<line x1="${QW}" y1="0" x2="${QW}" y2="${H}" stroke="#CBD5E0" stroke-width="1"/>
+    <line x1="0" y1="${QH}" x2="${W}" y2="${QH}" stroke="#CBD5E0" stroke-width="1"/>`;
 
-  // 依存矢印
+  // Dependency arrows (drawn before bubbles)
   dependencies.forEach(dep => {
-    const from = bubblePositions[dep.app_id];
-    const to   = bubblePositions[dep.depends_on_app_id];
+    const from = pos[dep.app_id], to = pos[dep.depends_on_app_id];
     if (!from || !to) return;
-    const r1 = bubbleRadii[dep.app_id]||24;
-    const r2 = bubbleRadii[dep.depends_on_app_id]||24;
-    const dx=to.x-from.x, dy=to.y-from.y;
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    if (dist < r1+r2+4) return;
-    const ux=dx/dist, uy=dy/dist;
-    const x1=(from.x+ux*r1).toFixed(1), y1=(from.y+uy*r1).toFixed(1);
-    const x2=(to.x-ux*(r2+6)).toFixed(1), y2=(to.y-uy*(r2+6)).toFixed(1);
+    const r1 = radii[dep.app_id] || 14, r2 = radii[dep.depends_on_app_id] || 14;
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    if (dist < r1 + r2 + 4) return;
+    const ux = dx/dist, uy = dy/dist;
+    const x1 = (from.x + ux*r1).toFixed(1), y1 = (from.y + uy*r1).toFixed(1);
+    const x2 = (to.x - ux*(r2+7)).toFixed(1), y2 = (to.y - uy*(r2+7)).toFixed(1);
     const st = DEP_STYLE[dep.dependency_type] || DEP_STYLE.api;
+    const typeKey = DEP_STYLE[dep.dependency_type] ? dep.dependency_type : 'api';
+    let op = st.op;
+    if (selectedBubbleId) {
+      op = (dep.app_id===selectedBubbleId || dep.depends_on_app_id===selectedBubbleId) ? Math.min(1, st.op*1.5) : 0.08;
+    }
+    const dashAttr = st.dash ? ` stroke-dasharray="${st.dash}"` : '';
     html += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
-      stroke="${st.color}" stroke-width="1.5" stroke-dasharray="${st.dash}"
-      opacity=".5" marker-end="url(#${st.marker})"/>`;
+      stroke="${st.color}" stroke-width="${st.w}"${dashAttr}
+      opacity="${op}" marker-end="url(#arr-${typeKey})"/>`;
   });
 
-  // バブル
+  // Bubbles
   filtered.forEach(app => {
-    const pos = bubblePositions[app.application_id];
-    if (!pos) return;
-    const r = bubbleRadii[app.application_id] || 24;
-    const color = getBubbleColor(app);
-    const name = app.application_name;
-    const short = name.length>8 ? name.slice(0,8)+'…' : name;
-    const cost = app.annual_cost_million ? `¥${app.annual_cost_million}M` : '';
-    const cx=pos.x.toFixed(1), cy=pos.y.toFixed(1);
-    html += `<g onclick="showBubbleDetail('${app.application_id}')" style="cursor:pointer;" title="${escHtml(name)}">
-      <circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${color}" stroke="white" stroke-width="2" opacity=".9"/>
-      <text x="${cx}" y="${(pos.y-(cost?8:3)).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="600"
-        fill="white" font-family="sans-serif" pointer-events="none">${escHtml(short)}</text>
-      <text x="${cx}" y="${(pos.y+6).toFixed(1)}" text-anchor="middle" font-size="9" fill="white" opacity=".85"
-        font-family="monospace" pointer-events="none">${escHtml(app.application_id)}</text>
-      ${cost?`<text x="${cx}" y="${(pos.y+17).toFixed(1)}" text-anchor="middle" font-size="8" fill="white" opacity=".75"
-        font-family="sans-serif" pointer-events="none">${cost}</text>`:''}
+    const p = pos[app.application_id];
+    if (!p) return;
+    const r = radii[app.application_id] || 14;
+    const style = getBubbleStyle(app);
+    const id = app.application_id;
+    const cx = p.x.toFixed(1), cy = p.y.toFixed(1);
+
+    let op = 1;
+    let rings = '';
+    if (selectedBubbleId) {
+      if (id === selectedBubbleId) {
+        rings = `<circle cx="${cx}" cy="${cy}" r="${(r+5).toFixed(1)}" fill="none" stroke="#1E3A8A" stroke-width="3" opacity="0.9"/>`;
+      } else if (related.has(id)) {
+        rings = `<circle cx="${cx}" cy="${cy}" r="${(r+4).toFixed(1)}" fill="none" stroke="#C62828" stroke-width="2.5" opacity="0.8"/>`;
+        op = 0.85;
+      } else {
+        op = 0.12;
+      }
+    }
+
+    let txt = '';
+    if (r > 28) {
+      const fw = Math.max(0, r*2 - 8).toFixed(0), fh = Math.max(0, r*2 - 8).toFixed(0);
+      const fx = (p.x - r + 4).toFixed(1), fy = (p.y - r + 4).toFixed(1);
+      const fs1 = Math.max(9, Math.min(12, Math.round(r * 0.28)));
+      const fs2 = Math.max(7, Math.min(10, Math.round(r * 0.22)));
+      const dname = app.application_name.length > 12 ? app.application_name.slice(0,12)+'…' : app.application_name;
+      txt = `<foreignObject x="${fx}" y="${fy}" width="${fw}" height="${fh}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;overflow:hidden;">
+          <div style="font-size:${fs1}px;font-weight:600;color:#1a1a2e;line-height:1.2;word-break:break-all;">${escHtml(dname)}</div>
+          <div style="font-size:${fs2}px;color:#666888;margin-top:2px;">${escHtml(id)}</div>
+          ${app.annual_cost_million ? `<div style="font-size:10px;color:#8B4513;margin-top:1px;font-weight:600;">¥${app.annual_cost_million}M</div>` : ''}
+        </div>
+      </foreignObject>`;
+    } else {
+      const short = app.application_name.length > 6 ? app.application_name.slice(0,6)+'…' : app.application_name;
+      txt = `<text x="${cx}" y="${(p.y+3.5).toFixed(1)}" text-anchor="middle" font-size="9"
+        font-weight="600" fill="#1a1a2e" font-family="sans-serif" pointer-events="none">${escHtml(short)}</text>`;
+    }
+
+    html += `<g onclick="selectBubble('${id}')" style="cursor:pointer;">
+      ${rings}
+      <circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="${style.fill}" stroke="${style.stroke}"
+        stroke-width="2" opacity="${op}"/>
+      <g opacity="${op}" pointer-events="none">${txt}</g>
     </g>`;
   });
 
+  const svg = document.getElementById('bubbleSvg');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.style.width = '100%';
+  svg.style.height = 'auto';
   svg.innerHTML = html;
+}
+
+function selectBubble(appId) {
+  selectedBubbleId = selectedBubbleId === appId ? null : appId;
+  if (selectedBubbleId) {
+    showBubbleDetail(selectedBubbleId);
+  } else {
+    document.getElementById('bubbleDetailPanel').style.display = 'none';
+  }
+  renderBubbleChart();
 }
 
 function showBubbleDetail(appId) {
   if (!bubbleData) return;
-  const app = bubbleData.apps.find(a => a.application_id===appId);
+  const app = bubbleData.apps.find(a => a.application_id === appId);
   if (!app) return;
   const panel = document.getElementById('bubbleDetailPanel');
   panel.style.display = 'block';
@@ -2265,18 +2433,16 @@ function showBubbleDetail(appId) {
 
   const depsOn = bubbleData.dependencies.filter(d => d.app_id===appId);
   const depsBy = bubbleData.dependencies.filter(d => d.depends_on_app_id===appId);
+  const depTypeLabel = {infra:'インフラ',auth:'認証連携',api:'API連携',data:'データ連携',migration:'移行先'};
 
-  const depTypeLabel = {infra:'インフラ',auth:'認証連携',api:'API連携',data:'データ連携'};
-  const depColor = {infra:'#7C3AED',auth:'#2563EB',api:'#059669',data:'#F59E0B'};
-
-  const fmtDeps = (list, keyId, keyName) => list.map(d => {
+  const fmtDeps = (list, keyId) => list.map(d => {
     const target = bubbleData.apps.find(a => a.application_id===d[keyId]);
     const n = target ? target.application_name : d[keyId];
-    const tc = depColor[d.dependency_type]||'#9CA3AF';
+    const tc = DEP_COLORS[d.dependency_type] || '#9CA3AF';
     return `<div style="padding:5px 0;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:6px;">
-      <span style="width:6px;height:6px;border-radius:50%;background:${tc};display:inline-block;flex-shrink:0;"></span>
+      <span style="width:7px;height:7px;border-radius:50%;background:${tc};flex-shrink:0;display:inline-block;"></span>
       <span style="font-size:11px;color:var(--gray-700);">${escHtml(n)}</span>
-      <span style="font-size:10px;color:var(--gray-400);margin-left:auto;">${depTypeLabel[d.dependency_type]||d.dependency_type}</span>
+      <span style="font-size:10px;color:var(--gray-400);margin-left:auto;">${depTypeLabel[d.dependency_type]||d.dependency_type||''}</span>
     </div>`;
   }).join('');
 
@@ -2286,7 +2452,7 @@ function showBubbleDetail(appId) {
         <div style="font-size:14px;font-weight:700;color:var(--gray-900);margin-bottom:2px;">${escHtml(app.application_name)}</div>
         <span class="sys-id">${escHtml(appId)}</span>
       </div>
-      <button onclick="document.getElementById('bubbleDetailPanel').style.display='none'"
+      <button onclick="selectBubble('${appId}')"
         style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--gray-400);line-height:1;">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
@@ -2295,10 +2461,10 @@ function showBubbleDetail(appId) {
       <div class="detail-field"><label>年間コスト</label><span style="font-weight:700;color:var(--accent);">${app.annual_cost_million?`¥${app.annual_cost_million}M`:'-'}</span></div>
       <div class="detail-field"><label>ステータス</label><span class="badge ${statusMap[app.status]?.cls||'badge-plan'}" style="font-size:10px;">${statusMap[app.status]?.label||app.status}</span></div>
     </div>
-    ${migApp?`<div class="detail-field" style="margin-bottom:10px;"><label>移行先</label><span style="font-size:11px;color:var(--red);">→ ${escHtml(migApp)}</span></div>`:''}
+    ${migApp?`<div class="detail-field" style="margin-bottom:10px;"><label>移行先</label><span style="font-size:11px;color:#e74c3c;">→ ${escHtml(migApp)}</span></div>`:''}
     <div class="detail-field" style="margin-bottom:10px;"><label>カテゴリ</label><span style="font-size:10px;">${escHtml(app.app_category||'-')}</span></div>
-    ${depsOn.length?`<div style="margin-bottom:10px;"><div class="ed-field-label" style="margin-bottom:4px;">依存先（このシステムが利用）</div>${fmtDeps(depsOn,'depends_on_app_id','depends_on_app_id')}</div>`:''}
-    ${depsBy.length?`<div><div class="ed-field-label" style="margin-bottom:4px;">被依存（利用されるシステム）</div>${fmtDeps(depsBy,'app_id','app_id')}</div>`:''}
+    ${depsOn.length?`<div style="margin-bottom:10px;"><div class="ed-field-label" style="margin-bottom:4px;">依存先（このシステムが利用）</div>${fmtDeps(depsOn,'depends_on_app_id')}</div>`:''}
+    ${depsBy.length?`<div><div class="ed-field-label" style="margin-bottom:4px;">被依存（利用されるシステム）</div>${fmtDeps(depsBy,'app_id')}</div>`:''}
   `;
 }
 </script>
