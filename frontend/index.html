@@ -184,6 +184,13 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .panel-form .form-control{padding:7px 10px;font-size:12px;}
 .panel-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .panel-save-bar{padding:16px 24px;border-top:1px solid var(--gray-200);background:var(--white);position:sticky;bottom:0;display:flex;gap:8px;justify-content:flex-end;}
+.pagination-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-size:12px;color:var(--gray-600);border-top:1px solid var(--gray-200);}
+.pagination-bar .pg-info{display:flex;align-items:center;gap:12px;}
+.pagination-bar .pg-nav{display:flex;align-items:center;gap:6px;}
+.pagination-bar .pg-nav button{padding:4px 10px;border:1px solid var(--gray-300);border-radius:4px;background:var(--white);font-size:12px;cursor:pointer;color:var(--gray-700);}
+.pagination-bar .pg-nav button:hover:not(:disabled){background:var(--gray-100);}
+.pagination-bar .pg-nav button:disabled{opacity:.4;cursor:default;}
+.pagination-bar .pg-label{font-weight:600;color:var(--gray-800);}
 </style>
 </head>
 <body>
@@ -213,13 +220,13 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
     <div class="sidebar-section">
       <div class="sidebar-title">ITアセット管理</div>
       <div class="sidebar-item active" id="sb-apps" onclick="showSidebarView('apps',this)">
-        <span class="sidebar-icon">📦</span> ビジネスアプリ
+        <span class="sidebar-icon">🖥️</span> システム（アプリ）
       </div>
       <div class="sidebar-item" id="sb-envs" onclick="showSidebarView('envs',this)">
         <span class="sidebar-icon">🖥️</span> システム環境
       </div>
       <div class="sidebar-item" id="sb-ci" onclick="showSidebarView('ci',this)">
-        <span class="sidebar-icon">🗂️</span> 構成情報（CI）
+        <span class="sidebar-icon">🔧</span> 構成情報（CI）
       </div>
     </div>
     <div class="sidebar-section">
@@ -267,13 +274,13 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <div class="table-header">
           <div class="table-header-title">ビジネスアプリケーション一覧</div>
           <div class="table-search-wrap">
-            <div class="table-search">🔍 <input id="searchApp" placeholder="検索…" oninput="renderAppTable()"></div>
+            <div class="table-search">🔍 <input id="searchApp" placeholder="検索…" oninput="appPage=1;renderAppTable()"></div>
             <a class="csv-btn" onclick="exportCSV()">⬇️ CSV出力</a>
             <button class="btn btn-primary btn-sm" onclick="openCatalogModal('register')">＋ 新規登録申請</button>
           </div>
         </div>
         <div class="filter-bar" style="padding:10px 16px 0;">
-          <select class="filter-select" id="filterStatus" onchange="renderAppTable()">
+          <select class="filter-select" id="filterStatus" onchange="appPage=1;renderAppTable()">
             <option value="">すべてのステータス</option>
             <option value="running">本番稼働中</option>
             <option value="dev">開発中</option>
@@ -281,7 +288,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <option value="order">発注中</option>
             <option value="retire">廃止</option>
           </select>
-          <select class="filter-select" id="filterDept" onchange="renderAppTable()">
+          <select class="filter-select" id="filterDept" onchange="appPage=1;renderAppTable()">
             <option value="">すべての部門</option>
           </select>
         </div>
@@ -294,13 +301,14 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <tbody id="appTableBody"></tbody>
         </table>
         </div>
+        <div id="appPagination" class="pagination-bar" style="display:none;"></div>
       </div>
 
       <div id="view-envs" class="table-card" style="display:none;">
         <div class="table-header">
           <div class="table-header-title">システム環境一覧</div>
           <div class="table-search-wrap">
-            <div class="table-search">🔍 <input id="searchEnv" placeholder="検索…" oninput="renderEnvTable()"></div>
+            <div class="table-search">🔍 <input id="searchEnv" placeholder="検索…" oninput="envPage=1;renderEnvTable()"></div>
             <button class="btn btn-primary btn-sm" onclick="openEnvModal()">＋ 環境追加</button>
           </div>
         </div>
@@ -313,6 +321,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <tbody id="envTableBody"></tbody>
         </table>
         </div>
+        <div id="envPagination" class="pagination-bar" style="display:none;"></div>
       </div>
 
       <div id="view-ci" class="table-card" style="display:none;">
@@ -329,7 +338,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <select class="filter-select" id="ciFilterEnv" onchange="loadAndRenderCi()">
             <option value="">すべての環境</option>
           </select>
-          <select class="filter-select" id="ciFilterType" onchange="renderCiTable()">
+          <select class="filter-select" id="ciFilterType" onchange="ciPage=1;renderCiTable()">
             <option value="">すべての種別</option>
             <option value="Server">Server</option>
             <option value="DB">DB</option>
@@ -338,7 +347,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <option value="Storage">Storage</option>
             <option value="Other">Other</option>
           </select>
-          <select class="filter-select" id="ciFilterStatus" onchange="renderCiTable()">
+          <select class="filter-select" id="ciFilterStatus" onchange="ciPage=1;renderCiTable()">
             <option value="">すべてのステータス</option>
             <option value="active">active</option>
             <option value="stopped">stopped</option>
@@ -353,6 +362,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <tbody id="ciTableBody"></tbody>
         </table>
         </div>
+        <div id="ciPagination" class="pagination-bar" style="display:none;"></div>
       </div>
     </div>
 
@@ -885,6 +895,7 @@ function highlightSidebar(id) {
 }
 
 // ========== アプリ一覧 ==========
+function setAppPage(p) { appPage = p; renderAppTable(); }
 function renderAppTable() {
   const q  = (document.getElementById('searchApp').value || '').toLowerCase();
   const st = document.getElementById('filterStatus').value;
@@ -895,12 +906,17 @@ function renderAppTable() {
     const matchDp = !dp || a.dept === dp;
     return matchQ && matchSt && matchDp;
   });
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (appPage > totalPages && totalPages > 0) appPage = totalPages;
+  const paged = filtered.slice((appPage - 1) * PAGE_SIZE, appPage * PAGE_SIZE);
   const tbody = document.getElementById('appTableBody');
-  if (!filtered.length) {
+  if (!paged.length) {
     tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">🔍</div>条件に一致するアプリがありません</div></td></tr>`;
+    document.getElementById('appPagination').style.display = 'none';
     return;
   }
-  tbody.innerHTML = filtered.map(app => {
+  tbody.innerHTML = paged.map(app => {
     const st2   = statusMap[app.status];
     const chips = (app.envTypes || []).slice(0, 3)
       .map(t => `<span class="env-chip ${envTypeClass[t]||'env-dev'}">${t.replace('環境','')}</span>`)
@@ -921,21 +937,28 @@ function renderAppTable() {
     </tr>`;
   }).join('');
   makeResizable(document.getElementById('appTable'));
+  renderPagination('appPagination', appPage, total, 'setAppPage');
 }
 
 // ========== 環境一覧 ==========
+function setEnvPage(p) { envPage = p; renderEnvTable(); }
 function renderEnvTable() {
   const q = (document.getElementById('searchEnv').value || '').toLowerCase();
   const filtered = envs.filter(e => {
     return !q || e.appId.toLowerCase().includes(q) || e.appName.toLowerCase().includes(q)
       || e.ip.toLowerCase().includes(q) || e.type.toLowerCase().includes(q);
   });
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (envPage > totalPages && totalPages > 0) envPage = totalPages;
+  const paged = filtered.slice((envPage - 1) * PAGE_SIZE, envPage * PAGE_SIZE);
   const tbody = document.getElementById('envTableBody');
-  if (!filtered.length) {
+  if (!paged.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🖥️</div>環境情報がありません</div></td></tr>`;
+    document.getElementById('envPagination').style.display = 'none';
     return;
   }
-  tbody.innerHTML = filtered.map(e => `<tr class="clickable" onclick="openEnvDetail(${e.envId})">
+  tbody.innerHTML = paged.map(e => `<tr class="clickable" onclick="openEnvDetail(${e.envId})">
     <td><span class="sys-id">${e.appId}</span> ${escHtml(e.appName)}</td>
     <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
     <td>${escHtml(e.loc)}</td>
@@ -946,6 +969,7 @@ function renderEnvTable() {
         onclick="event.stopPropagation();deleteEnv(${e.envId})">削除</button></td>
   </tr>`).join('');
   makeResizable(document.getElementById('envTable'));
+  renderPagination('envPagination', envPage, total, 'setEnvPage');
 }
 async function updateEnvField(envId, field, val) {
   try {
@@ -1103,16 +1127,22 @@ function openEnvDetail(envId) {
   document.getElementById('envDetailTitle').textContent    = e.type;
   document.getElementById('envDetailSubtitle').textContent = e.appId + ' / ' + e.appName;
 
+  const appOpts = apps.map(a =>
+    `<option value="${escHtml(a.id)}" ${a.id===e.appId?'selected':''}>${escHtml(a.id)} / ${escHtml(a.name)}</option>`
+  ).join('');
   const locOpts = ['東京DC','大阪DC','AWS ap-northeast-1','Azure Japan East','GCP asia-northeast1','オンプレミス','その他'].map(l =>
     `<option ${l===e.loc?'selected':''}>${l}</option>`
   ).join('');
   const typeOpts = ['本番環境','ステージング環境','開発環境','テスト環境'].map(t =>
     `<option ${t===e.type?'selected':''}>${t}</option>`
   ).join('');
+  const v = s => escHtml(s === '-' ? '' : s);
 
   document.getElementById('envDetailBody').innerHTML = `
     <div class="detail-section">
       <div class="detail-section-title">環境情報</div>
+      <div class="form-group"><label class="ed-field-label">対象アプリケーション</label>
+        <select class="form-control" id="envEd_app">${appOpts}</select></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="ed-field-label">環境種別</label>
           <select class="form-control" id="envEd_type">${typeOpts}</select></div>
@@ -1121,25 +1151,25 @@ function openEnvDetail(envId) {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="ed-field-label">IPアドレス</label>
-          <input class="form-control" id="envEd_ip" value="${escHtml(e.ip==='-'?'':e.ip)}" style="font-family:'JetBrains Mono',monospace;"></div>
+          <input class="form-control" id="envEd_ip" value="${v(e.ip)}" style="font-family:'JetBrains Mono',monospace;"></div>
         <div class="form-group"><label class="ed-field-label">FQDNホスト名</label>
-          <input class="form-control" id="envEd_host" value="${escHtml(e.host==='-'?'':e.host)}" style="font-family:'JetBrains Mono',monospace;"></div>
+          <input class="form-control" id="envEd_host" value="${v(e.host)}" style="font-family:'JetBrains Mono',monospace;"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="form-group"><label class="ed-field-label">OSバージョン</label>
-          <input class="form-control" id="envEd_os" value="${escHtml(e.os==='-'?'':e.os)}"></div>
+        <div class="form-group"><label class="ed-field-label">OS</label>
+          <input class="form-control" id="envEd_os" value="${v(e.os)}"></div>
         <div class="form-group"><label class="ed-field-label">ミドルウェア</label>
-          <input class="form-control" id="envEd_mw" value="${escHtml(e.mw==='-'?'':e.mw)}"></div>
+          <input class="form-control" id="envEd_mw" value="${v(e.mw)}"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group"><label class="ed-field-label">CPU / メモリ</label>
-          <input class="form-control" id="envEd_cpu" value="${escHtml(e.cpu==='-'?'':e.cpu)}"></div>
+          <input class="form-control" id="envEd_cpu" value="${v(e.cpu)}"></div>
         <div class="form-group"><label class="ed-field-label">ストレージ</label>
-          <input class="form-control" id="envEd_storage" value="${escHtml(e.storage==='-'?'':e.storage)}"></div>
+          <input class="form-control" id="envEd_storage" value="${v(e.storage)}"></div>
       </div>
     </div>
     <div class="detail-section">
-      <button class="btn btn-danger btn-sm" onclick="if(confirm('この環境を削除しますか？'))deleteEnv(${envId}).then(()=>closeEnvDetail())">🗑️ 環境削除</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteEnvFromPanel(${envId})">🗑️ 環境削除</button>
     </div>
   `;
   document.getElementById('envDetailOverlay').classList.add('open');
@@ -1150,14 +1180,15 @@ function closeEnvDetail() { document.getElementById('envDetailOverlay').classLis
 async function saveEnvEdit() {
   const envId = parseInt(document.getElementById('envDetailOverlay').dataset.envId);
   const payload = {
-    env_type:   document.getElementById('envEd_type').value,
-    location:   document.getElementById('envEd_loc').value,
-    ip:         document.getElementById('envEd_ip').value || null,
-    host:       document.getElementById('envEd_host').value || null,
-    os:         document.getElementById('envEd_os').value || null,
-    middleware: document.getElementById('envEd_mw').value || null,
-    cpu_mem:    document.getElementById('envEd_cpu').value || null,
-    storage:    document.getElementById('envEd_storage').value || null,
+    application_id: document.getElementById('envEd_app').value || null,
+    env_type:       document.getElementById('envEd_type').value,
+    location:       document.getElementById('envEd_loc').value,
+    ip:             document.getElementById('envEd_ip').value || null,
+    host:           document.getElementById('envEd_host').value || null,
+    os:             document.getElementById('envEd_os').value || null,
+    middleware:     document.getElementById('envEd_mw').value || null,
+    cpu_mem:        document.getElementById('envEd_cpu').value || null,
+    storage:        document.getElementById('envEd_storage').value || null,
   };
   try {
     await apiFetch(`/api/environments/${envId}`, {method:'PUT', body:payload});
@@ -1171,6 +1202,20 @@ async function saveEnvEdit() {
     showToast('環境情報を保存しました', 'success');
   } catch(e) {
     showToast('保存に失敗しました', 'error');
+  }
+}
+
+async function deleteEnvFromPanel(envId) {
+  if (!confirm('この環境情報を削除してもよいですか？')) return;
+  try {
+    await apiFetch(`/api/environments/${envId}`, {method:'DELETE'});
+    closeEnvDetail();
+    await loadEnvs();
+    renderEnvTable();
+    await loadStats();
+    showToast('環境情報を削除しました', 'success');
+  } catch(e) {
+    showToast('削除に失敗しました', 'error');
   }
 }
 
@@ -1550,6 +1595,24 @@ const ciStatusLabel = {active:'稼働中', stopped:'停止中', retired:'廃止�
 let ciList = [];
 let ciEditingId = null;
 
+const PAGE_SIZE = 10;
+let appPage = 1, envPage = 1, ciPage = 1;
+
+function renderPagination(containerId, page, total, setPageFn) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (totalPages <= 1) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <span class="pg-info"><span>全 <strong>${total}</strong> 件</span></span>
+    <span class="pg-nav">
+      <button onclick="${setPageFn}(${page - 1})" ${page <= 1 ? 'disabled' : ''}>← 前へ</button>
+      <span class="pg-label">${page} / ${totalPages} ページ</span>
+      <button onclick="${setPageFn}(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>次へ →</button>
+    </span>`;
+}
+
 function initCiView() {
   const appSel = document.getElementById('ciFilterApp');
   appSel.innerHTML = '<option value="">すべてのアプリ</option>' +
@@ -1559,6 +1622,7 @@ function initCiView() {
 }
 
 function onCiAppChange() {
+  ciPage = 1;
   const appId = document.getElementById('ciFilterApp').value;
   const envSel = document.getElementById('ciFilterEnv');
   const filtered = appId ? envs.filter(e => e.appId === appId) : envs;
@@ -1568,6 +1632,7 @@ function onCiAppChange() {
 }
 
 async function loadAndRenderCi() {
+  ciPage = 1;
   const envId = document.getElementById('ciFilterEnv').value;
   const url = envId ? `/api/ci?environment_id=${envId}` : '/api/ci';
   const data = await apiFetch(url);
@@ -1576,6 +1641,7 @@ async function loadAndRenderCi() {
   renderCiTable();
 }
 
+function setCiPage(p) { ciPage = p; renderCiTable(); }
 function renderCiTable() {
   const typeF   = document.getElementById('ciFilterType').value;
   const statusF = document.getElementById('ciFilterStatus').value;
@@ -1583,12 +1649,17 @@ function renderCiTable() {
     (!typeF   || c.ci_type === typeF) &&
     (!statusF || c.status  === statusF)
   );
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  if (ciPage > totalPages && totalPages > 0) ciPage = totalPages;
+  const paged = filtered.slice((ciPage - 1) * PAGE_SIZE, ciPage * PAGE_SIZE);
   const tbody = document.getElementById('ciTableBody');
-  if (!filtered.length) {
+  if (!paged.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state-icon">🗂️</div>CIが登録されていません</div></td></tr>`;
+    document.getElementById('ciPagination').style.display = 'none';
     return;
   }
-  tbody.innerHTML = filtered.map(c => {
+  tbody.innerHTML = paged.map(c => {
     const typeColor = ciTypeColor[c.ci_type] || '#6B7280';
     const stCls = ciStatusColor[c.status] || 'badge-plan';
     return `<tr class="clickable" onclick="openCiDetail(${c.ci_id})">
@@ -1603,6 +1674,7 @@ function renderCiTable() {
     </tr>`;
   }).join('');
   makeResizable(document.getElementById('ciTable'));
+  renderPagination('ciPagination', ciPage, total, 'setCiPage');
 }
 
 async function openCiDetail(ciId) {

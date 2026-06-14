@@ -13,6 +13,7 @@ class EnvironmentCreate(BaseModel):
     storage: Optional[str] = None
 
 class EnvironmentUpdate(BaseModel):
+    application_id: Optional[str] = None
     env_type: Optional[str] = None
     location: Optional[str] = None
     ip: Optional[str] = None
