@@ -21,8 +21,11 @@ def _run_seed():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, _run_seed)
+    try:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _run_seed)
+    except Exception as e:
+        print(f"[WARNING] Seed failed (non-fatal): {e}")
     yield
 
 
