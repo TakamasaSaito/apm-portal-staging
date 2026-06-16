@@ -79,7 +79,10 @@ async def list_requests(
     for row in rows:
         if row["application_id"]:
             async with db.execute(
-                "SELECT * FROM environment WHERE application_id = ? ORDER BY environment_id",
+                """SELECT e.* FROM environment e
+                   JOIN cmdb_rel_ci r ON r.child_id = CAST(e.environment_id AS TEXT)
+                       AND r.child_table = 'environment' AND r.parent_table = 'application'
+                   WHERE r.parent_id = ? ORDER BY e.environment_id""",
                 [row["application_id"]],
             ) as cur:
                 row["app_envs"] = [dict(e) for e in await cur.fetchall()]
