@@ -38,7 +38,10 @@ async def list_applications(
 
     for app in apps:
         async with db.execute(
-            "SELECT env_type FROM environment WHERE application_id = ?",
+            """SELECT e.env_type FROM environment e
+               JOIN cmdb_rel_ci r ON r.child_id = CAST(e.environment_id AS TEXT)
+                   AND r.child_table = 'environment' AND r.parent_table = 'application'
+               WHERE r.parent_id = ?""",
             [app["application_id"]],
         ) as cur:
             app["env_types"] = [row["env_type"] for row in await cur.fetchall()]
@@ -68,7 +71,10 @@ async def get_application(
     app = dict(row)
 
     async with db.execute(
-        "SELECT * FROM environment WHERE application_id = ? ORDER BY environment_id",
+        """SELECT e.* FROM environment e
+           JOIN cmdb_rel_ci r ON r.child_id = CAST(e.environment_id AS TEXT)
+               AND r.child_table = 'environment' AND r.parent_table = 'application'
+           WHERE r.parent_id = ? ORDER BY e.environment_id""",
         [app_id],
     ) as cur:
         app["environments"] = [dict(r) for r in await cur.fetchall()]
@@ -132,6 +138,86 @@ async def update_application(
         )
         await db.commit()
     return {"status": "updated"}
+
+
+@router.get("/applications/{app_id}/overview")
+async def get_application_overview(
+    app_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute(
+        "SELECT a.*, d.department_name FROM application a LEFT JOIN department d ON a.owner_department_id = d.department_id WHERE a.application_id = ?",
+        [app_id],
+    ) as cur:
+        row = await cur.fetchone()
+    if not row:
+        raise HTTPException(404, "Application not found")
+    application = dict(row)
+
+    if application.get("migration_target_id"):
+        async with db.execute(
+            "SELECT application_name FROM application WHERE application_id = ?",
+            [application["migration_target_id"]],
+        ) as cur:
+            mt = await cur.fetchone()
+        application["migration_target_name"] = mt["application_name"] if mt else None
+    else:
+        application["migration_target_name"] = None
+
+    async with db.execute(
+        """SELECT d.depends_on_app_id, a.application_name AS depends_on_name, d.dependency_type
+           FROM application_dependency d
+           JOIN application a ON a.application_id = d.depends_on_app_id
+           WHERE d.app_id = ?""",
+        [app_id],
+    ) as cur:
+        dependencies = [dict(r) for r in await cur.fetchall()]
+
+    async with db.execute(
+        """SELECT d.app_id, a.application_name, d.dependency_type
+           FROM application_dependency d
+           JOIN application a ON a.application_id = d.app_id
+           WHERE d.depends_on_app_id = ?""",
+        [app_id],
+    ) as cur:
+        dependents = [dict(r) for r in await cur.fetchall()]
+
+    async with db.execute(
+        """SELECT e.* FROM environment e
+           JOIN cmdb_rel_ci r ON r.child_id = CAST(e.environment_id AS TEXT)
+               AND r.child_table = 'environment' AND r.parent_table = 'application'
+           WHERE r.parent_id = ? ORDER BY e.environment_id""",
+        [app_id],
+    ) as cur:
+        environments = [dict(r) for r in await cur.fetchall()]
+
+    for env in environments:
+        async with db.execute(
+            """SELECT c.* FROM configuration_item c
+               JOIN cmdb_rel_ci r ON r.child_id = CAST(c.ci_id AS TEXT)
+                   AND r.child_table = 'configuration_item' AND r.parent_table = 'environment'
+               WHERE r.parent_id = ? ORDER BY c.ci_id""",
+            [str(env["environment_id"])],
+        ) as cur:
+            env["configuration_items"] = [dict(r) for r in await cur.fetchall()]
+
+    async with db.execute(
+        """SELECT d.demand_id, d.title, d.stage, d.priority
+           FROM demand d
+           JOIN demand_application da ON da.demand_id = d.demand_id
+           WHERE da.application_id = ? ORDER BY d.created_at DESC""",
+        [app_id],
+    ) as cur:
+        demands = [dict(r) for r in await cur.fetchall()]
+
+    return {
+        "application": application,
+        "dependencies": dependencies,
+        "dependents": dependents,
+        "environments": environments,
+        "demands": demands,
+    }
 
 
 @router.get("/stats")

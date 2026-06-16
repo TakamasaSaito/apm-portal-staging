@@ -251,3 +251,17 @@ class CostPlanUpdate(BaseModel):
     planned_cost: Optional[int] = None
     actual_cost: Optional[int] = None
     note: Optional[str] = None
+
+
+class CmdbRelCreate(BaseModel):
+    parent_table: str
+    parent_id: str
+    child_table: str
+    child_id: str
+    relation_type_id: Optional[int] = None
+    note: Optional[str] = None
+
+
+class CmdbRelUpdate(BaseModel):
+    note: Optional[str] = None
+    relation_type_id: Optional[int] = None

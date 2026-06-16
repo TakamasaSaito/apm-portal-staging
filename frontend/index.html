@@ -280,6 +280,21 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .complete-icon{font-size:64px;margin-bottom:16px;}
 .complete-title{font-size:24px;font-weight:700;color:var(--navy);margin-bottom:8px;}
 .complete-sub{font-size:14px;color:var(--gray-500);margin-bottom:24px;}
+/* panel tabs (app detail) */
+.panel-tab-bar{display:flex;border-bottom:1px solid var(--gray-200);position:sticky;top:0;background:#fff;z-index:5;padding:0 16px;}
+.panel-tab{padding:10px 18px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.panel-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+/* overview cards */
+.ov-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:16px;margin-bottom:14px;}
+.ov-card-title{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--gray-100);}
+.ov-env-row{padding:8px 0;border-bottom:1px solid var(--gray-100);}
+.ov-env-row:last-child{border-bottom:none;}
+.ov-ci-row{font-size:11px;color:var(--gray-600);padding:3px 0 3px 16px;border-left:2px solid var(--gray-200);margin-left:8px;margin-bottom:2px;}
+/* cmdb rel table type badge */
+.tbl-badge{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:600;}
+.tbl-badge-app{background:#EFF6FF;color:#3B82F6;}
+.tbl-badge-env{background:#ECFDF5;color:#10B981;}
+.tbl-badge-ci{background:#FEF3C7;color:#D97706;}
 </style>
 </head>
 <body>
@@ -321,6 +336,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
       <div class="sidebar-item" id="sb-ci" onclick="showSidebarView('ci',this)">
         <span class="sidebar-icon">🔧</span> 構成情報（CI）
+      </div>
+      <div class="sidebar-item" id="sb-ci-relations" onclick="showSidebarView('ci-relations',this)">
+        <span class="sidebar-icon">🔗</span> CIリレーション一覧
       </div>
     </div>
     <div class="sidebar-section">
@@ -535,6 +553,36 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         </table>
         </div>
         <div id="ciPagination" class="pagination-bar" style="display:none;"></div>
+      </div>
+
+      <!-- CIリレーション一覧 -->
+      <div id="view-ci-relations" class="table-card" style="display:none;">
+        <div class="table-header">
+          <div class="table-header-title">🔗 CIリレーション一覧</div>
+          <div class="table-search-wrap" style="gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="loadCiRelations()">🔄 再読込</button>
+            <button id="btnAddCmdbRel" class="btn btn-primary btn-sm" onclick="openCmdbRelModal(null)" style="display:none;">＋ リレーション追加</button>
+          </div>
+        </div>
+        <div style="padding:6px 16px 0;font-size:11px;color:var(--gray-400);">
+          cmdb_rel_ci テーブルの全リレーションを表示します。事務局ロールのみ追加・編集・削除が可能です。
+        </div>
+        <div class="table-scroll-wrap" style="margin-top:8px;">
+          <table id="cmdbRelTable">
+            <thead><tr>
+              <th style="min-width:70px">ID</th>
+              <th style="min-width:80px">親種別</th>
+              <th style="min-width:180px">親名</th>
+              <th style="min-width:30px;text-align:center;">→</th>
+              <th style="min-width:80px">子種別</th>
+              <th style="min-width:180px">子名</th>
+              <th style="min-width:130px">リレーション種別</th>
+              <th style="min-width:140px">備考</th>
+              <th style="min-width:90px">操作</th>
+            </tr></thead>
+            <tbody id="cmdbRelTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -924,10 +972,10 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <button class="close-btn" onclick="closeDetailPanel()">✕</button>
       </div>
     </div>
-    <div class="detail-body" id="detailBody" style="padding-bottom:0;"></div>
-    <div class="panel-save-bar">
+    <div class="detail-body" id="detailBody" style="padding-bottom:0;overflow-y:auto;flex:1;"></div>
+    <div class="panel-save-bar" id="detailSaveBar">
       <button class="btn btn-secondary" onclick="closeDetailPanel()">閉じる</button>
-      <button class="btn btn-primary" onclick="saveAppEdit(document.getElementById('detailId').textContent.split(' ')[0])">💾 保存する</button>
+      <button class="btn btn-primary" id="detailSaveBtn" onclick="saveAppEdit(document.getElementById('detailId').textContent.split(' ')[0])">💾 保存する</button>
     </div>
   </div>
 </div>
@@ -984,6 +1032,59 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeEnvModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="submitEnv()">即時反映する</button>
+    </div>
+  </div>
+</div>
+
+<!-- CIリレーション 追加・編集モーダル -->
+<div class="modal-overlay" id="cmdbRelModal" onclick="if(event.target===this)closeCmdbRelModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="cmdbRelModalTitle">CIリレーション追加</div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeCmdbRelModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cmdbRelEditId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>親テーブル</label>
+          <select class="form-control" id="crmParentTable">
+            <option value="application">application（アプリ）</option>
+            <option value="environment">environment（環境）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>親ID<span class="required">*</span></label>
+          <input class="form-control" id="crmParentId" placeholder="例: APM-001 または 1">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>子テーブル</label>
+          <select class="form-control" id="crmChildTable">
+            <option value="environment">environment（環境）</option>
+            <option value="configuration_item">configuration_item（CI）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>子ID<span class="required">*</span></label>
+          <input class="form-control" id="crmChildId" placeholder="例: 1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>リレーション種別</label>
+        <select class="form-control" id="crmRelTypeId">
+          <option value="">-- 選択なし --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>備考</label>
+        <input class="form-control" id="crmNote" placeholder="備考（任意）">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeCmdbRelModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveCmdbRel()">保存</button>
     </div>
   </div>
 </div>
@@ -1414,14 +1515,16 @@ function showSidebarView(view, el) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   if (el) el.classList.add('active');
   const isDash = view === 'dashboard';
-  document.getElementById('view-dashboard').style.display = isDash ? 'block' : 'none';
-  document.getElementById('pageHomeStats').style.display  = isDash ? 'none' : 'grid';
-  document.getElementById('view-apps').style.display = view === 'apps' ? 'block' : 'none';
-  document.getElementById('view-envs').style.display = view === 'envs' ? 'block' : 'none';
-  document.getElementById('view-ci').style.display   = view === 'ci'   ? 'block' : 'none';
-  if (view === 'envs')      renderEnvTable();
-  if (view === 'ci')        initCiView();
-  if (isDash && bubbleData) renderBubbleChart();
+  document.getElementById('view-dashboard').style.display    = isDash ? 'block' : 'none';
+  document.getElementById('pageHomeStats').style.display     = isDash ? 'none' : 'grid';
+  document.getElementById('view-apps').style.display         = view === 'apps'         ? 'block' : 'none';
+  document.getElementById('view-envs').style.display         = view === 'envs'         ? 'block' : 'none';
+  document.getElementById('view-ci').style.display           = view === 'ci'           ? 'block' : 'none';
+  document.getElementById('view-ci-relations').style.display = view === 'ci-relations' ? 'block' : 'none';
+  if (view === 'envs')          renderEnvTable();
+  if (view === 'ci')            initCiView();
+  if (view === 'ci-relations')  loadCiRelations();
+  if (isDash && bubbleData)     renderBubbleChart();
 }
 function highlightSidebar(id) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
@@ -1528,12 +1631,33 @@ async function deleteEnv(envId) {
 }
 
 // ========== アプリ詳細・編集パネル ==========
+let detailOpenAppId = null;
+let detailOverviewLoaded = false;
+
+function switchAppDetailTab(idx) {
+  [0, 1].forEach(i => {
+    document.getElementById('dtab-' + i)?.classList.toggle('active', i === idx);
+    const p = document.getElementById('dtpane-' + i);
+    if (p) p.style.display = i === idx ? 'block' : 'none';
+  });
+  const sb = document.getElementById('detailSaveBar');
+  if (sb) sb.style.display = idx === 0 ? 'flex' : 'none';
+  if (idx === 1 && !detailOverviewLoaded) {
+    detailOverviewLoaded = true;
+    loadAppOverview(detailOpenAppId);
+  }
+}
+
 function openDetail(id) {
+  detailOpenAppId = id;
+  detailOverviewLoaded = false;
   const app = apps.find(a => a.id === id);
   if (!app) return;
   const appEnvs = envs.filter(e => e.appId === id);
   document.getElementById('detailTitle').textContent = app.name;
   document.getElementById('detailId').textContent    = app.id + ' | ' + app.dept;
+  const saveBar = document.getElementById('detailSaveBar');
+  if (saveBar) saveBar.style.display = 'flex';
 
   const deptOpts = depts.map(d =>
     `<option value="${escHtml(d.department_name)}" ${d.department_name===app.dept?'selected':''}>${escHtml(d.department_name)}</option>`
@@ -1544,6 +1668,11 @@ function openDetail(id) {
   const toVal = v => (v === '-' ? '' : v);
 
   document.getElementById('detailBody').innerHTML = `
+    <div class="panel-tab-bar">
+      <button class="panel-tab active" id="dtab-0" onclick="switchAppDetailTab(0)">📝 編集</button>
+      <button class="panel-tab" id="dtab-1" onclick="switchAppDetailTab(1)">🔍 全体像</button>
+    </div>
+    <div id="dtpane-0" style="display:block;">
     <div class="panel-form" style="padding:0;">
       <div class="detail-section">
         <div class="detail-section-title">基本情報</div>
@@ -1618,8 +1747,261 @@ function openDetail(id) {
         </div>
       </div>
     </div>
+    </div>
+    <div id="dtpane-1" style="display:none;padding:16px;">
+      <div style="color:var(--gray-400);text-align:center;padding:40px 0;font-size:13px;">「全体像」タブを選択して読み込みます</div>
+    </div>
   `;
   document.getElementById('detailOverlay').classList.add('open');
+}
+
+// ─── アプリ全体像タブ ─────────────────────────────────────────────
+async function loadAppOverview(appId) {
+  const pane = document.getElementById('dtpane-1');
+  if (!pane) return;
+  pane.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">読み込み中...</div>';
+  try {
+    const d = await apiFetch(`/api/applications/${appId}/overview`);
+    pane.innerHTML = renderOverviewPane(d);
+  } catch(e) {
+    pane.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);">読み込みに失敗しました</div>';
+  }
+}
+
+function renderOverviewPane(d) {
+  const app = d.application || {};
+  const fmt = v => v ? escHtml(String(v)) : '-';
+  const STATUS_LABEL = {plan:'企画',order:'発注中',dev:'開発中',running:'本番稼働中',retire:'廃止'};
+
+  // 基本情報
+  const basicCard = `
+    <div class="ov-card">
+      <div class="ov-card-title">基本情報</div>
+      <div class="demand-detail-grid">
+        <div class="d-field"><label>ステータス</label><span>${fmt(STATUS_LABEL[app.status]||app.status)}</span></div>
+        <div class="d-field"><label>カテゴリ</label><span>${fmt(app.app_category)}</span></div>
+        <div class="d-field"><label>ポートフォリオエリア</label><span>${fmt(app.portfolio_area)}</span></div>
+        <div class="d-field"><label>年間コスト（百万円）</label><span>${fmt(app.annual_cost_million)}</span></div>
+        <div class="d-field"><label>ベンダー</label><span>${fmt(app.vendor)}</span></div>
+        <div class="d-field"><label>移行先システム</label><span>${app.migration_target_id ? `<span class="sys-id">${escHtml(app.migration_target_id)}</span> ${escHtml(app.migration_target_name||'')}` : '-'}</span></div>
+      </div>
+    </div>`;
+
+  // 依存関係
+  const depsOut = d.dependencies.length
+    ? d.dependencies.map(x => `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--gray-100);">
+        <span class="sys-id">${escHtml(x.depends_on_app_id)}</span>
+        <span style="font-size:12px;">${escHtml(x.depends_on_name)}</span>
+        <span style="font-size:10px;color:var(--gray-400);">${escHtml(x.dependency_type||'')}</span>
+      </div>`).join('')
+    : '<div style="color:var(--gray-400);font-size:12px;padding:4px 0;">登録なし</div>';
+  const depsIn = d.dependents.length
+    ? d.dependents.map(x => `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--gray-100);">
+        <span class="sys-id">${escHtml(x.app_id)}</span>
+        <span style="font-size:12px;">${escHtml(x.application_name)}</span>
+        <span style="font-size:10px;color:var(--gray-400);">${escHtml(x.dependency_type||'')}</span>
+      </div>`).join('')
+    : '<div style="color:var(--gray-400);font-size:12px;padding:4px 0;">登録なし</div>';
+
+  const depCard = `
+    <div class="ov-card">
+      <div class="ov-card-title">依存関係</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray-500);margin-bottom:6px;">このシステムが依存している先</div>
+          ${depsOut}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray-500);margin-bottom:6px;">このシステムに依存しているシステム</div>
+          ${depsIn}
+        </div>
+      </div>
+    </div>`;
+
+  // 環境・CI
+  const envRows = d.environments.length
+    ? d.environments.map(env => {
+        const ciList = env.configuration_items && env.configuration_items.length
+          ? env.configuration_items.map(ci =>
+              `<div class="ov-ci-row">🔧 ${escHtml(ci.ci_name)} <span style="color:var(--gray-400);">[${escHtml(ci.ci_type||'')}]</span> <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gray-400);">${escHtml(ci.ip_address||'')}</span></div>`
+            ).join('')
+          : '<div class="ov-ci-row" style="color:var(--gray-400);">CI登録なし</div>';
+        return `<div class="ov-env-row">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span class="env-chip ${envTypeClass[env.env_type]||'env-dev'}">${escHtml(env.env_type)}</span>
+            <span style="font-size:11px;color:var(--gray-400);">${escHtml(env.location||'')} / ${escHtml(env.ip||'')}</span>
+          </div>
+          ${ciList}
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--gray-400);font-size:12px;padding:4px 0;">環境登録なし</div>';
+
+  const envCard = `
+    <div class="ov-card">
+      <div class="ov-card-title">環境・構成情報（CI）</div>
+      ${envRows}
+    </div>`;
+
+  // デマンド
+  const demandRows = d.demands.length
+    ? d.demands.map(dm => `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--gray-100);cursor:pointer;" onclick="showDemandDetailById('${escHtml(dm.demand_id)}')">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);">${escHtml(dm.demand_id)}</span>
+          ${stageBadge(dm.stage)}
+          ${priorityBadge(dm.priority)}
+          <span style="font-size:12px;">${escHtml(dm.title)}</span>
+        </div>`).join('')
+    : '<div style="color:var(--gray-400);font-size:12px;padding:4px 0;">関連デマンドなし</div>';
+
+  const demandCard = `
+    <div class="ov-card">
+      <div class="ov-card-title">関連デマンド</div>
+      ${demandRows}
+    </div>`;
+
+  return basicCard + depCard + envCard + demandCard;
+}
+
+function showDemandDetailById(demandId) {
+  closeDetailPanel();
+  showDemandPage('demand-review');
+  loadDemandReview().then(() => selectDemandForReview(demandId));
+}
+
+// ─── CIリレーション一覧 ──────────────────────────────────────────
+let cmdbRelations = [];
+let relTypes = [];
+
+function tableTypeBadge(t) {
+  const map = {application:'tbl-badge-app', environment:'tbl-badge-env', configuration_item:'tbl-badge-ci'};
+  const lbl = {application:'アプリ', environment:'環境', configuration_item:'CI'};
+  return `<span class="tbl-badge ${map[t]||''}">${lbl[t]||t}</span>`;
+}
+
+async function loadCiRelations() {
+  const tbody = document.getElementById('cmdbRelTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--gray-400);">読み込み中...</td></tr>';
+
+  // admin ボタン表示制御
+  const addBtn = document.getElementById('btnAddCmdbRel');
+  if (addBtn) addBtn.style.display = currentUser === 'admin' ? 'inline-flex' : 'none';
+
+  try {
+    cmdbRelations = await apiFetch('/api/cmdb-relations') || [];
+
+    // relation_types もロード（モーダル用）
+    if (relTypes.length === 0) {
+      const rt = await apiFetch('/api/relation-types').catch(() => null);
+      if (rt) relTypes = rt;
+    }
+
+    renderCiRelTable();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--red);">読み込みに失敗しました</td></tr>';
+  }
+}
+
+function renderCiRelTable() {
+  const tbody = document.getElementById('cmdbRelTableBody');
+  if (!tbody) return;
+  if (!cmdbRelations.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state">リレーションなし</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = cmdbRelations.map(r => `
+    <tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);">${r.rel_id}</td>
+      <td>${tableTypeBadge(r.parent_table)}</td>
+      <td>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);">${escHtml(r.parent_id)}</span>
+        <div style="font-size:12px;">${escHtml(r.parent_name||'')}</div>
+      </td>
+      <td style="text-align:center;color:var(--gray-400);">→</td>
+      <td>${tableTypeBadge(r.child_table)}</td>
+      <td>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);">${escHtml(r.child_id)}</span>
+        <div style="font-size:12px;">${escHtml(r.child_name||'')}</div>
+      </td>
+      <td style="font-size:11px;">${escHtml(r.relation_type||'-')}</td>
+      <td style="font-size:12px;color:var(--gray-600);">${escHtml(r.note||'-')}</td>
+      <td>${currentUser === 'admin' ? `
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-secondary btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openCmdbRelModal(${r.rel_id})">編集</button>
+          <button class="btn btn-danger btn-sm" style="font-size:11px;padding:2px 8px;" onclick="deleteCmdbRel(${r.rel_id})">削除</button>
+        </div>` : '-'}</td>
+    </tr>`).join('');
+}
+
+function openCmdbRelModal(relId) {
+  document.getElementById('cmdbRelModalTitle').textContent = relId ? 'CIリレーション編集' : 'CIリレーション追加';
+  document.getElementById('cmdbRelEditId').value = relId || '';
+
+  // relation_type セレクト
+  const rtSel = document.getElementById('crmRelTypeId');
+  if (rtSel) {
+    rtSel.innerHTML = '<option value="">-- 選択なし --</option>' +
+      relTypes.map(rt => `<option value="${rt.relation_type_id}">${escHtml(rt.type_name)} - ${escHtml(rt.parent_label||'')}</option>`).join('');
+  }
+
+  if (relId) {
+    const r = cmdbRelations.find(x => x.rel_id === relId);
+    if (r) {
+      document.getElementById('crmParentTable').value = r.parent_table;
+      document.getElementById('crmParentId').value    = r.parent_id;
+      document.getElementById('crmChildTable').value  = r.child_table;
+      document.getElementById('crmChildId').value     = r.child_id;
+      document.getElementById('crmNote').value        = r.note || '';
+      if (rtSel && r.relation_type_id) rtSel.value = r.relation_type_id;
+    }
+  } else {
+    document.getElementById('crmParentTable').value = 'application';
+    document.getElementById('crmParentId').value    = '';
+    document.getElementById('crmChildTable').value  = 'environment';
+    document.getElementById('crmChildId').value     = '';
+    document.getElementById('crmNote').value        = '';
+    if (rtSel) rtSel.value = '';
+  }
+  document.getElementById('cmdbRelModal').style.display = 'flex';
+}
+
+function closeCmdbRelModal() {
+  document.getElementById('cmdbRelModal').style.display = 'none';
+}
+
+async function saveCmdbRel() {
+  const relId  = document.getElementById('cmdbRelEditId').value;
+  const rtIdEl = document.getElementById('crmRelTypeId');
+  const payload = {
+    parent_table:      document.getElementById('crmParentTable').value,
+    parent_id:         document.getElementById('crmParentId').value.trim(),
+    child_table:       document.getElementById('crmChildTable').value,
+    child_id:          document.getElementById('crmChildId').value.trim(),
+    relation_type_id:  rtIdEl?.value ? parseInt(rtIdEl.value) : null,
+    note:              document.getElementById('crmNote').value.trim() || null,
+  };
+  if (!payload.parent_id || !payload.child_id) {
+    showToast('親IDと子IDは必須です', 'error'); return;
+  }
+  try {
+    if (relId) {
+      await apiFetch(`/api/cmdb-relations/${relId}`, {method:'PUT', body:{note:payload.note, relation_type_id:payload.relation_type_id}});
+    } else {
+      await apiFetch('/api/cmdb-relations', {method:'POST', body:payload});
+    }
+    closeCmdbRelModal();
+    showToast('保存しました', 'success');
+    loadCiRelations();
+  } catch(e) { showToast('保存に失敗しました', 'error'); }
+}
+
+async function deleteCmdbRel(relId) {
+  if (!confirm(`リレーション ID:${relId} を削除しますか？`)) return;
+  try {
+    await apiFetch(`/api/cmdb-relations/${relId}`, {method:'DELETE'});
+    showToast('削除しました', 'success');
+    loadCiRelations();
+  } catch(e) { showToast('削除に失敗しました', 'error'); }
 }
 
 async function saveAppEdit(id) {
