@@ -701,10 +701,10 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </div>
           <div class="form-grid">
             <div class="form-group">
-              <label>関連業務システム</label>
-              <select class="form-control" id="df_related_app">
-                <option value="">-- 選択 --</option>
-              </select>
+              <label>関連業務システム（複数選択可）</label>
+              <div id="df_related_app_list" style="max-height:160px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px 8px;background:#fff;">
+                <span style="font-size:12px;color:var(--gray-400);">読み込み中...</span>
+              </div>
             </div>
             <div class="form-group">
               <label>申請部門</label>
@@ -2904,7 +2904,7 @@ function renderDemandTable() {
     <td>${stageBadge(d.stage)}</td>
     <td>${escHtml(d.submitter_name||'-')}</td>
     <td>${escHtml(d.manager_name||'-')}</td>
-    <td><span class="sys-id">${escHtml(d.related_application_id||'-')}</span></td>
+    <td>${d.related_app_ids ? d.related_app_ids.split(',').map(id=>`<span class="sys-id">${escHtml(id.trim())}</span>`).join(' ') : '-'}</td>
     <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${d.requested_budget ? '¥'+Number(d.requested_budget).toLocaleString() : '-'}</td>
   </tr>`).join('');
 }
@@ -2947,10 +2947,11 @@ function resetDemandForm() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  ['df_type','df_domain','df_it_class','df_category','df_priority','df_feasibility','df_related_app','df_department'].forEach(id => {
+  ['df_type','df_domain','df_it_class','df_category','df_priority','df_feasibility','df_department'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
+  document.querySelectorAll('#df_related_app_list input[type=checkbox]').forEach(cb => { cb.checked = false; });
   ['df_start_date','df_due_date','df_target_date'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -2970,10 +2971,18 @@ async function loadDemandFormSelects() {
     ]);
     demandApplications = appsData || [];
     demandDepts = deptsData || [];
-    const appSel = document.getElementById('df_related_app');
-    if (appSel) {
-      appSel.innerHTML = '<option value="">-- 選択 --</option>' +
-        demandApplications.map(a => `<option value="${escHtml(a.application_id)}">${escHtml(a.application_id)} - ${escHtml(a.application_name)}</option>`).join('');
+    const appList = document.getElementById('df_related_app_list');
+    if (appList) {
+      if (demandApplications.length === 0) {
+        appList.innerHTML = '<span style="font-size:12px;color:var(--gray-400);">アプリなし</span>';
+      } else {
+        appList.innerHTML = demandApplications.map(a => `
+          <label style="display:flex;align-items:center;gap:6px;padding:3px 0;cursor:pointer;font-size:12px;">
+            <input type="checkbox" value="${escHtml(a.application_id)}" style="cursor:pointer;">
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--gray-400);min-width:64px;">${escHtml(a.application_id)}</span>
+            <span style="color:var(--gray-700);">${escHtml(a.application_name)}</span>
+          </label>`).join('');
+      }
     }
     const deptSel = document.getElementById('df_department');
     if (deptSel) {
@@ -2983,6 +2992,10 @@ async function loadDemandFormSelects() {
   } catch(e) { /* ignore */ }
 }
 
+function getSelectedRelatedApps() {
+  return Array.from(document.querySelectorAll('#df_related_app_list input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
 function getDemandFormPayload() {
   return {
     title: document.getElementById('df_title')?.value?.trim() || '',
@@ -2990,7 +3003,6 @@ function getDemandFormPayload() {
     domain: document.getElementById('df_domain')?.value || null,
     start_date: document.getElementById('df_start_date')?.value || null,
     due_date: document.getElementById('df_due_date')?.value || null,
-    related_application_id: document.getElementById('df_related_app')?.value || null,
     department_id: document.getElementById('df_department')?.value ? parseInt(document.getElementById('df_department').value) : null,
     description: document.getElementById('df_description')?.value || null,
     it_class: document.getElementById('df_it_class')?.value || null,
@@ -3013,12 +3025,24 @@ function getDemandFormPayload() {
   };
 }
 
+async function postDemandApplications(demandId, appIds) {
+  for (const appId of appIds) {
+    try {
+      await apiFetch(`/api/demands/${demandId}/applications`, {method:'POST', body:{application_id: appId}});
+    } catch(e) { /* ignore duplicate or error */ }
+  }
+}
+
 async function saveDemandDraft() {
   const payload = getDemandFormPayload();
   if (!payload.title) { showToast('タイトルを入力してください', 'error'); return; }
   payload.stage = 'draft';
+  const selectedApps = getSelectedRelatedApps();
   try {
-    await apiFetch('/api/demands', {method:'POST', body:payload});
+    const created = await apiFetch('/api/demands', {method:'POST', body:payload});
+    if (created?.demand_id && selectedApps.length) {
+      await postDemandApplications(created.demand_id, selectedApps);
+    }
     showToast('下書きを保存しました', 'success');
     loadDemandData();
   } catch(e) { showToast('保存に失敗しました', 'error'); }
@@ -3028,8 +3052,12 @@ async function submitDemandForm() {
   const payload = getDemandFormPayload();
   if (!payload.title) { showToast('タイトルを入力してください', 'error'); return; }
   payload.stage = 'submitted';
+  const selectedApps = getSelectedRelatedApps();
   try {
-    await apiFetch('/api/demands', {method:'POST', body:payload});
+    const created = await apiFetch('/api/demands', {method:'POST', body:payload});
+    if (created?.demand_id && selectedApps.length) {
+      await postDemandApplications(created.demand_id, selectedApps);
+    }
     showToast('デマンドを提出しました', 'success');
     loadDemandData();
     showDemandPage('demand-list');
@@ -3073,8 +3101,19 @@ async function selectDemandForReview(demandId) {
   currentDemandId = demandId;
   renderReviewLeftPane();
   try {
-    const d = await apiFetch(`/api/demands/${demandId}`);
+    const [d, apps] = await Promise.all([
+      apiFetch(`/api/demands/${demandId}`),
+      apiFetch(`/api/demands/${demandId}/applications`).catch(() => []),
+    ]);
     renderReviewRightPane(d);
+    const relEl = document.getElementById('reviewRelatedApps');
+    if (relEl) {
+      if (apps && apps.length) {
+        relEl.innerHTML = apps.map(a => `<span class="sys-id" style="margin-right:4px;">${escHtml(a.application_id)}</span><span style="font-size:11px;color:var(--gray-500);">${escHtml(a.application_name||'')}</span>`).join('<br>');
+      } else {
+        relEl.textContent = '-';
+      }
+    }
   } catch(e) { showToast('デマンド詳細の読み込みに失敗しました', 'error'); }
 }
 
@@ -3117,7 +3156,7 @@ function renderReviewRightPane(d) {
         <div class="d-field"><label>審査責任者</label><span>${fmt(d.manager_name)}</span></div>
         <div class="d-field"><label>開始予定日</label><span>${fmt(d.start_date)}</span></div>
         <div class="d-field"><label>目標完了日</label><span>${fmt(d.due_date)}</span></div>
-        <div class="d-field"><label>関連システム</label><span><span class="sys-id">${fmt(d.related_application_id)}</span></span></div>
+        <div class="d-field"><label>関連システム</label><span id="reviewRelatedApps"><span style="color:var(--gray-400);font-size:11px;">読み込み中...</span></span></div>
         <div class="d-field"><label>申請部門</label><span>${fmt(d.department_name)}</span></div>
       </div>
       <div class="d-field" style="margin-top:8px;"><label>概要</label><span>${fmt(d.description)}</span></div>

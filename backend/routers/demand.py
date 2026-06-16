@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 import aiosqlite
 from datetime import date
 from ..database import get_db
-from ..models import DemandCreate, DemandUpdate, DemandStageUpdate, DemandTaskCreate, DemandTaskUpdate
+from ..models import (DemandCreate, DemandUpdate, DemandStageUpdate,
+                      DemandTaskCreate, DemandTaskUpdate,
+                      DemandApplicationCreate, CostPlanCreate, CostPlanUpdate)
 from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
@@ -45,15 +47,13 @@ async def _demand_with_users(db, demand_id):
                u2.user_name AS manager_name,
                u3.user_name AS system_owner_name,
                u4.user_name AS pm_name,
-               dep.department_name,
-               a.application_name
+               dep.department_name
         FROM demand d
         LEFT JOIN user u1 ON d.submitter_user_id = u1.user_id
         LEFT JOIN user u2 ON d.manager_user_id = u2.user_id
         LEFT JOIN user u3 ON d.system_owner_user_id = u3.user_id
         LEFT JOIN user u4 ON d.pm_user_id = u4.user_id
         LEFT JOIN department dep ON d.department_id = dep.department_id
-        LEFT JOIN application a ON d.related_application_id = a.application_id
         WHERE d.demand_id = ?
     """, [demand_id]) as cur:
         row = await cur.fetchone()
@@ -73,12 +73,12 @@ async def list_demands(
                u1.user_name AS submitter_name,
                u2.user_name AS manager_name,
                dep.department_name,
-               a.application_name
+               (SELECT COUNT(*) FROM demand_application da WHERE da.demand_id = d.demand_id) AS related_app_count,
+               (SELECT GROUP_CONCAT(da.application_id) FROM demand_application da WHERE da.demand_id = d.demand_id) AS related_app_ids
         FROM demand d
         LEFT JOIN user u1 ON d.submitter_user_id = u1.user_id
         LEFT JOIN user u2 ON d.manager_user_id = u2.user_id
         LEFT JOIN department dep ON d.department_id = dep.department_id
-        LEFT JOIN application a ON d.related_application_id = a.application_id
         WHERE 1=1
     """
     params = []
@@ -291,6 +291,138 @@ async def reject_demand(
     )
     await db.commit()
     return await _demand_with_users(db, demand_id)
+
+
+# ── 関連システム一覧 ──────────────────────────────────────────
+@router.get("/demands/{demand_id}/applications")
+async def list_demand_applications(
+    demand_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute(
+        """SELECT da.*, a.application_name, a.app_category, a.status AS app_status
+           FROM demand_application da
+           LEFT JOIN application a ON da.application_id = a.application_id
+           WHERE da.demand_id = ? ORDER BY da.id""",
+        [demand_id],
+    ) as cur:
+        return [dict(r) for r in await cur.fetchall()]
+
+
+# ── 関連システム追加 ──────────────────────────────────────────
+@router.post("/demands/{demand_id}/applications", status_code=201)
+async def add_demand_application(
+    demand_id: str,
+    payload: DemandApplicationCreate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute(
+        "SELECT id FROM demand_application WHERE demand_id=? AND application_id=?",
+        [demand_id, payload.application_id],
+    ) as cur:
+        if await cur.fetchone():
+            raise HTTPException(409, "already linked")
+    await db.execute(
+        "INSERT INTO demand_application (demand_id, application_id, relation_note) VALUES (?,?,?)",
+        [demand_id, payload.application_id, payload.relation_note],
+    )
+    await db.commit()
+    async with db.execute(
+        """SELECT da.*, a.application_name, a.app_category, a.status AS app_status
+           FROM demand_application da
+           LEFT JOIN application a ON da.application_id = a.application_id
+           WHERE da.demand_id = ? ORDER BY da.id""",
+        [demand_id],
+    ) as cur:
+        return [dict(r) for r in await cur.fetchall()]
+
+
+# ── 関連システム削除 ──────────────────────────────────────────
+@router.delete("/demands/{demand_id}/applications/{application_id}", status_code=204)
+async def remove_demand_application(
+    demand_id: str,
+    application_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    await db.execute(
+        "DELETE FROM demand_application WHERE demand_id=? AND application_id=?",
+        [demand_id, application_id],
+    )
+    await db.commit()
+
+
+# ── コスト計画一覧 ────────────────────────────────────────────
+@router.get("/demands/{demand_id}/cost-plans")
+async def list_cost_plans(
+    demand_id: str,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute(
+        "SELECT * FROM cost_plan WHERE demand_id=? ORDER BY fiscal_year, fiscal_period",
+        [demand_id],
+    ) as cur:
+        return [dict(r) for r in await cur.fetchall()]
+
+
+# ── コスト計画追加 ────────────────────────────────────────────
+@router.post("/demands/{demand_id}/cost-plans", status_code=201)
+async def create_cost_plan(
+    demand_id: str,
+    payload: CostPlanCreate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    data = payload.dict()
+    data["demand_id"] = demand_id
+    cols = list(data.keys())
+    vals = [data[c] for c in cols]
+    await db.execute(
+        f"INSERT INTO cost_plan ({','.join(cols)}) VALUES ({','.join('?'*len(cols))})",
+        vals,
+    )
+    await db.commit()
+    async with db.execute(
+        "SELECT * FROM cost_plan WHERE demand_id=? ORDER BY fiscal_year, fiscal_period",
+        [demand_id],
+    ) as cur:
+        return [dict(r) for r in await cur.fetchall()]
+
+
+# ── コスト計画更新 ────────────────────────────────────────────
+@router.put("/cost-plans/{cost_plan_id}")
+async def update_cost_plan(
+    cost_plan_id: int,
+    payload: CostPlanUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    data = {k: v for k, v in payload.dict().items() if v is not None}
+    if not data:
+        raise HTTPException(400, "no fields to update")
+    set_clause = ", ".join(f"{k}=?" for k in data)
+    await db.execute(
+        f"UPDATE cost_plan SET {set_clause} WHERE cost_plan_id=?",
+        list(data.values()) + [cost_plan_id],
+    )
+    await db.commit()
+    async with db.execute("SELECT * FROM cost_plan WHERE cost_plan_id=?", [cost_plan_id]) as cur:
+        row = await cur.fetchone()
+    return dict(row) if row else {}
+
+
+# ── コスト計画削除 ────────────────────────────────────────────
+@router.delete("/cost-plans/{cost_plan_id}", status_code=204)
+async def delete_cost_plan(
+    cost_plan_id: int,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    await db.execute("DELETE FROM cost_plan WHERE cost_plan_id=?", [cost_plan_id])
+    await db.commit()
 
 
 # ── プロジェクト一覧 ──────────────────────────────────────────

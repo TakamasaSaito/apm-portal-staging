@@ -41,7 +41,6 @@ CREATE TABLE IF NOT EXISTS demand (
   region         TEXT,
   company        TEXT,
   business_unit  TEXT,
-  related_application_id TEXT,
   business_case  TEXT,
   expected_benefit TEXT,
   target_date    DATE,
@@ -55,6 +54,27 @@ CREATE TABLE IF NOT EXISTS demand (
   approval_comment TEXT,
   created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS demand_application (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  demand_id      TEXT REFERENCES demand(demand_id),
+  application_id TEXT REFERENCES application(application_id),
+  relation_note  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cost_plan (
+  cost_plan_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+  demand_id      TEXT REFERENCES demand(demand_id),
+  fiscal_year    INTEGER,
+  fiscal_period  TEXT,
+  cost_type      TEXT,
+  unit_cost      INTEGER,
+  quantity       INTEGER DEFAULT 1,
+  planned_cost   INTEGER,
+  actual_cost    INTEGER DEFAULT 0,
+  note           TEXT,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS demand_task (

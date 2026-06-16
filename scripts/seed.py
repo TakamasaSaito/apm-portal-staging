@@ -156,7 +156,6 @@ CREATE TABLE IF NOT EXISTS demand (
   region         TEXT,
   company        TEXT,
   business_unit  TEXT,
-  related_application_id TEXT,
   business_case  TEXT,
   expected_benefit TEXT,
   target_date    DATE,
@@ -170,6 +169,27 @@ CREATE TABLE IF NOT EXISTS demand (
   approval_comment TEXT,
   created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS demand_application (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  demand_id      TEXT,
+  application_id TEXT,
+  relation_note  TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cost_plan (
+  cost_plan_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+  demand_id      TEXT,
+  fiscal_year    INTEGER,
+  fiscal_period  TEXT,
+  cost_type      TEXT,
+  unit_cost      INTEGER,
+  quantity       INTEGER DEFAULT 1,
+  planned_cost   INTEGER,
+  actual_cost    INTEGER DEFAULT 0,
+  note           TEXT,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS demand_task (
@@ -198,7 +218,7 @@ CREATE TABLE IF NOT EXISTS project (
 
     # 既存データクリア（FK OFF なので順序自由）
     for table in [
-        "demand_task", "project", "demand",
+        "cost_plan", "demand_application", "demand_task", "project", "demand",
         "apm_request", "configuration_item", "environment",
         "application_dependency", "application", "user", "department",
     ]:
@@ -683,7 +703,6 @@ CREATE TABLE IF NOT EXISTS project (
             "region": "国内",
             "company": "本社",
             "business_unit": "情報システム部",
-            "related_application_id": "APM-001",
             "business_case": "ExcelによるT工数管理は月次集計に1人×3日を要している。専用ツール導入により集計自動化を実現する。",
             "expected_benefit": "月次集計工数を3人日から0.5人日に削減。年間約20人日の削減効果。",
             "target_date": "2027-04-01",
@@ -720,7 +739,6 @@ CREATE TABLE IF NOT EXISTS project (
             "region": "グローバル",
             "company": "グループ全社",
             "business_unit": "購買部",
-            "related_application_id": "APM-003",
             "business_case": "現在12拠点で異なるシステムを運用しており、統合により年間運用コストを30%削減見込み。",
             "expected_benefit": "年間運用コスト約2億円削減。標準購買プロセス適用で調達リードタイム20%短縮。",
             "target_date": "2028-10-01",
@@ -757,7 +775,6 @@ CREATE TABLE IF NOT EXISTS project (
             "region": "国内",
             "company": "本社",
             "business_unit": "営業本部",
-            "related_application_id": "APM-002",
             "business_case": "Excel・メール管理による非効率を解消。Salesforceで商談管理・予実管理を実現。",
             "expected_benefit": "営業活動の可視化により受注率10%向上。週次レポート作成工数を2時間から0に削減。",
             "target_date": "2026-07-01",
@@ -781,10 +798,10 @@ CREATE TABLE IF NOT EXISTS project (
                 system_owner_user_id, pm_user_id,
                 description, portfolio, program, change_type, purpose,
                 feasibility, priority, region, company, business_unit,
-                related_application_id, business_case, expected_benefit,
+                business_case, expected_benefit,
                 target_date, estimated_cost, requested_budget, cost_note, notes,
                 stage, reject_reason, review_comment, approval_comment)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             [
                 d["demand_id"], d["title"], d["it_class"], d["category"], d["domain"], d["type"],
                 d["start_date"], d["due_date"],
@@ -792,7 +809,7 @@ CREATE TABLE IF NOT EXISTS project (
                 d["system_owner_user_id"], d["pm_user_id"],
                 d["description"], d["portfolio"], d["program"], d["change_type"], d["purpose"],
                 d["feasibility"], d["priority"], d["region"], d["company"], d["business_unit"],
-                d["related_application_id"], d["business_case"], d["expected_benefit"],
+                d["business_case"], d["expected_benefit"],
                 d["target_date"], d["estimated_cost"], d["requested_budget"], d["cost_note"], d["notes"],
                 d["stage"], d["reject_reason"], d["review_comment"], d["approval_comment"],
             ],
@@ -822,6 +839,41 @@ CREATE TABLE IF NOT EXISTS project (
             [task_id, demand_id, name, due_date, assignee_id, priority, state, comment, ai_gen, rationale],
         )
 
+    # ---------- demand_application ----------
+    demand_apps = [
+        ("DMND1001001", "APM-001", "工数管理の主対象システム"),
+        ("DMND1001002", "APM-003", "統合対象：在庫管理システム"),
+        ("DMND1001002", "APM-008", "統合対象：購買管理システム"),
+        ("DMND1001003", "APM-002", "CRM連携対象：営業支援システム"),
+    ]
+    for (did, aid, note) in demand_apps:
+        cur.execute(
+            "INSERT INTO demand_application (demand_id, application_id, relation_note) VALUES (?,?,?)",
+            [did, aid, note],
+        )
+
+    # ---------- cost_plan ----------
+    cost_plans = [
+        # DMND1001001
+        ("DMND1001001", 2026, "Q1", "開発費",      2000000, 1, 2000000, 0,       "要件定義・基本設計"),
+        ("DMND1001001", 2026, "Q2", "開発費",      3000000, 1, 3000000, 0,       "詳細設計・開発"),
+        ("DMND1001001", 2026, "Q3", "ライセンス費", 4000000, 1, 4000000, 0,       "初年度ライセンス費"),
+        # DMND1001002
+        ("DMND1001002", 2026, "Q2", "開発費",      30000000, 1, 30000000, 0,      "グローバル移行設計"),
+        ("DMND1001002", 2026, "Q3", "開発費",      30000000, 1, 30000000, 0,      "実装・テスト"),
+        ("DMND1001002", 2026, "Q4", "ライセンス費", 25000000, 1, 25000000, 0,     "SAP Ariba ライセンス"),
+        # DMND1001003
+        ("DMND1001003", 2026, "Q1", "ライセンス費", 5000000, 1, 5000000, 5000000, "Salesforceライセンス（実績あり）"),
+        ("DMND1001003", 2026, "Q2", "開発費",       3000000, 1, 3000000, 3000000, "カスタマイズ開発（実績あり）"),
+    ]
+    for (did, fy, fp, ct, uc, qty, pc, ac, note) in cost_plans:
+        cur.execute(
+            """INSERT INTO cost_plan
+               (demand_id, fiscal_year, fiscal_period, cost_type, unit_cost, quantity, planned_cost, actual_cost, note)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            [did, fy, fp, ct, uc, qty, pc, ac, note],
+        )
+
     # ---------- プロジェクト ----------
     cur.execute(
         """INSERT INTO project (project_id, demand_id, title, status, created_date)
@@ -835,7 +887,7 @@ CREATE TABLE IF NOT EXISTS project (
     print(f"  部署: {len(departments)}件, ユーザー: {len(users)}件")
     print(f"  アプリケーション: {len(apps)}件 (インフラ含む), 環境: {len(envs)}件")
     print(f"  CI: {len(ci_data)}件, 依存関係: {len(deps)}件, 申請: {len(requests)}件")
-    print(f"  デマンド: {len(demands)}件, タスク: {len(demand_tasks)}件")
+    print(f"  デマンド: {len(demands)}件, タスク: {len(demand_tasks)}件, 関連アプリ: {len(demand_apps)}件, コスト計画: {len(cost_plans)}件")
 
 
 if __name__ == "__main__":

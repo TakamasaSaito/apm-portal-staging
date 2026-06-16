@@ -155,7 +155,6 @@ class DemandCreate(BaseModel):
     region: Optional[str] = None
     company: Optional[str] = None
     business_unit: Optional[str] = None
-    related_application_id: Optional[str] = None
     business_case: Optional[str] = None
     expected_benefit: Optional[str] = None
     target_date: Optional[str] = None
@@ -189,7 +188,6 @@ class DemandUpdate(BaseModel):
     region: Optional[str] = None
     company: Optional[str] = None
     business_unit: Optional[str] = None
-    related_application_id: Optional[str] = None
     business_case: Optional[str] = None
     expected_benefit: Optional[str] = None
     target_date: Optional[str] = None
@@ -226,3 +224,30 @@ class DemandTaskUpdate(BaseModel):
     priority: Optional[str] = None
     state: Optional[str] = None
     comment: Optional[str] = None
+
+
+class DemandApplicationCreate(BaseModel):
+    application_id: str
+    relation_note: Optional[str] = None
+
+
+class CostPlanCreate(BaseModel):
+    fiscal_year: int
+    fiscal_period: str
+    cost_type: str
+    unit_cost: Optional[int] = None
+    quantity: Optional[int] = 1
+    planned_cost: Optional[int] = None
+    actual_cost: Optional[int] = 0
+    note: Optional[str] = None
+
+
+class CostPlanUpdate(BaseModel):
+    fiscal_year: Optional[int] = None
+    fiscal_period: Optional[str] = None
+    cost_type: Optional[str] = None
+    unit_cost: Optional[int] = None
+    quantity: Optional[int] = None
+    planned_cost: Optional[int] = None
+    actual_cost: Optional[int] = None
+    note: Optional[str] = None
