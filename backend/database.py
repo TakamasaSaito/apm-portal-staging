@@ -17,6 +17,24 @@ async def init_db():
         await db.executescript("""
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS relation_type (
+  relation_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type_name        TEXT NOT NULL UNIQUE,
+  parent_label     TEXT,
+  child_label      TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cmdb_rel_ci (
+  rel_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  parent_table     TEXT NOT NULL,
+  parent_id        TEXT NOT NULL,
+  child_table      TEXT NOT NULL,
+  child_id         TEXT NOT NULL,
+  relation_type_id INTEGER REFERENCES relation_type(relation_type_id),
+  note             TEXT,
+  created_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS demand (
   demand_id      TEXT PRIMARY KEY,
   title          TEXT NOT NULL,
@@ -145,7 +163,6 @@ CREATE TABLE IF NOT EXISTS application_dependency (
 
 CREATE TABLE IF NOT EXISTS environment (
     environment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    application_id TEXT REFERENCES application(application_id),
     env_type       TEXT NOT NULL,
     location       TEXT,
     ip             TEXT,
@@ -160,7 +177,6 @@ CREATE TABLE IF NOT EXISTS configuration_item (
     ci_id          INTEGER PRIMARY KEY AUTOINCREMENT,
     ci_name        TEXT NOT NULL,
     ci_type        TEXT,
-    environment_id INTEGER REFERENCES environment(environment_id),
     hostname       TEXT,
     ip_address     TEXT,
     bmc_ip         TEXT,
@@ -195,6 +211,21 @@ CREATE TABLE IF NOT EXISTS apm_request (
     app_category      TEXT
 );
         """)
+
+        # Seed relation_type master data
+        for row in (
+            ("has_environment", "環境を持つ", "環境である"),
+            ("has_ci",          "構成情報を持つ", "構成情報である"),
+        ):
+            try:
+                await db.execute(
+                    "INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES (?,?,?)",
+                    list(row),
+                )
+            except Exception:
+                pass
+
+        # ALTER TABLE additions for legacy DBs
         for stmt in (
             "ALTER TABLE user ADD COLUMN login_id TEXT",
             "ALTER TABLE user ADD COLUMN password_hash TEXT",
@@ -210,4 +241,81 @@ CREATE TABLE IF NOT EXISTS apm_request (
                 await db.execute(stmt)
             except Exception:
                 pass
+
+        # ── Migration: environment.application_id → cmdb_rel_ci ──────────
+        async with db.execute("PRAGMA table_info(environment)") as cur:
+            env_col_names = [r[1] for r in await cur.fetchall()]
+
+        if "application_id" in env_col_names:
+            async with db.execute(
+                "SELECT relation_type_id FROM relation_type WHERE type_name='has_environment'"
+            ) as cur:
+                row = await cur.fetchone()
+                has_env_id = row[0] if row else 1
+
+            # Migrate existing relationships before dropping the column
+            await db.execute(
+                """INSERT OR IGNORE INTO cmdb_rel_ci
+                   (parent_table, parent_id, child_table, child_id, relation_type_id)
+                   SELECT 'application', application_id,
+                          'environment', CAST(environment_id AS TEXT), ?
+                   FROM environment WHERE application_id IS NOT NULL""",
+                [has_env_id],
+            )
+            # Recreate environment without application_id
+            await db.execute(
+                """CREATE TABLE IF NOT EXISTS environment_v2 (
+                    environment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    env_type TEXT NOT NULL, location TEXT, ip TEXT,
+                    host TEXT, os TEXT, middleware TEXT, cpu_mem TEXT, storage TEXT
+                )"""
+            )
+            await db.execute(
+                """INSERT INTO environment_v2
+                   SELECT environment_id, env_type, location, ip, host, os, middleware, cpu_mem, storage
+                   FROM environment"""
+            )
+            await db.execute("DROP TABLE environment")
+            await db.execute("ALTER TABLE environment_v2 RENAME TO environment")
+
+        # ── Migration: configuration_item.environment_id → cmdb_rel_ci ───
+        async with db.execute("PRAGMA table_info(configuration_item)") as cur:
+            ci_col_names = [r[1] for r in await cur.fetchall()]
+
+        if "environment_id" in ci_col_names:
+            async with db.execute(
+                "SELECT relation_type_id FROM relation_type WHERE type_name='has_ci'"
+            ) as cur:
+                row = await cur.fetchone()
+                has_ci_id = row[0] if row else 2
+
+            # Migrate existing relationships before dropping the column
+            await db.execute(
+                """INSERT OR IGNORE INTO cmdb_rel_ci
+                   (parent_table, parent_id, child_table, child_id, relation_type_id)
+                   SELECT 'environment', CAST(environment_id AS TEXT),
+                          'configuration_item', CAST(ci_id AS TEXT), ?
+                   FROM configuration_item WHERE environment_id IS NOT NULL""",
+                [has_ci_id],
+            )
+            # Recreate configuration_item without environment_id
+            await db.execute(
+                """CREATE TABLE IF NOT EXISTS ci_v2 (
+                    ci_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ci_name TEXT NOT NULL, ci_type TEXT,
+                    hostname TEXT, ip_address TEXT, bmc_ip TEXT,
+                    os TEXT, os_version TEXT, cpu TEXT, memory TEXT, storage TEXT,
+                    vendor TEXT, model TEXT,
+                    status TEXT DEFAULT 'active', note TEXT
+                )"""
+            )
+            await db.execute(
+                """INSERT INTO ci_v2
+                   SELECT ci_id, ci_name, ci_type, hostname, ip_address, bmc_ip,
+                          os, os_version, cpu, memory, storage, vendor, model, status, note
+                   FROM configuration_item"""
+            )
+            await db.execute("DROP TABLE configuration_item")
+            await db.execute("ALTER TABLE ci_v2 RENAME TO configuration_item")
+
         await db.commit()

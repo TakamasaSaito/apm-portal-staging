@@ -64,7 +64,6 @@ CREATE TABLE IF NOT EXISTS application_dependency (
 );
 CREATE TABLE IF NOT EXISTS environment (
     environment_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    application_id TEXT REFERENCES application(application_id),
     env_type       TEXT NOT NULL,
     location       TEXT,
     ip             TEXT,
@@ -78,7 +77,6 @@ CREATE TABLE IF NOT EXISTS configuration_item (
     ci_id          INTEGER PRIMARY KEY AUTOINCREMENT,
     ci_name        TEXT NOT NULL,
     ci_type        TEXT,
-    environment_id INTEGER REFERENCES environment(environment_id),
     hostname       TEXT,
     ip_address     TEXT,
     bmc_ip         TEXT,
@@ -214,10 +212,53 @@ CREATE TABLE IF NOT EXISTS project (
   created_date   DATE,
   created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS relation_type (
+  relation_type_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type_name        TEXT NOT NULL UNIQUE,
+  parent_label     TEXT,
+  child_label      TEXT
+);
+
+CREATE TABLE IF NOT EXISTS cmdb_rel_ci (
+  rel_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  parent_table     TEXT NOT NULL,
+  parent_id        TEXT NOT NULL,
+  child_table      TEXT NOT NULL,
+  child_id         TEXT NOT NULL,
+  relation_type_id INTEGER,
+  note             TEXT,
+  created_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+);
     """)
+
+    # スキーマ強制移行: environment / configuration_item から直接FKカラムを除去
+    cur.executescript("""
+DROP TABLE IF EXISTS environment;
+CREATE TABLE environment (
+    environment_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    env_type       TEXT NOT NULL,
+    location       TEXT, ip TEXT, host TEXT, os TEXT,
+    middleware     TEXT, cpu_mem TEXT, storage TEXT
+);
+DROP TABLE IF EXISTS configuration_item;
+CREATE TABLE configuration_item (
+    ci_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    ci_name        TEXT NOT NULL, ci_type TEXT,
+    hostname       TEXT, ip_address TEXT, bmc_ip TEXT,
+    os TEXT, os_version TEXT, cpu TEXT, memory TEXT, storage TEXT,
+    vendor TEXT, model TEXT,
+    status         TEXT DEFAULT 'active', note TEXT
+);
+    """)
+
+    # relation_type 初期データ投入
+    cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('has_environment','環境を持つ','環境である')")
+    cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('has_ci','構成情報を持つ','構成情報である')")
 
     # 既存データクリア（FK OFF なので順序自由）
     for table in [
+        "cmdb_rel_ci",
         "cost_plan", "demand_application", "demand_task", "project", "demand",
         "apm_request", "configuration_item", "environment",
         "application_dependency", "application", "user", "department",
@@ -561,14 +602,23 @@ CREATE TABLE IF NOT EXISTS project (
         ("APM-005", "開発環境",       "AWS ap-northeast-1",   "（未割当）",   "crm-dev.corp.local",      "Amazon Linux 2",      "Python 3.11/FastAPI",  "2vCPU/4GB",   "100GB SSD"),
     ]
     env_ids: dict = {}
+    has_env_id = cur.execute("SELECT relation_type_id FROM relation_type WHERE type_name='has_environment'").fetchone()[0]
     for row in envs:
+        app_id, env_type = row[0], row[1]
         cur.execute(
             """INSERT INTO environment
-                   (application_id, env_type, location, ip, host, os, middleware, cpu_mem, storage)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            list(row),
+                   (env_type, location, ip, host, os, middleware, cpu_mem, storage)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            list(row[1:]),
         )
-        env_ids[(row[0], row[1])] = cur.lastrowid
+        env_id = cur.lastrowid
+        env_ids[(app_id, env_type)] = env_id
+        cur.execute(
+            """INSERT INTO cmdb_rel_ci
+                   (parent_table, parent_id, child_table, child_id, relation_type_id)
+               VALUES ('application', ?, 'environment', ?, ?)""",
+            [app_id, str(env_id), has_env_id],
+        )
 
     # ---------- 構成情報（CI） ----------
     def eid(app_id, env_type):
@@ -593,17 +643,25 @@ CREATE TABLE IF NOT EXISTS project (
         (eid("APM-005","開発環境"),       "crm-dev-ap-01",    "Server",  "crm-dev.corp.local",          "172.16.0.11",  None,         "Amazon Linux 2","2","2vCPU (t3.small)","4GB","50GB SSD","AWS","EC2 t3.small","active","FastAPI 開発サーバー"),
         (eid("APM-005","開発環境"),       "crm-dev-db-01",    "DB",      "crm-dev-db-01.corp.local",    "172.16.0.12",  None,         "Amazon Linux 2","2","1vCPU (db.t3.micro)","1GB","20GB SSD","AWS","RDS PostgreSQL 15","active","開発用DB"),
     ]
+    has_ci_id = cur.execute("SELECT relation_type_id FROM relation_type WHERE type_name='has_ci'").fetchone()[0]
     for (env_id, ci_name, ci_type, hostname, ip_address, bmc_ip,
          os_, os_version, cpu, memory, storage, vendor, model, status, note) in ci_data:
         if env_id is None:
             continue
         cur.execute(
             """INSERT INTO configuration_item
-                   (ci_name, ci_type, environment_id, hostname, ip_address, bmc_ip,
+                   (ci_name, ci_type, hostname, ip_address, bmc_ip,
                     os, os_version, cpu, memory, storage, vendor, model, status, note)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            [ci_name, ci_type, env_id, hostname, ip_address, bmc_ip,
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            [ci_name, ci_type, hostname, ip_address, bmc_ip,
              os_, os_version, cpu, memory, storage, vendor, model, status, note],
+        )
+        ci_id = cur.lastrowid
+        cur.execute(
+            """INSERT INTO cmdb_rel_ci
+                   (parent_table, parent_id, child_table, child_id, relation_type_id)
+               VALUES ('environment', ?, 'configuration_item', ?, ?)""",
+            [str(env_id), str(ci_id), has_ci_id],
         )
 
     # ---------- 申請 ----------
