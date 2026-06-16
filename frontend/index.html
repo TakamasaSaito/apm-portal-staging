@@ -295,6 +295,36 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .tbl-badge-app{background:#EFF6FF;color:#3B82F6;}
 .tbl-badge-env{background:#ECFDF5;color:#10B981;}
 .tbl-badge-ci{background:#FEF3C7;color:#D97706;}
+/* ─── 全体像ビュー 表示切替 ─── */
+.ov-view-toggle{display:flex;gap:6px;padding:10px 0 8px;margin-bottom:10px;flex-wrap:wrap;}
+.ov-view-btn{padding:5px 12px;border:1px solid var(--gray-300);border-radius:6px;background:var(--white);font-size:12px;font-weight:500;color:var(--gray-600);cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.ov-view-btn:hover:not(.active){background:var(--gray-50);}
+.ov-view-btn.active{background:#EFF6FF;border-color:var(--accent);color:var(--accent);}
+/* ─── ツリー表示 ─── */
+.ov-tree-sys{border:2px solid #6c5ce7;border-radius:10px;padding:12px 16px;background:linear-gradient(135deg,#f8f5ff,#ede7ff);margin-bottom:8px;}
+.ov-tree-sys-name{font-size:14px;font-weight:700;color:#3d2a8a;margin-bottom:6px;}
+.ov-tree-arrow{text-align:center;color:var(--gray-300);font-size:14px;line-height:1.8;margin-bottom:2px;}
+.ov-tree-env-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.ov-tree-env{border:2px solid #fdcb6e;border-radius:8px;padding:10px 12px;background:linear-gradient(135deg,#fffef5,#fff9e0);min-width:120px;flex:1;max-width:220px;cursor:pointer;transition:background .15s;}
+.ov-tree-env:hover{background:linear-gradient(135deg,#fffbee,#fff0b0);}
+.ov-tree-env-loc{font-size:10px;color:#b8860b;margin-top:3px;}
+.ov-tree-ci{border:1px solid #74b9ff;border-radius:5px;padding:4px 8px;background:#f0f7ff;font-size:11px;color:#1a5fb4;margin-top:5px;cursor:pointer;transition:background .15s;}
+.ov-tree-ci:hover{background:#dceeff;}
+.ov-tree-bottom{border-top:2px dashed var(--gray-200);margin-top:12px;padding-top:12px;}
+.ov-tree-bottom-cols{display:flex;gap:16px;flex-wrap:wrap;}
+.ov-tree-bottom-col{flex:1;min-width:140px;}
+.ov-tree-bottom-label{font-size:11px;font-weight:600;color:var(--gray-500);margin-bottom:6px;}
+.ov-tree-cards{display:flex;gap:8px;flex-wrap:wrap;}
+.ov-tree-dep{border:1px solid #9b7ee8;border-radius:6px;padding:8px 10px;background:#f8f5ff;font-size:11px;cursor:pointer;flex:1;min-width:90px;max-width:160px;transition:background .15s;}
+.ov-tree-dep:hover{background:#ede7ff;}
+.ov-tree-dep-name{font-weight:600;color:#3d2a8a;margin-bottom:2px;}
+.ov-tree-dep-type{font-size:10px;color:#9b7ee8;}
+.ov-tree-dmd{border:1px solid #00b894;border-radius:6px;padding:8px 10px;background:#f0fff8;font-size:11px;cursor:pointer;flex:1;min-width:90px;max-width:200px;transition:background .15s;}
+.ov-tree-dmd:hover{background:#d6fff0;}
+.ov-tree-dmd-name{font-weight:600;color:#00694d;margin-bottom:2px;}
+.ov-tree-dmd-stage{font-size:10px;color:#00b894;}
+/* ─── ネットワーク表示 ─── */
+.ov-net-wrap{border-radius:8px;overflow:hidden;background:#fafbfc;border:1px solid var(--gray-200);}
 </style>
 </head>
 <body>
@@ -1633,6 +1663,9 @@ async function deleteEnv(envId) {
 // ========== アプリ詳細・編集パネル ==========
 let detailOpenAppId = null;
 let detailOverviewLoaded = false;
+let ovData = null;
+let ovViewMode = 'list';
+let _ovNetResizeObs = null;
 
 function switchAppDetailTab(idx) {
   [0, 1].forEach(i => {
@@ -1649,6 +1682,7 @@ function switchAppDetailTab(idx) {
 }
 
 function openDetail(id) {
+  if (_ovNetResizeObs) { _ovNetResizeObs.disconnect(); _ovNetResizeObs = null; }
   detailOpenAppId = id;
   detailOverviewLoaded = false;
   const app = apps.find(a => a.id === id);
@@ -1757,18 +1791,64 @@ function openDetail(id) {
 
 // ─── アプリ全体像タブ ─────────────────────────────────────────────
 async function loadAppOverview(appId) {
+  if (_ovNetResizeObs) { _ovNetResizeObs.disconnect(); _ovNetResizeObs = null; }
   const pane = document.getElementById('dtpane-1');
   if (!pane) return;
   pane.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400);">読み込み中...</div>';
   try {
-    const d = await apiFetch(`/api/applications/${appId}/overview`);
-    pane.innerHTML = renderOverviewPane(d);
+    ovData = await apiFetch(`/api/applications/${appId}/overview`);
+    ovViewMode = 'list';
+    pane.innerHTML = `
+      <div class="ov-view-toggle">
+        <button class="ov-view-btn active" id="ovbtn-list" onclick="switchOverviewView('list')">📋 リスト表示</button>
+        <button class="ov-view-btn" id="ovbtn-tree" onclick="switchOverviewView('tree')">🌳 ツリー表示</button>
+        <button class="ov-view-btn" id="ovbtn-net" onclick="switchOverviewView('net')">🕸️ ネットワーク表示</button>
+      </div>
+      <div id="ov-content"></div>`;
+    _renderOvContent();
   } catch(e) {
     pane.innerHTML = '<div style="text-align:center;padding:40px;color:var(--red);">読み込みに失敗しました</div>';
   }
 }
 
-function renderOverviewPane(d) {
+function switchOverviewView(mode) {
+  if (_ovNetResizeObs) { _ovNetResizeObs.disconnect(); _ovNetResizeObs = null; }
+  ovViewMode = mode;
+  ['list','tree','net'].forEach(m => {
+    const btn = document.getElementById('ovbtn-' + m);
+    if (btn) btn.classList.toggle('active', m === mode);
+  });
+  _renderOvContent();
+}
+
+function _renderOvContent() {
+  const el = document.getElementById('ov-content');
+  if (!el || !ovData) return;
+  if (ovViewMode === 'list') {
+    el.innerHTML = renderOverviewList(ovData);
+  } else if (ovViewMode === 'tree') {
+    el.innerHTML = renderOverviewTree(ovData);
+  } else if (ovViewMode === 'net') {
+    el.innerHTML = '<div class="ov-net-wrap" id="ov-net-wrap" style="min-height:200px;"></div>';
+    requestAnimationFrame(() => _drawOverviewNetwork());
+  }
+}
+
+function _drawOverviewNetwork() {
+  const wrap = document.getElementById('ov-net-wrap');
+  if (!wrap || !ovData) return;
+  const render = () => {
+    const w = wrap.clientWidth;
+    if (w > 0) wrap.innerHTML = _buildNetworkSVG(ovData, w);
+  };
+  render();
+  if (typeof ResizeObserver !== 'undefined') {
+    _ovNetResizeObs = new ResizeObserver(render);
+    _ovNetResizeObs.observe(wrap);
+  }
+}
+
+function renderOverviewList(d) {
   const app = d.application || {};
   const fmt = v => v ? escHtml(String(v)) : '-';
   const STATUS_LABEL = {plan:'企画',order:'発注中',dev:'開発中',running:'本番稼働中',retire:'廃止'};
@@ -1860,6 +1940,233 @@ function renderOverviewPane(d) {
     </div>`;
 
   return basicCard + depCard + envCard + demandCard;
+}
+
+// ─── ツリー表示 ────────────────────────────────────────────────────
+function renderOverviewTree(d) {
+  const app = d.application || {};
+  const envList = d.environments || [];
+  const depList = d.dependencies || [];
+  const dmdList = d.demands || [];
+  const STATUS_LABEL = {plan:'企画',order:'発注中',dev:'開発中',running:'本番稼働中',retire:'廃止'};
+  const DEP_TYPE_LABEL = {auth:'🔑 認証連携',infra:'🏗️ インフラ依存',api:'🔌 API連携',migration:'🔄 移行先',data:'📊 データ連携'};
+  const STAGE_LABEL = {draft:'草稿',screening:'審査中',approved:'承認済',rejected:'却下',closed:'完了'};
+
+  const stLabel = STATUS_LABEL[app.status] || app.status || '-';
+  const stCls   = statusMap[app.status]?.cls || 'badge-plan';
+  const migBadge = app.migration_target_id
+    ? `<span style="font-size:10px;background:#fee2e2;color:#ef4444;border-radius:4px;padding:2px 6px;margin-left:4px;">→ ${escHtml(app.migration_target_id)}</span>` : '';
+
+  const sysCard = `
+    <div class="ov-tree-sys">
+      <div class="ov-tree-sys-name">${escHtml(app.application_name||'')}</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span class="sys-id">${escHtml(app.application_id||'')}</span>
+        <span class="badge ${stCls}">${stLabel}</span>
+        <span style="font-size:11px;color:var(--gray-500);">${escHtml(app.department_name||'-')}</span>
+        ${migBadge}
+      </div>
+    </div>`;
+
+  // Environments + CIs
+  let envSection;
+  if (envList.length === 0) {
+    envSection = '<div style="color:var(--gray-400);font-size:12px;text-align:center;padding:8px;">環境登録なし</div>';
+  } else {
+    const envCards = envList.map(env => {
+      const cis = (env.configuration_items || []).slice(0, 5);
+      const ciCards = cis.map(ci => {
+        const nm = ci.ci_name.length > 18 ? ci.ci_name.slice(0,17) + '…' : ci.ci_name;
+        return `<div class="ov-tree-ci" onclick="event.stopPropagation();closeDetailPanel();openCiViewForEnv(${env.environment_id},'${env.env_type}')">
+          🔧 ${escHtml(nm)}${ci.ci_type ? ` <span style="color:var(--gray-400);">[${escHtml(ci.ci_type)}]</span>` : ''}
+        </div>`;
+      }).join('');
+      const more = (env.configuration_items||[]).length > 5
+        ? `<div style="font-size:10px;color:var(--gray-400);padding-top:3px;">他 ${env.configuration_items.length-5} 件…</div>` : '';
+      return `<div class="ov-tree-env" onclick="closeDetailPanel();openEnvDetail(${env.environment_id})">
+        <div><span class="env-chip ${envTypeClass[env.env_type]||'env-dev'}" style="font-size:10px;">${escHtml(env.env_type)}</span></div>
+        ${env.location ? `<div class="ov-tree-env-loc">📍 ${escHtml(env.location)}</div>` : ''}
+        ${ciCards}${more}
+      </div>`;
+    }).join('');
+    envSection = `<div class="ov-tree-env-row">${envCards}</div>`;
+  }
+
+  // Bottom: deps + demands
+  let bottomHtml = '';
+  const depCards = depList.map(dep => {
+    const nm = (dep.depends_on_name||dep.depends_on_app_id||'');
+    const tl = DEP_TYPE_LABEL[dep.dependency_type] || (dep.dependency_type||'');
+    return `<div class="ov-tree-dep" onclick="openDetail('${escHtml(dep.depends_on_app_id)}')">
+      <div class="ov-tree-dep-name">${escHtml(nm.length>18?nm.slice(0,17)+'…':nm)}</div>
+      <div class="ov-tree-dep-type">${escHtml(tl)}</div>
+    </div>`;
+  }).join('');
+  const dmdCards = dmdList.map(dm => {
+    const t = dm.title.length>20 ? dm.title.slice(0,19)+'…' : dm.title;
+    return `<div class="ov-tree-dmd" onclick="showDemandDetailById('${escHtml(dm.demand_id)}')">
+      <div class="ov-tree-dmd-name">${escHtml(t)}</div>
+      <div class="ov-tree-dmd-stage">${STAGE_LABEL[dm.stage]||dm.stage}</div>
+    </div>`;
+  }).join('');
+
+  if (depList.length > 0 || dmdList.length > 0) {
+    bottomHtml = `<div class="ov-tree-bottom"><div class="ov-tree-bottom-cols">
+      ${depList.length > 0 ? `<div class="ov-tree-bottom-col">
+        <div class="ov-tree-bottom-label">依存先システム</div>
+        <div class="ov-tree-cards">${depCards}</div>
+      </div>` : ''}
+      ${dmdList.length > 0 ? `<div class="ov-tree-bottom-col">
+        <div class="ov-tree-bottom-label">関連デマンド</div>
+        <div class="ov-tree-cards">${dmdCards}</div>
+      </div>` : ''}
+    </div></div>`;
+  }
+
+  return sysCard
+    + '<div class="ov-tree-arrow">▼</div>'
+    + envSection
+    + bottomHtml;
+}
+
+// ─── ネットワーク表示 ─────────────────────────────────────────────
+function _buildNetworkSVG(d, containerW) {
+  const W = Math.max(containerW || 300, 300);
+  const H = Math.max(560, Math.round(W * 0.72));
+
+  const app     = d.application  || {};
+  const envList = (d.environments  || []).slice(0, 7);
+  const depList = (d.dependencies  || []).slice(0, 5);
+  const dmdList = (d.demands       || []).slice(0, 4);
+
+  const cx = W / 2;
+  const cy = H * 0.47;
+
+  // Radii
+  const R_SYS = 46, R_ENV = 28, R_CI = 20, R_DEP = 32, R_DMD = 28;
+  // Distances from system center
+  const D_ENV = 148, D_CI = 238, D_DEP = 162, D_DMD = 218;
+
+  // Colors
+  const C_SYS_FILL = '#6c5ce7', C_SYS_STROKE = '#5a4ad1';
+  const C_ENV_FILL = '#fffbf0', C_ENV_STROKE = '#e9a820', C_ENV_TEXT = '#8b6914';
+  const C_CI_FILL  = '#f0f6ff', C_CI_STROKE  = '#4a90d9', C_CI_TEXT  = '#1a5fb4';
+  const C_DEP_FILL = '#f5f0ff', C_DEP_STROKE = '#9b7ee8', C_DEP_TEXT = '#3d2a8a';
+  const C_DMD_FILL = '#f0fff8', C_DMD_STROKE = '#00b894', C_DMD_TEXT = '#00694d';
+
+  // Polar → absolute XY
+  const p2xy = (r, deg) => ({
+    x: cx + r * Math.cos(deg * Math.PI / 180),
+    y: cy + r * Math.sin(deg * Math.PI / 180),
+  });
+
+  // Evenly spaced angles in [startDeg, endDeg]
+  const arcAngles = (n, s, e) => {
+    if (n === 0) return [];
+    if (n === 1) return [(s + e) / 2];
+    return Array.from({length: n}, (_, i) => s + (e - s) * i / (n - 1));
+  };
+
+  // Environment arc: upper half (angles around 270° = straight up in SVG)
+  const envAngles = arcAngles(envList.length, 200, 340);
+  // Dependency arc: lower right
+  const depAngles = arcAngles(depList.length, 30, 150);
+  // Demand arc: lower center (further out to avoid overlap with deps)
+  const dmdAngles = arcAngles(dmdList.length, 60, 120);
+
+  // Dependency type → edge color
+  const depEdgeColor = t => ({auth:'#3B82F6',infra:'#8B5CF6',api:'#10B981',migration:'#EF4444',data:'#F59E0B'}[t] || C_DEP_STROKE);
+
+  let edges = [], nodes = [];
+
+  // ── System node ──
+  const sysName = (app.application_name||'').slice(0, 11);
+  const sysId   = (app.application_id  ||'');
+  nodes.push(`<g>
+    <circle cx="${cx}" cy="${cy}" r="${R_SYS}" fill="${C_SYS_FILL}" stroke="${C_SYS_STROKE}" stroke-width="2.5"/>
+    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700" font-family="sans-serif">${escHtml(sysName)}</text>
+    <text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,.82)" font-family="monospace">${escHtml(sysId)}</text>
+  </g>`);
+
+  // ── Environment nodes + CI nodes ──
+  envList.forEach((env, i) => {
+    const ea = envAngles[i];
+    const ep = p2xy(D_ENV, ea);
+
+    // Edge: system → env (solid)
+    edges.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${ep.x.toFixed(1)}" y2="${ep.y.toFixed(1)}" stroke="${C_ENV_STROKE}" stroke-width="2" opacity=".7"/>`);
+
+    const envLbl = (env.env_type||'').replace('環境','').slice(0, 8);
+    nodes.push(`<g cursor="pointer" onclick="closeDetailPanel();openEnvDetail(${env.environment_id})">
+      <circle cx="${ep.x.toFixed(1)}" cy="${ep.y.toFixed(1)}" r="${R_ENV}" fill="${C_ENV_FILL}" stroke="${C_ENV_STROKE}" stroke-width="2"/>
+      <text x="${ep.x.toFixed(1)}" y="${(ep.y-4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${C_ENV_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(envLbl)}</text>
+      <text x="${ep.x.toFixed(1)}" y="${(ep.y+8).toFixed(1)}" text-anchor="middle" font-size="7.5" fill="${C_ENV_STROKE}" font-family="sans-serif">env</text>
+    </g>`);
+
+    // CI nodes
+    const cis = (env.configuration_items||[]).slice(0, 3);
+    const ciAng = arcAngles(cis.length, ea - 22, ea + 22);
+    cis.forEach((ci, j) => {
+      const ca = ciAng[j];
+      const cp = p2xy(D_CI, ca);
+      const cp_env = p2xy(D_ENV + R_ENV, ca); // edge start = env surface
+      // Edge: env → CI (dashed)
+      edges.push(`<line x1="${cp_env.x.toFixed(1)}" y1="${cp_env.y.toFixed(1)}" x2="${cp.x.toFixed(1)}" y2="${cp.y.toFixed(1)}" stroke="${C_CI_STROKE}" stroke-width="1.5" stroke-dasharray="4,3" opacity=".6"/>`);
+      const ciLbl = (ci.ci_name||'').slice(0, 7);
+      nodes.push(`<g cursor="pointer" onclick="closeDetailPanel();openCiViewForEnv(${env.environment_id},'${env.env_type.replace(/'/g,'&#39;')}')">
+        <circle cx="${cp.x.toFixed(1)}" cy="${cp.y.toFixed(1)}" r="${R_CI}" fill="${C_CI_FILL}" stroke="${C_CI_STROKE}" stroke-width="1.5"/>
+        <text x="${cp.x.toFixed(1)}" y="${cp.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="${C_CI_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(ciLbl)}</text>
+      </g>`);
+    });
+  });
+
+  // ── Dependency nodes ──
+  depList.forEach((dep, i) => {
+    const da  = depAngles[i];
+    const dp  = p2xy(D_DEP, da);
+    const ec  = depEdgeColor(dep.dependency_type);
+    edges.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${dp.x.toFixed(1)}" y2="${dp.y.toFixed(1)}" stroke="${ec}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".65"/>`);
+    const nm  = (dep.depends_on_name||dep.depends_on_app_id||'').slice(0,11);
+    const idl = (dep.depends_on_app_id||'').slice(0, 9);
+    nodes.push(`<g cursor="pointer" onclick="openDetail('${escHtml(dep.depends_on_app_id)}')">
+      <circle cx="${dp.x.toFixed(1)}" cy="${dp.y.toFixed(1)}" r="${R_DEP}" fill="${C_DEP_FILL}" stroke="${C_DEP_STROKE}" stroke-width="2"/>
+      <text x="${dp.x.toFixed(1)}" y="${(dp.y-7).toFixed(1)}" text-anchor="middle" font-size="9" fill="${C_DEP_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(nm)}</text>
+      <text x="${dp.x.toFixed(1)}" y="${(dp.y+6).toFixed(1)}" text-anchor="middle" font-size="7.5" fill="${C_DEP_STROKE}" font-family="monospace">${escHtml(idl)}</text>
+    </g>`);
+  });
+
+  // ── Demand nodes ──
+  dmdList.forEach((dm, i) => {
+    const ma = dmdAngles[i];
+    const mp = p2xy(D_DMD, ma);
+    edges.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${mp.x.toFixed(1)}" y2="${mp.y.toFixed(1)}" stroke="${C_DMD_STROKE}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".6"/>`);
+    const tl = (dm.title||'').slice(0, 9);
+    nodes.push(`<g cursor="pointer" onclick="showDemandDetailById('${escHtml(dm.demand_id)}')">
+      <circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${R_DMD}" fill="${C_DMD_FILL}" stroke="${C_DMD_STROKE}" stroke-width="2"/>
+      <text x="${mp.x.toFixed(1)}" y="${(mp.y-5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${C_DMD_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(tl)}</text>
+      <text x="${mp.x.toFixed(1)}" y="${(mp.y+7).toFixed(1)}" text-anchor="middle" font-size="7.5" fill="${C_DMD_STROKE}" font-family="sans-serif">demand</text>
+    </g>`);
+  });
+
+  // ── Legend ──
+  const legends = [
+    {c: C_SYS_FILL, label:'システム'},
+    {c: C_ENV_STROKE, label:'環境'},
+    {c: C_CI_STROKE, label:'CI'},
+    {c: C_DEP_STROKE, label:'依存先'},
+    {c: C_DMD_STROKE, label:'デマンド'},
+  ];
+  const LY = H - 16, LS = 80;
+  const legendSvg = legends.map((l, i) =>
+    `<g><circle cx="${14+i*LS}" cy="${LY}" r="5" fill="${l.c}"/><text x="${22+i*LS}" y="${LY+4}" font-size="9" fill="#6b7280" font-family="sans-serif">${l.label}</text></g>`
+  ).join('');
+
+  return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;display:block;">
+    <rect width="${W}" height="${H}" fill="#fafbfc" rx="8"/>
+    ${edges.join('\n    ')}
+    ${nodes.join('\n    ')}
+    ${legendSvg}
+  </svg>`;
 }
 
 function showDemandDetailById(demandId) {
