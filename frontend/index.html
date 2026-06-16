@@ -226,6 +226,60 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .legend-title{font-weight:700;color:var(--gray-700);}
 .legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle;}
 .legend-dash{display:inline-block;width:24px;height:2px;vertical-align:middle;margin-right:4px;border-top:2px dashed currentColor;}
+/* ── デマンド管理 ── */
+.demand-stage-bar{display:flex;align-items:center;padding:10px 0;flex-wrap:wrap;gap:4px;margin-bottom:16px;}
+.stage-step{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:5px 12px;border-radius:14px;white-space:nowrap;}
+.stage-step.done{background:var(--green-light);color:var(--green);}
+.stage-step.current{background:var(--accent);color:#fff;}
+.stage-step.pending{background:var(--gray-100);color:var(--gray-400);}
+.stage-arrow{color:var(--gray-300);font-size:12px;margin:0 2px;}
+.demand-form-tabs{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:20px;overflow-x:auto;}
+.demand-tab{padding:10px 18px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
+.demand-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.demand-tab-pane{display:none;} .demand-tab-pane.active{display:block;}
+.demand-review-layout{display:flex;min-height:calc(100vh - 180px);background:var(--white);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;}
+.demand-review-left{width:320px;flex-shrink:0;border-right:1px solid var(--gray-200);overflow-y:auto;}
+.demand-review-right{flex:1;overflow-y:auto;padding:24px;background:var(--gray-50);}
+.demand-list-item{padding:12px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .1s;}
+.demand-list-item:hover{background:var(--gray-50);}
+.demand-list-item.selected{background:#EFF6FF;border-left:3px solid var(--accent);}
+.task-card{background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
+.task-card.closed{opacity:.65;}
+.task-card-header{display:flex;align-items:flex-start;gap:10px;}
+.task-state-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.task-state-open{background:#F1F5F9;color:#64748B;}
+.task-state-inprogress{background:#FEF3C7;color:#D97706;}
+.task-state-closed{background:var(--green-light);color:var(--green);}
+.task-meta{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;}
+.task-meta-item{font-size:11px;color:var(--gray-500);}
+.sbadge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.sbadge-draft{background:#F1F5F9;color:#64748B;}
+.sbadge-submitted{background:#EFF6FF;color:#3B82F6;}
+.sbadge-screening{background:#FEF3C7;color:#D97706;}
+.sbadge-qualified{background:#EDE9FE;color:#7C3AED;}
+.sbadge-approved{background:var(--green-light);color:var(--green);}
+.sbadge-completed{background:#F0FDF4;color:#15803D;}
+.sbadge-rejected{background:var(--red-light);color:var(--red);}
+.pbadge-1{background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.pbadge-2{background:#FEF3C7;color:#D97706;display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.pbadge-3{background:#EFF6FF;color:#3B82F6;display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.pbadge-4{background:var(--gray-100);color:var(--gray-500);display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.approve-tab-bar{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:16px;}
+.approve-tab{padding:10px 20px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;font-family:'Noto Sans JP',sans-serif;}
+.approve-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.approve-pane{display:none;} .approve-pane.active{display:block;}
+.demand-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.demand-detail-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;}
+.d-field label{font-size:11px;color:var(--gray-400);font-weight:600;display:block;margin-bottom:3px;}
+.d-field span{font-size:13px;color:var(--gray-800);}
+.review-card{background:var(--white);border-radius:10px;box-shadow:var(--shadow);padding:20px;margin-bottom:16px;}
+.review-card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--gray-200);}
+.task-state-select{padding:3px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:11px;font-family:'Noto Sans JP',sans-serif;background:var(--white);cursor:pointer;}
+.task-actions{display:flex;gap:6px;margin-top:8px;}
+.complete-page{text-align:center;padding:60px 40px;}
+.complete-icon{font-size:64px;margin-bottom:16px;}
+.complete-title{font-size:24px;font-weight:700;color:var(--navy);margin-bottom:8px;}
+.complete-sub{font-size:14px;color:var(--gray-500);margin-bottom:24px;}
 </style>
 </head>
 <body>
@@ -279,6 +333,15 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
       <div class="sidebar-item" onclick="openCatalogModal('retire')">
         <span class="sidebar-icon">🗑️</span> 廃止申請
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">デマンド管理</div>
+      <div class="sidebar-item" id="sb-demand-list" onclick="showDemandPage('demand-list')">
+        <span class="sidebar-icon">📋</span> デマンド一覧
+      </div>
+      <div class="sidebar-item" id="sb-demand-form" onclick="showDemandPage('demand-form')">
+        <span class="sidebar-icon">➕</span> 新規デマンド起票
       </div>
     </div>
     <div class="sidebar-section">
@@ -513,6 +576,339 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
       <div id="approvalListWrap"></div>
     </div>
+
+    <!-- ===================== デマンド一覧 ===================== -->
+    <div id="page-demand-list" style="display:none;">
+      <div class="page-header">
+        <div><div class="page-title">📋 デマンド一覧</div><div class="page-subtitle">ITデマンドの申請・審査状況を管理します</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="showDemandPage('demand-form');resetDemandForm()">➕ 新規デマンド起票</button>
+          <button class="btn btn-secondary" onclick="showDemandPage('demand-review');loadDemandReview()">🔍 審査画面を開く</button>
+        </div>
+      </div>
+      <!-- KPI -->
+      <div class="stats-grid" style="margin-bottom:20px;" id="demandKpiGrid">
+        <div class="stat-card blue"><div class="stat-label">総件数</div><div class="stat-value" id="dKpiTotal">-</div><div class="stat-sub">デマンド</div></div>
+        <div class="stat-card yellow"><div class="stat-label">審査中</div><div class="stat-value" id="dKpiScreening">-</div><div class="stat-sub">screening</div></div>
+        <div class="stat-card green"><div class="stat-label">承認済</div><div class="stat-value" id="dKpiApproved">-</div><div class="stat-sub">approved</div></div>
+        <div class="stat-card red"><div class="stat-label">差戻し</div><div class="stat-value" id="dKpiRejected">-</div><div class="stat-sub">rejected</div></div>
+      </div>
+      <!-- Filter -->
+      <div class="filter-bar" style="margin-bottom:12px;">
+        <select class="filter-select" id="dFilterStage" onchange="renderDemandTable()">
+          <option value="">すべてのステージ</option>
+          <option value="draft">下書き</option>
+          <option value="submitted">提出済</option>
+          <option value="screening">審査中</option>
+          <option value="qualified">承認申請</option>
+          <option value="approved">承認済</option>
+          <option value="rejected">差戻し</option>
+        </select>
+        <select class="filter-select" id="dFilterPriority" onchange="renderDemandTable()">
+          <option value="">すべての優先度</option>
+          <option value="1 - 最重要">1 - 最重要</option>
+          <option value="2 - 高">2 - 高</option>
+          <option value="3 - 中">3 - 中</option>
+          <option value="4 - 低">4 - 低</option>
+        </select>
+      </div>
+      <!-- Demand table -->
+      <div class="table-card" style="margin-bottom:20px;">
+        <div class="table-header"><span class="table-header-title">デマンド一覧</span></div>
+        <div class="table-scroll-wrap">
+          <table id="demandTable">
+            <thead><tr>
+              <th style="min-width:110px">申請番号</th>
+              <th style="min-width:220px">タイトル</th>
+              <th style="min-width:80px">優先度</th>
+              <th style="min-width:100px">ステータス</th>
+              <th style="min-width:120px">申請者</th>
+              <th style="min-width:120px">審査責任者</th>
+              <th style="min-width:100px">関連システム</th>
+              <th style="min-width:100px">予算規模</th>
+            </tr></thead>
+            <tbody id="demandTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Projects table -->
+      <div class="table-card">
+        <div class="table-header"><span class="table-header-title">🚀 プロジェクト化済み一覧</span></div>
+        <div class="table-scroll-wrap">
+          <table id="projectTable">
+            <thead><tr>
+              <th style="min-width:110px">プロジェクトID</th>
+              <th style="min-width:220px">タイトル</th>
+              <th style="min-width:110px">起因デマンドID</th>
+              <th style="min-width:100px">ステータス</th>
+              <th style="min-width:110px">作成日</th>
+            </tr></thead>
+            <tbody id="projectTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 新規デマンド起票 ===================== -->
+    <div id="page-demand-form" style="display:none;">
+      <div class="page-header">
+        <div><div class="page-title">➕ 新規デマンド起票</div><div class="page-subtitle">デマンドを登録します（下書き保存後、内容を確認して提出してください）</div></div>
+        <button class="btn btn-secondary" onclick="showDemandPage('demand-list')">← 一覧へ戻る</button>
+      </div>
+      <div class="table-card" style="padding:24px;">
+        <div class="demand-form-tabs">
+          <button class="demand-tab active" onclick="switchDemandTab(0,this)">① 基本情報</button>
+          <button class="demand-tab" onclick="switchDemandTab(1,this)">② 分類・優先度</button>
+          <button class="demand-tab" onclick="switchDemandTab(2,this)">③ ビジネスケース</button>
+          <button class="demand-tab" onclick="switchDemandTab(3,this)">④ 費用計画</button>
+          <button class="demand-tab" onclick="switchDemandTab(4,this)">⑤ 備考</button>
+        </div>
+        <!-- Tab 0: 基本情報 -->
+        <div class="demand-tab-pane active" id="dft-0">
+          <div class="form-grid">
+            <div class="form-group" style="grid-column:1/-1">
+              <label>タイトル<span class="required">*</span></label>
+              <input class="form-control" id="df_title" placeholder="デマンドのタイトルを入力してください">
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>デマンド種別</label>
+              <select class="form-control" id="df_type">
+                <option value="">-- 選択 --</option>
+                <option value="新規導入">新規導入</option>
+                <option value="機能拡張">機能拡張</option>
+                <option value="更改・移行">更改・移行</option>
+                <option value="廃止">廃止</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ドメイン</label>
+              <select class="form-control" id="df_domain">
+                <option value="">-- 選択 --</option>
+                <option value="人事・労務">人事・労務</option>
+                <option value="調達・購買">調達・購買</option>
+                <option value="営業・マーケティング">営業・マーケティング</option>
+                <option value="経理・財務">経理・財務</option>
+                <option value="情報システム">情報システム</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>開始予定日</label><input class="form-control" id="df_start_date" type="date"></div>
+            <div class="form-group"><label>目標完了日</label><input class="form-control" id="df_due_date" type="date"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>関連業務システム</label>
+              <select class="form-control" id="df_related_app">
+                <option value="">-- 選択 --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>申請部門</label>
+              <select class="form-control" id="df_department">
+                <option value="">-- 選択 --</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>概要説明</label>
+            <textarea class="form-control" id="df_description" rows="3" placeholder="このデマンドの概要を入力してください"></textarea>
+          </div>
+        </div>
+        <!-- Tab 1: 分類・優先度 -->
+        <div class="demand-tab-pane" id="dft-1">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>IT分類</label>
+              <select class="form-control" id="df_it_class">
+                <option value="">-- 選択 --</option>
+                <option value="全社共通">全社共通</option>
+                <option value="部門固有">部門固有</option>
+                <option value="グローバル展開">グローバル展開</option>
+                <option value="地域限定">地域限定</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>カテゴリ</label>
+              <select class="form-control" id="df_category">
+                <option value="">-- 選択 --</option>
+                <option value="戦略投資">戦略投資</option>
+                <option value="業務改善">業務改善</option>
+                <option value="コンプライアンス対応">コンプライアンス対応</option>
+                <option value="インフラ刷新">インフラ刷新</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>優先度</label>
+              <select class="form-control" id="df_priority">
+                <option value="">-- 選択 --</option>
+                <option value="1 - 最重要">1 - 最重要</option>
+                <option value="2 - 高">2 - 高</option>
+                <option value="3 - 中">3 - 中</option>
+                <option value="4 - 低">4 - 低</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>実現可能性</label>
+              <select class="form-control" id="df_feasibility">
+                <option value="">-- 選択 --</option>
+                <option value="A:確実">A:確実</option>
+                <option value="B:高い">B:高い</option>
+                <option value="C:中程度">C:中程度</option>
+                <option value="D:要調査">D:要調査</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>ポートフォリオ</label><input class="form-control" id="df_portfolio" placeholder="例：コーポレートIT"></div>
+            <div class="form-group"><label>プログラム</label><input class="form-control" id="df_program" placeholder="例：DX推進プログラム"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-group"><label>対象地域</label><input class="form-control" id="df_region" placeholder="例：国内、グローバル"></div>
+            <div class="form-group"><label>事業部門</label><input class="form-control" id="df_business_unit" placeholder="例：営業本部"></div>
+          </div>
+        </div>
+        <!-- Tab 2: ビジネスケース -->
+        <div class="demand-tab-pane" id="dft-2">
+          <div class="form-group">
+            <label>目的・背景</label>
+            <textarea class="form-control" id="df_purpose" rows="3" placeholder="このデマンドの目的・背景を入力"></textarea>
+          </div>
+          <div class="form-group">
+            <label>ビジネスケース</label>
+            <textarea class="form-control" id="df_business_case" rows="4" placeholder="ビジネスケース・課題背景を詳しく入力してください"></textarea>
+          </div>
+          <div class="form-group">
+            <label>期待効果</label>
+            <textarea class="form-control" id="df_expected_benefit" rows="3" placeholder="導入・実施により期待される効果を入力"></textarea>
+          </div>
+          <div class="form-group"><label>目標達成日</label><input class="form-control" id="df_target_date" type="date"></div>
+        </div>
+        <!-- Tab 3: 費用計画 -->
+        <div class="demand-tab-pane" id="dft-3">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>概算費用（円）</label>
+              <input class="form-control" id="df_estimated_cost" type="number" placeholder="12000000">
+            </div>
+            <div class="form-group">
+              <label>要求予算（円）</label>
+              <input class="form-control" id="df_requested_budget" type="number" placeholder="15000000">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>費用内訳・備考</label>
+            <textarea class="form-control" id="df_cost_note" rows="3" placeholder="費用の内訳や根拠を入力してください"></textarea>
+          </div>
+        </div>
+        <!-- Tab 4: 備考 -->
+        <div class="demand-tab-pane" id="dft-4">
+          <div class="form-group">
+            <label>備考・特記事項</label>
+            <textarea class="form-control" id="df_notes" rows="6" placeholder="その他の注意事項・特記事項を入力してください"></textarea>
+          </div>
+        </div>
+        <!-- Footer actions -->
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:16px;border-top:1px solid var(--gray-200);">
+          <button class="btn btn-secondary" onclick="saveDemandDraft()">💾 下書き保存</button>
+          <button class="btn btn-primary" onclick="submitDemandForm()">📤 提出する</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== デマンド審査 (2ペイン) ===================== -->
+    <div id="page-demand-review" style="display:none;">
+      <div class="page-header">
+        <div><div class="page-title">🔍 デマンド審査</div><div class="page-subtitle">デマンドを選択して審査を進めてください</div></div>
+        <button class="btn btn-secondary" onclick="showDemandPage('demand-list')">← 一覧へ戻る</button>
+      </div>
+      <div class="demand-review-layout">
+        <!-- Left pane -->
+        <div class="demand-review-left">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--gray-200);background:var(--gray-50);">
+            <div style="font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;">デマンド一覧</div>
+          </div>
+          <div id="reviewDemandList"></div>
+        </div>
+        <!-- Right pane -->
+        <div class="demand-review-right" id="reviewRightPane">
+          <div style="text-align:center;padding:80px 40px;color:var(--gray-400);">
+            <div style="font-size:40px;margin-bottom:12px;">📋</div>
+            <div>デマンドを選択してください</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== タスク管理 ===================== -->
+    <div id="page-demand-tasks" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">✅ タスク管理</div>
+          <div class="page-subtitle" id="taskPageSubtitle">デマンドの審査タスクを管理します</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary" onclick="showDemandPage('demand-review');loadDemandReview()">← 審査画面へ戻る</button>
+          <button class="btn btn-secondary" id="btnGenerateTasks" onclick="generateTasksWithClaude()">🤖 Claudeでタスク自動生成</button>
+          <button class="btn btn-primary" id="btnToApprove" disabled onclick="goToApproveScreen()">🎯 承認申請へ進む</button>
+        </div>
+      </div>
+      <div id="taskCardsWrap"></div>
+    </div>
+
+    <!-- ===================== 承認画面 ===================== -->
+    <div id="page-demand-approve" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🎯 承認申請</div>
+          <div class="page-subtitle" id="approvePageSubtitle">デマンドの承認・却下を行います</div>
+        </div>
+        <button class="btn btn-secondary" onclick="showDemandPage('demand-tasks');loadTaskPage(currentDemandId)">← タスク管理へ戻る</button>
+      </div>
+      <div class="table-card" style="padding:0 0 24px;">
+        <div class="approve-tab-bar" style="padding:0 24px;">
+          <button class="approve-tab active" onclick="switchApproveTab(0,this)">📄 申請内容</button>
+          <button class="approve-tab" onclick="switchApproveTab(1,this)">✅ タスク完了状況</button>
+          <button class="approve-tab" onclick="switchApproveTab(2,this)">🎯 承認アクション</button>
+        </div>
+        <div style="padding:0 24px;">
+          <div class="approve-pane active" id="apt-0" style="padding-top:4px;"></div>
+          <div class="approve-pane" id="apt-1"></div>
+          <div class="approve-pane" id="apt-2">
+            <div style="max-width:560px;">
+              <div class="form-group">
+                <label style="font-size:13px;font-weight:700;color:var(--navy);">承認コメント</label>
+                <textarea class="form-control" id="approveComment" rows="4" placeholder="承認理由・条件を入力してください"></textarea>
+              </div>
+              <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn btn-success" onclick="doApproveDemand()" style="font-size:14px;padding:10px 24px;">✅ 承認してプロジェクト化</button>
+                <button class="btn btn-danger" onclick="openRejectModal()" style="font-size:14px;padding:10px 24px;">❌ 却下・差戻し</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== プロジェクト登録完了 ===================== -->
+    <div id="page-demand-complete" style="display:none;">
+      <div class="table-card">
+        <div class="complete-page">
+          <div class="complete-icon">🎉</div>
+          <div class="complete-title">プロジェクト化が完了しました！</div>
+          <div class="complete-sub" id="completeMessage">デマンドが承認され、プロジェクトとして登録されました。</div>
+          <div style="display:flex;gap:10px;justify-content:center;">
+            <button class="btn btn-primary" onclick="showDemandPage('demand-list');loadDemandData()">📋 デマンド一覧へ</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -620,6 +1016,29 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
     <div class="panel-save-bar">
       <button class="btn btn-secondary" onclick="closeEnvDetail()">閉じる</button>
       <button class="btn btn-primary" onclick="saveEnvEdit()">💾 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- デマンド却下モーダル -->
+<div class="modal-overlay" id="demandRejectModal" onclick="if(event.target===this)closeDemandRejectModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">❌ 却下・差戻し</div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeDemandRejectModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--red-light);border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--red);">
+        ⚠️ 却下・差戻しを行います。理由を入力してください。
+      </div>
+      <div class="form-group">
+        <label>却下・差戻し理由<span class="required">*</span></label>
+        <textarea class="form-control" id="rejectReasonInput" rows="4" placeholder="却下・差戻しの理由を入力してください"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDemandRejectModal()">キャンセル</button>
+      <button class="btn btn-danger" onclick="doRejectDemand()">❌ 却下・差戻しを確定</button>
     </div>
   </div>
 </div>
@@ -979,10 +1398,12 @@ function doLogout() {
 }
 
 // ========== ページ切り替え ==========
+const ALL_PAGES = ['home','history','approval','demand-list','demand-form','demand-review','demand-tasks','demand-approve','demand-complete'];
 function showPage(page, navEl) {
   currentPage = page;
-  ['home','history','approval'].forEach(p => {
-    document.getElementById('page-' + p).style.display = p === page ? 'block' : 'none';
+  ALL_PAGES.forEach(p => {
+    const el = document.getElementById('page-' + p);
+    if (el) el.style.display = p === page ? 'block' : 'none';
   });
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (navEl) navEl.classList.add('active');
@@ -1979,6 +2400,8 @@ async function initApp() {
     await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts(), loadDashboardSummary(), loadBubbleData()]);
     renderAppTable();
     await loadStats();
+    loadDemandData();
+    loadDemandFormSelects();
   } catch(e) {
     showToast('データの読み込みに失敗しました。サーバーを確認してください。', 'error');
   }
@@ -2407,6 +2830,605 @@ function renderBubbleChart() {
   svg.style.width = '100%';
   svg.style.height = 'auto';
   svg.innerHTML = html;
+}
+
+// =====================================================================
+// ========== デマンド管理 =============================================
+// =====================================================================
+let demandList = [];
+let demandProjects = [];
+let currentDemandId = null;
+let demandTasks = [];
+let demandApplications = [];
+let demandDepts = [];
+
+const STAGE_LABEL = {
+  draft:'下書き', submitted:'提出済', screening:'審査中',
+  qualified:'承認申請', approved:'承認済', completed:'完了', rejected:'差戻し'
+};
+const STAGE_ORDER = ['draft','submitted','screening','qualified','approved','completed'];
+
+function stageBadge(stage) {
+  return `<span class="sbadge sbadge-${stage}">${STAGE_LABEL[stage]||stage}</span>`;
+}
+function priorityBadge(priority) {
+  const num = priority ? priority[0] : '3';
+  return `<span class="pbadge-${num}">${escHtml(priority||'-')}</span>`;
+}
+
+// デマンドページへ移動
+function showDemandPage(page) {
+  showPage(page, null);
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  if (page === 'demand-list') document.getElementById('sb-demand-list')?.classList.add('active');
+  if (page === 'demand-form') document.getElementById('sb-demand-form')?.classList.add('active');
+}
+
+// ──────────────────────────────────────────────────────────────────
+// デマンド一覧
+// ──────────────────────────────────────────────────────────────────
+async function loadDemandData() {
+  try {
+    [demandList, demandProjects] = await Promise.all([
+      apiFetch('/api/demands'),
+      apiFetch('/api/projects'),
+    ]);
+    updateDemandKpi();
+    renderDemandTable();
+    renderProjectTable();
+  } catch(e) { showToast('デマンドデータの読み込みに失敗しました', 'error'); }
+}
+
+function updateDemandKpi() {
+  document.getElementById('dKpiTotal').textContent = demandList.length;
+  document.getElementById('dKpiScreening').textContent = demandList.filter(d=>d.stage==='screening').length;
+  document.getElementById('dKpiApproved').textContent = demandList.filter(d=>d.stage==='approved').length;
+  document.getElementById('dKpiRejected').textContent = demandList.filter(d=>d.stage==='rejected').length;
+}
+
+function renderDemandTable() {
+  const stageF = document.getElementById('dFilterStage')?.value || '';
+  const prioF  = document.getElementById('dFilterPriority')?.value || '';
+  const filtered = demandList.filter(d =>
+    (!stageF || d.stage === stageF) && (!prioF || d.priority === prioF)
+  );
+  const tbody = document.getElementById('demandTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📋</div>デマンドがありません</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(d => `<tr class="clickable" onclick="openDemandReviewById('${d.demand_id}')">
+    <td><span class="sys-id">${escHtml(d.demand_id)}</span></td>
+    <td>${escHtml(d.title)}</td>
+    <td>${priorityBadge(d.priority)}</td>
+    <td>${stageBadge(d.stage)}</td>
+    <td>${escHtml(d.submitter_name||'-')}</td>
+    <td>${escHtml(d.manager_name||'-')}</td>
+    <td><span class="sys-id">${escHtml(d.related_application_id||'-')}</span></td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${d.requested_budget ? '¥'+Number(d.requested_budget).toLocaleString() : '-'}</td>
+  </tr>`).join('');
+}
+
+function renderProjectTable() {
+  const tbody = document.getElementById('projectTableBody');
+  if (!demandProjects.length) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-state-icon">🚀</div>プロジェクトがありません</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = demandProjects.map(p => `<tr>
+    <td><span class="sys-id">${escHtml(p.project_id)}</span></td>
+    <td>${escHtml(p.title)}</td>
+    <td><span class="sys-id">${escHtml(p.demand_id||'-')}</span></td>
+    <td><span class="sbadge sbadge-approved">${escHtml(p.status||'active')}</span></td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${p.created_date||'-'}</td>
+  </tr>`).join('');
+}
+
+// 一覧から審査画面へ
+function openDemandReviewById(demandId) {
+  currentDemandId = demandId;
+  showDemandPage('demand-review');
+  loadDemandReview();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 新規デマンド起票フォーム
+// ──────────────────────────────────────────────────────────────────
+let demandFormTabIdx = 0;
+
+function switchDemandTab(idx, btn) {
+  demandFormTabIdx = idx;
+  document.querySelectorAll('.demand-tab').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.demand-tab-pane').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+
+function resetDemandForm() {
+  ['df_title','df_description','df_purpose','df_business_case','df_expected_benefit','df_cost_note','df_notes','df_portfolio','df_program','df_region','df_business_unit'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['df_type','df_domain','df_it_class','df_category','df_priority','df_feasibility','df_related_app','df_department'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.selectedIndex = 0;
+  });
+  ['df_start_date','df_due_date','df_target_date'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['df_estimated_cost','df_requested_budget'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  switchDemandTab(0, null);
+}
+
+async function loadDemandFormSelects() {
+  try {
+    const [appsData, deptsData] = await Promise.all([
+      apiFetch('/api/applications'),
+      apiFetch('/api/departments'),
+    ]);
+    demandApplications = appsData || [];
+    demandDepts = deptsData || [];
+    const appSel = document.getElementById('df_related_app');
+    if (appSel) {
+      appSel.innerHTML = '<option value="">-- 選択 --</option>' +
+        demandApplications.map(a => `<option value="${escHtml(a.application_id)}">${escHtml(a.application_id)} - ${escHtml(a.application_name)}</option>`).join('');
+    }
+    const deptSel = document.getElementById('df_department');
+    if (deptSel) {
+      deptSel.innerHTML = '<option value="">-- 選択 --</option>' +
+        demandDepts.map(d => `<option value="${d.department_id}">${escHtml(d.department_name)}</option>`).join('');
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function getDemandFormPayload() {
+  return {
+    title: document.getElementById('df_title')?.value?.trim() || '',
+    type:  document.getElementById('df_type')?.value || null,
+    domain: document.getElementById('df_domain')?.value || null,
+    start_date: document.getElementById('df_start_date')?.value || null,
+    due_date: document.getElementById('df_due_date')?.value || null,
+    related_application_id: document.getElementById('df_related_app')?.value || null,
+    department_id: document.getElementById('df_department')?.value ? parseInt(document.getElementById('df_department').value) : null,
+    description: document.getElementById('df_description')?.value || null,
+    it_class: document.getElementById('df_it_class')?.value || null,
+    category: document.getElementById('df_category')?.value || null,
+    priority: document.getElementById('df_priority')?.value || null,
+    feasibility: document.getElementById('df_feasibility')?.value || null,
+    portfolio: document.getElementById('df_portfolio')?.value || null,
+    program: document.getElementById('df_program')?.value || null,
+    region: document.getElementById('df_region')?.value || null,
+    business_unit: document.getElementById('df_business_unit')?.value || null,
+    purpose: document.getElementById('df_purpose')?.value || null,
+    business_case: document.getElementById('df_business_case')?.value || null,
+    expected_benefit: document.getElementById('df_expected_benefit')?.value || null,
+    target_date: document.getElementById('df_target_date')?.value || null,
+    estimated_cost: document.getElementById('df_estimated_cost')?.value ? parseInt(document.getElementById('df_estimated_cost').value) : null,
+    requested_budget: document.getElementById('df_requested_budget')?.value ? parseInt(document.getElementById('df_requested_budget').value) : null,
+    cost_note: document.getElementById('df_cost_note')?.value || null,
+    notes: document.getElementById('df_notes')?.value || null,
+    submitter_user_id: currentUserId || 1,
+  };
+}
+
+async function saveDemandDraft() {
+  const payload = getDemandFormPayload();
+  if (!payload.title) { showToast('タイトルを入力してください', 'error'); return; }
+  payload.stage = 'draft';
+  try {
+    await apiFetch('/api/demands', {method:'POST', body:payload});
+    showToast('下書きを保存しました', 'success');
+    loadDemandData();
+  } catch(e) { showToast('保存に失敗しました', 'error'); }
+}
+
+async function submitDemandForm() {
+  const payload = getDemandFormPayload();
+  if (!payload.title) { showToast('タイトルを入力してください', 'error'); return; }
+  payload.stage = 'submitted';
+  try {
+    await apiFetch('/api/demands', {method:'POST', body:payload});
+    showToast('デマンドを提出しました', 'success');
+    loadDemandData();
+    showDemandPage('demand-list');
+  } catch(e) { showToast('提出に失敗しました', 'error'); }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// デマンド審査（2ペイン）
+// ──────────────────────────────────────────────────────────────────
+async function loadDemandReview() {
+  try {
+    demandList = await apiFetch('/api/demands') || [];
+  } catch(e) { /* ignore */ }
+  renderReviewLeftPane();
+  if (currentDemandId) selectDemandForReview(currentDemandId);
+}
+
+function renderReviewLeftPane() {
+  const el = document.getElementById('reviewDemandList');
+  if (!el) return;
+  if (!demandList.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:24px;">デマンドなし</div>';
+    return;
+  }
+  el.innerHTML = demandList.map(d => `
+    <div class="demand-list-item ${d.demand_id===currentDemandId?'selected':''}" onclick="selectDemandForReview('${d.demand_id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--gray-400);">${escHtml(d.demand_id)}</span>
+        ${stageBadge(d.stage)}
+      </div>
+      <div style="font-size:13px;font-weight:500;color:var(--gray-800);margin-bottom:4px;">${escHtml(d.title)}</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${priorityBadge(d.priority)}
+        <span style="font-size:11px;color:var(--gray-400);">${escHtml(d.submitter_name||'-')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function selectDemandForReview(demandId) {
+  currentDemandId = demandId;
+  renderReviewLeftPane();
+  try {
+    const d = await apiFetch(`/api/demands/${demandId}`);
+    renderReviewRightPane(d);
+  } catch(e) { showToast('デマンド詳細の読み込みに失敗しました', 'error'); }
+}
+
+function renderStageBar(currentStage) {
+  const stages = STAGE_ORDER;
+  const currentIdx = stages.indexOf(currentStage);
+  return stages.map((s, i) => {
+    let cls = 'pending';
+    if (i < currentIdx) cls = 'done';
+    else if (i === currentIdx) cls = 'current';
+    const icon = cls==='done'?'✓ ': '';
+    return `<span class="stage-step ${cls}">${icon}${STAGE_LABEL[s]}</span>${i<stages.length-1?'<span class="stage-arrow">›</span>':''}`;
+  }).join('');
+}
+
+function renderReviewRightPane(d) {
+  const el = document.getElementById('reviewRightPane');
+  if (!el) return;
+  const fmt = v => v ? escHtml(String(v)) : '-';
+  el.innerHTML = `
+    <div class="review-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--navy);">${escHtml(d.title)}</div>
+          <div style="font-size:12px;color:var(--gray-400);font-family:'JetBrains Mono',monospace;margin-top:2px;">${escHtml(d.demand_id)}</div>
+        </div>
+        <div style="display:flex;gap:6px;">${stageBadge(d.stage)}${priorityBadge(d.priority)}</div>
+      </div>
+      <div class="demand-stage-bar">${renderStageBar(d.stage)}</div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-card-title">基本情報</div>
+      <div class="demand-detail-grid">
+        <div class="d-field"><label>デマンド種別</label><span>${fmt(d.type)}</span></div>
+        <div class="d-field"><label>ドメイン</label><span>${fmt(d.domain)}</span></div>
+        <div class="d-field"><label>IT分類</label><span>${fmt(d.it_class)}</span></div>
+        <div class="d-field"><label>カテゴリ</label><span>${fmt(d.category)}</span></div>
+        <div class="d-field"><label>申請者</label><span>${fmt(d.submitter_name)}</span></div>
+        <div class="d-field"><label>審査責任者</label><span>${fmt(d.manager_name)}</span></div>
+        <div class="d-field"><label>開始予定日</label><span>${fmt(d.start_date)}</span></div>
+        <div class="d-field"><label>目標完了日</label><span>${fmt(d.due_date)}</span></div>
+        <div class="d-field"><label>関連システム</label><span><span class="sys-id">${fmt(d.related_application_id)}</span></span></div>
+        <div class="d-field"><label>申請部門</label><span>${fmt(d.department_name)}</span></div>
+      </div>
+      <div class="d-field" style="margin-top:8px;"><label>概要</label><span>${fmt(d.description)}</span></div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-card-title">ビジネスケース</div>
+      <div class="d-field" style="margin-bottom:10px;"><label>目的・背景</label><span>${fmt(d.purpose)}</span></div>
+      <div class="d-field" style="margin-bottom:10px;"><label>ビジネスケース</label><span>${fmt(d.business_case)}</span></div>
+      <div class="d-field"><label>期待効果</label><span>${fmt(d.expected_benefit)}</span></div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-card-title">費用計画</div>
+      <div class="demand-detail-grid">
+        <div class="d-field"><label>概算費用</label><span style="font-weight:700;color:var(--accent);">${d.estimated_cost?'¥'+Number(d.estimated_cost).toLocaleString():'-'}</span></div>
+        <div class="d-field"><label>要求予算</label><span style="font-weight:700;color:var(--accent);">${d.requested_budget?'¥'+Number(d.requested_budget).toLocaleString():'-'}</span></div>
+      </div>
+      <div class="d-field"><label>費用備考</label><span>${fmt(d.cost_note)}</span></div>
+    </div>
+
+    <div class="review-card">
+      <div class="review-card-title">審査アクション</div>
+      <div class="form-group">
+        <label>レビューコメント</label>
+        <textarea class="form-control" id="reviewCommentInput" rows="3" placeholder="審査コメントを入力してください">${escHtml(d.review_comment||'')}</textarea>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+        ${d.stage === 'submitted' ? `<button class="btn btn-primary" onclick="startScreening('${d.demand_id}')">🔍 審査開始</button>` : ''}
+        ${d.stage === 'screening' ? `<button class="btn btn-primary" onclick="loadTaskPage('${d.demand_id}')">✅ タスク管理へ</button>` : ''}
+        ${d.stage === 'qualified' || d.stage === 'screening' ? `<button class="btn btn-success" onclick="loadTaskPage('${d.demand_id}')">🎯 承認画面へ</button>` : ''}
+        <button class="btn btn-secondary" onclick="saveReviewComment('${d.demand_id}')">💾 コメント保存</button>
+        <button class="btn btn-danger btn-sm" onclick="openRejectModal()">❌ 差戻し</button>
+      </div>
+    </div>
+  `;
+}
+
+async function startScreening(demandId) {
+  const comment = document.getElementById('reviewCommentInput')?.value || '';
+  try {
+    await apiFetch(`/api/demands/${demandId}/stage`, {method:'PUT', body:{stage:'screening', review_comment:comment}});
+    showToast('審査中に変更しました', 'success');
+    await selectDemandForReview(demandId);
+    demandList = await apiFetch('/api/demands') || demandList;
+    renderReviewLeftPane();
+  } catch(e) { showToast('ステージ変更に失敗しました', 'error'); }
+}
+
+async function saveReviewComment(demandId) {
+  const comment = document.getElementById('reviewCommentInput')?.value || '';
+  try {
+    await apiFetch(`/api/demands/${demandId}`, {method:'PUT', body:{review_comment:comment}});
+    showToast('コメントを保存しました', 'success');
+  } catch(e) { showToast('保存に失敗しました', 'error'); }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// タスク管理
+// ──────────────────────────────────────────────────────────────────
+async function loadTaskPage(demandId) {
+  currentDemandId = demandId;
+  showDemandPage('demand-tasks');
+  try {
+    const [d, tasks] = await Promise.all([
+      apiFetch(`/api/demands/${demandId}`),
+      apiFetch(`/api/demands/${demandId}/tasks`),
+    ]);
+    demandTasks = tasks || [];
+    document.getElementById('taskPageSubtitle').textContent = `${d.demand_id} - ${d.title}`;
+    renderTaskCards();
+  } catch(e) { showToast('タスクの読み込みに失敗しました', 'error'); }
+}
+
+function renderTaskCards() {
+  const el = document.getElementById('taskCardsWrap');
+  if (!demandTasks.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✅</div>タスクがありません。「Claudeでタスク自動生成」で作成できます。</div>`;
+    checkAllTasksDone();
+    return;
+  }
+  const stateLabel = {open:'未着手', inprogress:'進行中', closed:'完了'};
+  el.innerHTML = demandTasks.map(t => `
+    <div class="task-card ${t.state==='closed'?'closed':''}">
+      <div class="task-card-header">
+        <span class="task-state-badge task-state-${t.state}">${stateLabel[t.state]||t.state}</span>
+        <div style="flex:1;margin-left:8px;">
+          <div style="font-size:14px;font-weight:500;color:var(--gray-800);">${escHtml(t.name)}</div>
+          ${t.rationale ? `<div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${escHtml(t.rationale)}</div>` : ''}
+        </div>
+        ${t.ai_generated ? '<span style="font-size:10px;background:#EDE9FE;color:#7C3AED;padding:2px 6px;border-radius:8px;">🤖 AI生成</span>' : ''}
+      </div>
+      <div class="task-meta">
+        <span class="task-meta-item">📅 ${t.due_date||'-'}</span>
+        <span class="task-meta-item">👤 ${escHtml(t.assignee_name||'-')}</span>
+        <span class="task-meta-item">${priorityBadge(t.priority)}</span>
+      </div>
+      ${t.comment ? `<div style="font-size:12px;color:var(--gray-600);margin-top:8px;padding:8px;background:var(--gray-50);border-radius:4px;">${escHtml(t.comment)}</div>` : ''}
+      <div class="task-actions">
+        <select class="task-state-select" onchange="updateTaskState('${t.task_id}', this.value)">
+          <option value="open" ${t.state==='open'?'selected':''}>未着手</option>
+          <option value="inprogress" ${t.state==='inprogress'?'selected':''}>進行中</option>
+          <option value="closed" ${t.state==='closed'?'selected':''}>完了</option>
+        </select>
+      </div>
+    </div>
+  `).join('');
+  checkAllTasksDone();
+}
+
+function checkAllTasksDone() {
+  const allDone = demandTasks.length > 0 && demandTasks.every(t => t.state === 'closed');
+  const btn = document.getElementById('btnToApprove');
+  if (btn) btn.disabled = !allDone;
+}
+
+async function updateTaskState(taskId, newState) {
+  try {
+    await apiFetch(`/api/demands/${currentDemandId}/tasks/${taskId}`, {method:'PUT', body:{state:newState}});
+    const idx = demandTasks.findIndex(t => t.task_id === taskId);
+    if (idx >= 0) demandTasks[idx].state = newState;
+    renderTaskCards();
+    // ステージ更新: 全完了ならqualifiedへ
+    if (demandTasks.every(t => t.state === 'closed')) {
+      await apiFetch(`/api/demands/${currentDemandId}/stage`, {method:'PUT', body:{stage:'qualified'}});
+      showToast('全タスク完了！承認申請に進めます', 'success');
+    }
+  } catch(e) { showToast('タスク更新に失敗しました', 'error'); }
+}
+
+function goToApproveScreen() {
+  loadApproveScreen(currentDemandId);
+}
+
+async function generateTasksWithClaude() {
+  if (!currentDemandId) return;
+  const btn = document.getElementById('btnGenerateTasks');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ 生成中...'; }
+  try {
+    const d = await apiFetch(`/api/demands/${currentDemandId}`);
+    const prompt = `あなたはITデマンド管理の専門家です。以下のITデマンドに対して、審査に必要なタスクリストを作成してください。
+
+デマンド情報:
+- タイトル: ${d.title}
+- カテゴリ: ${d.category||'-'}
+- IT分類: ${d.it_class||'-'}
+- 概要: ${d.description||'-'}
+- ビジネスケース: ${d.business_case||'-'}
+
+以下のJSON形式で、審査タスクを4件返してください（必ずJSONのみ返してください）:
+[
+  {"name": "タスク名", "due_date": "YYYY-MM-DD", "priority": "1 - 最重要", "rationale": "このタスクが必要な理由"},
+  ...
+]
+
+タスクは以下の審査観点を含めてください: セキュリティ審査、アーキテクチャ審査、企画審査、投資審査`;
+
+    const res = await fetch('/api/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{role:'user', content: prompt}],
+      }),
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('Invalid response');
+    const tasks = JSON.parse(jsonMatch[0]);
+    for (const t of tasks) {
+      await apiFetch(`/api/demands/${currentDemandId}/tasks`, {method:'POST', body:{
+        name: t.name,
+        due_date: t.due_date || null,
+        priority: t.priority || '3 - 中',
+        rationale: t.rationale || '',
+        ai_generated: 1,
+        state: 'open',
+      }});
+    }
+    demandTasks = await apiFetch(`/api/demands/${currentDemandId}/tasks`) || [];
+    renderTaskCards();
+    showToast(`${tasks.length}件のタスクを生成しました`, 'success');
+  } catch(e) {
+    // Claudeが利用できない場合は標準タスクを生成
+    const defaultTasks = [
+      {name:'セキュリティ審査', priority:'2 - 高', rationale:'セキュリティポリシー準拠の確認'},
+      {name:'アーキテクチャ審査', priority:'2 - 高', rationale:'技術アーキテクチャの妥当性確認'},
+      {name:'企画審査', priority:'3 - 中', rationale:'ビジネスケースと費用対効果の確認'},
+      {name:'投資審査', priority:'1 - 最重要', rationale:'投資委員会への上程・承認取得'},
+    ];
+    const today = new Date();
+    for (let i = 0; i < defaultTasks.length; i++) {
+      const due = new Date(today);
+      due.setMonth(due.getMonth() + i + 1);
+      await apiFetch(`/api/demands/${currentDemandId}/tasks`, {method:'POST', body:{
+        ...defaultTasks[i],
+        due_date: due.toISOString().slice(0,10),
+        ai_generated: 1,
+        state: 'open',
+      }});
+    }
+    demandTasks = await apiFetch(`/api/demands/${currentDemandId}/tasks`) || [];
+    renderTaskCards();
+    showToast('標準タスクを生成しました', 'success');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🤖 Claudeでタスク自動生成'; }
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────
+// 承認画面
+// ──────────────────────────────────────────────────────────────────
+let approveCurrentDemand = null;
+
+async function loadApproveScreen(demandId) {
+  currentDemandId = demandId;
+  showDemandPage('demand-approve');
+  try {
+    const [d, tasks] = await Promise.all([
+      apiFetch(`/api/demands/${demandId}`),
+      apiFetch(`/api/demands/${demandId}/tasks`),
+    ]);
+    approveCurrentDemand = d;
+    demandTasks = tasks || [];
+    document.getElementById('approvePageSubtitle').textContent = `${d.demand_id} - ${d.title}`;
+    renderApproveTab0(d);
+    renderApproveTab1(tasks);
+    switchApproveTab(0, null);
+  } catch(e) { showToast('データの読み込みに失敗しました', 'error'); }
+}
+
+function switchApproveTab(idx, btn) {
+  document.querySelectorAll('.approve-tab').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.approve-pane').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+
+function renderApproveTab0(d) {
+  const el = document.getElementById('apt-0');
+  if (!el) return;
+  const fmt = v => v ? escHtml(String(v)) : '-';
+  el.innerHTML = `
+    <div class="demand-stage-bar">${renderStageBar(d.stage)}</div>
+    <div class="demand-detail-grid">
+      <div class="d-field"><label>申請番号</label><span class="sys-id">${fmt(d.demand_id)}</span></div>
+      <div class="d-field"><label>タイトル</label><span>${fmt(d.title)}</span></div>
+      <div class="d-field"><label>IT分類</label><span>${fmt(d.it_class)}</span></div>
+      <div class="d-field"><label>カテゴリ</label><span>${fmt(d.category)}</span></div>
+      <div class="d-field"><label>優先度</label><span>${priorityBadge(d.priority)}</span></div>
+      <div class="d-field"><label>実現可能性</label><span>${fmt(d.feasibility)}</span></div>
+      <div class="d-field"><label>概算費用</label><span style="font-weight:700;color:var(--accent);">${d.estimated_cost?'¥'+Number(d.estimated_cost).toLocaleString():'-'}</span></div>
+      <div class="d-field"><label>要求予算</label><span style="font-weight:700;color:var(--accent);">${d.requested_budget?'¥'+Number(d.requested_budget).toLocaleString():'-'}</span></div>
+    </div>
+    <div class="d-field" style="margin-bottom:12px;"><label>ビジネスケース</label><span>${fmt(d.business_case)}</span></div>
+    <div class="d-field"><label>期待効果</label><span>${fmt(d.expected_benefit)}</span></div>
+    ${d.review_comment?`<div style="margin-top:12px;padding:10px 14px;background:#EFF6FF;border-radius:6px;font-size:12px;"><div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px;">審査コメント</div>${escHtml(d.review_comment)}</div>`:''}
+  `;
+}
+
+function renderApproveTab1(tasks) {
+  const el = document.getElementById('apt-1');
+  if (!el) return;
+  const stateLabel = {open:'未着手', inprogress:'進行中', closed:'完了'};
+  const allDone = tasks.length > 0 && tasks.every(t => t.state === 'closed');
+  el.innerHTML = `
+    <div style="margin-bottom:12px;">
+      ${allDone ? '<div style="background:var(--green-light);border:1px solid #6EE7B7;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);font-weight:600;">✅ 全タスクが完了しています。承認可能です。</div>' :
+        '<div style="background:var(--yellow-light);border:1px solid #FCD34D;border-radius:8px;padding:10px 14px;font-size:13px;color:var(--yellow);font-weight:600;">⚠️ 未完了のタスクがあります。</div>'}
+    </div>
+    ${tasks.map(t => `<div class="task-card ${t.state==='closed'?'closed':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:14px;font-weight:500;">${escHtml(t.name)}</span>
+        <span class="task-state-badge task-state-${t.state}">${stateLabel[t.state]||t.state}</span>
+      </div>
+      ${t.comment?`<div style="font-size:12px;color:var(--gray-600);margin-top:6px;">${escHtml(t.comment)}</div>`:''}
+    </div>`).join('')}
+  `;
+}
+
+async function doApproveDemand() {
+  if (!currentDemandId) return;
+  const comment = document.getElementById('approveComment')?.value || '';
+  try {
+    await apiFetch(`/api/demands/${currentDemandId}`, {method:'PUT', body:{approval_comment:comment}});
+    const result = await apiFetch(`/api/demands/${currentDemandId}/approve`, {method:'POST'});
+    document.getElementById('completeMessage').textContent =
+      `デマンド ${currentDemandId} が承認され、プロジェクト ${result.project_id} として登録されました。`;
+    showDemandPage('demand-complete');
+    loadDemandData();
+  } catch(e) { showToast('承認処理に失敗しました', 'error'); }
+}
+
+function openRejectModal() {
+  document.getElementById('rejectReasonInput').value = '';
+  document.getElementById('demandRejectModal').classList.add('open');
+}
+function closeDemandRejectModal() {
+  document.getElementById('demandRejectModal').classList.remove('open');
+}
+async function doRejectDemand() {
+  const reason = document.getElementById('rejectReasonInput')?.value?.trim() || '';
+  if (!reason) { showToast('却下理由を入力してください', 'error'); return; }
+  try {
+    await apiFetch(`/api/demands/${currentDemandId}/reject`, {method:'POST', body:{stage:'rejected', reject_reason:reason}});
+    closeDemandRejectModal();
+    showToast('差戻しを行いました', 'success');
+    showDemandPage('demand-list');
+    loadDemandData();
+  } catch(e) { showToast('差戻し処理に失敗しました', 'error'); }
 }
 
 function selectBubble(appId) {

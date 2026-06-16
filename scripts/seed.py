@@ -130,8 +130,75 @@ CREATE TABLE IF NOT EXISTS apm_request (
         except Exception:
             pass
 
+    # demand/project テーブル作成（存在しない場合）
+    cur.executescript("""
+CREATE TABLE IF NOT EXISTS demand (
+  demand_id      TEXT PRIMARY KEY,
+  title          TEXT NOT NULL,
+  it_class       TEXT,
+  category       TEXT,
+  domain         TEXT,
+  type           TEXT,
+  start_date     DATE,
+  due_date       DATE,
+  submitter_user_id   INTEGER,
+  department_id       INTEGER,
+  manager_user_id     INTEGER,
+  system_owner_user_id INTEGER,
+  pm_user_id          INTEGER,
+  description    TEXT,
+  portfolio      TEXT,
+  program        TEXT,
+  change_type    TEXT,
+  purpose        TEXT,
+  feasibility    TEXT,
+  priority       TEXT,
+  region         TEXT,
+  company        TEXT,
+  business_unit  TEXT,
+  related_application_id TEXT,
+  business_case  TEXT,
+  expected_benefit TEXT,
+  target_date    DATE,
+  estimated_cost INTEGER,
+  requested_budget INTEGER,
+  cost_note      TEXT,
+  notes          TEXT,
+  stage          TEXT DEFAULT 'draft',
+  reject_reason  TEXT,
+  review_comment TEXT,
+  approval_comment TEXT,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS demand_task (
+  task_id        TEXT PRIMARY KEY,
+  demand_id      TEXT,
+  name           TEXT NOT NULL,
+  due_date       DATE,
+  assignee_user_id INTEGER,
+  priority       TEXT,
+  state          TEXT DEFAULT 'open',
+  comment        TEXT,
+  ai_generated   INTEGER DEFAULT 0,
+  rationale      TEXT,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS project (
+  project_id     TEXT PRIMARY KEY,
+  demand_id      TEXT,
+  title          TEXT NOT NULL,
+  status         TEXT DEFAULT 'active',
+  created_date   DATE,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+    """)
+
     # 既存データクリア（FK OFF なので順序自由）
     for table in [
+        "demand_task", "project", "demand",
         "apm_request", "configuration_item", "environment",
         "application_dependency", "application", "user", "department",
     ]:
@@ -590,12 +657,185 @@ CREATE TABLE IF NOT EXISTS apm_request (
             ],
         )
 
+    # ---------- デマンド ----------
+    demands = [
+        {
+            "demand_id": "DMND1001001",
+            "title": "全社工数管理ツールの導入",
+            "it_class": "全社共通",
+            "category": "戦略投資",
+            "domain": "人事・労務",
+            "type": "新規導入",
+            "start_date": "2026-07-01",
+            "due_date": "2027-03-31",
+            "submitter_user_id": user_ids["山田 太郎"],
+            "department_id": dept_ids["人事部"],
+            "manager_user_id": user_ids["佐藤 事務局"],
+            "system_owner_user_id": user_ids["山田 太郎"],
+            "pm_user_id": user_ids["鈴木 一郎"],
+            "description": "全社工数管理ツールを導入し、プロジェクト別・部門別の工数可視化と集計自動化を実現する。",
+            "portfolio": "コーポレートIT",
+            "program": "生産性向上プログラム",
+            "change_type": "新規",
+            "purpose": "月次工数集計工数の削減と正確性向上",
+            "feasibility": "B:高い",
+            "priority": "2 - 高",
+            "region": "国内",
+            "company": "本社",
+            "business_unit": "情報システム部",
+            "related_application_id": "APM-001",
+            "business_case": "ExcelによるT工数管理は月次集計に1人×3日を要している。専用ツール導入により集計自動化を実現する。",
+            "expected_benefit": "月次集計工数を3人日から0.5人日に削減。年間約20人日の削減効果。",
+            "target_date": "2027-04-01",
+            "estimated_cost": 12000000,
+            "requested_budget": 15000000,
+            "cost_note": "初期導入費8M、年間ライセンス4M（3年契約）",
+            "notes": "HR部門との調整が必要。既存Excelとの移行計画を別途策定。",
+            "stage": "screening",
+            "reject_reason": None,
+            "review_comment": "セキュリティ審査完了。アーキテクチャ審査進行中。",
+            "approval_comment": None,
+        },
+        {
+            "demand_id": "DMND1001002",
+            "title": "グローバル購買システムの統合",
+            "it_class": "グローバル展開",
+            "category": "インフラ刷新",
+            "domain": "調達・購買",
+            "type": "更改・移行",
+            "start_date": "2026-10-01",
+            "due_date": "2028-09-30",
+            "submitter_user_id": user_ids["田中 花子"],
+            "department_id": dept_ids["購買部"],
+            "manager_user_id": user_ids["佐藤 事務局"],
+            "system_owner_user_id": user_ids["田中 花子"],
+            "pm_user_id": user_ids["高橋 二郎"],
+            "description": "グローバル購買システムを統合し、各拠点バラバラの購買プロセスを標準化する。",
+            "portfolio": "グローバルERP",
+            "program": "グローバルSCM刷新プログラム",
+            "change_type": "更改",
+            "purpose": "グローバル購買プロセス標準化とコスト削減",
+            "feasibility": "C:中程度",
+            "priority": "1 - 最重要",
+            "region": "グローバル",
+            "company": "グループ全社",
+            "business_unit": "購買部",
+            "related_application_id": "APM-003",
+            "business_case": "現在12拠点で異なるシステムを運用しており、統合により年間運用コストを30%削減見込み。",
+            "expected_benefit": "年間運用コスト約2億円削減。標準購買プロセス適用で調達リードタイム20%短縮。",
+            "target_date": "2028-10-01",
+            "estimated_cost": 85000000,
+            "requested_budget": 100000000,
+            "cost_note": "SAP Ariba ライセンス50M、移行費用35M",
+            "notes": "海外拠点の合意取得が前提条件。法務・コンプライアンス確認必須。",
+            "stage": "submitted",
+            "reject_reason": None,
+            "review_comment": None,
+            "approval_comment": None,
+        },
+        {
+            "demand_id": "DMND1001003",
+            "title": "営業支援CRM導入（国内営業部門）",
+            "it_class": "部門固有",
+            "category": "業務改善",
+            "domain": "営業・マーケティング",
+            "type": "新規導入",
+            "start_date": "2025-10-01",
+            "due_date": "2026-06-30",
+            "submitter_user_id": user_ids["高橋 二郎"],
+            "department_id": dept_ids["営業本部"],
+            "manager_user_id": user_ids["佐藤 事務局"],
+            "system_owner_user_id": user_ids["高橋 二郎"],
+            "pm_user_id": user_ids["鈴木 一郎"],
+            "description": "国内営業部門向けCRMシステムを導入し、顧客管理・商談管理を一元化する。",
+            "portfolio": "営業IT",
+            "program": "営業DXプログラム",
+            "change_type": "新規",
+            "purpose": "商談情報の一元管理と営業活動の可視化",
+            "feasibility": "A:確実",
+            "priority": "2 - 高",
+            "region": "国内",
+            "company": "本社",
+            "business_unit": "営業本部",
+            "related_application_id": "APM-002",
+            "business_case": "Excel・メール管理による非効率を解消。Salesforceで商談管理・予実管理を実現。",
+            "expected_benefit": "営業活動の可視化により受注率10%向上。週次レポート作成工数を2時間から0に削減。",
+            "target_date": "2026-07-01",
+            "estimated_cost": 8000000,
+            "requested_budget": 10000000,
+            "cost_note": "Salesforceライセンス5M/年、カスタマイズ3M",
+            "notes": "全タスク完了済み。プロジェクト化済み。",
+            "stage": "approved",
+            "reject_reason": None,
+            "review_comment": "全審査項目クリア。承認申請へ移行。",
+            "approval_comment": "承認。プロジェクト化を指示。",
+        },
+    ]
+
+    for d in demands:
+        cur.execute(
+            """INSERT INTO demand
+               (demand_id, title, it_class, category, domain, type,
+                start_date, due_date,
+                submitter_user_id, department_id, manager_user_id,
+                system_owner_user_id, pm_user_id,
+                description, portfolio, program, change_type, purpose,
+                feasibility, priority, region, company, business_unit,
+                related_application_id, business_case, expected_benefit,
+                target_date, estimated_cost, requested_budget, cost_note, notes,
+                stage, reject_reason, review_comment, approval_comment)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            [
+                d["demand_id"], d["title"], d["it_class"], d["category"], d["domain"], d["type"],
+                d["start_date"], d["due_date"],
+                d["submitter_user_id"], d["department_id"], d["manager_user_id"],
+                d["system_owner_user_id"], d["pm_user_id"],
+                d["description"], d["portfolio"], d["program"], d["change_type"], d["purpose"],
+                d["feasibility"], d["priority"], d["region"], d["company"], d["business_unit"],
+                d["related_application_id"], d["business_case"], d["expected_benefit"],
+                d["target_date"], d["estimated_cost"], d["requested_budget"], d["cost_note"], d["notes"],
+                d["stage"], d["reject_reason"], d["review_comment"], d["approval_comment"],
+            ],
+        )
+
+    # ---------- デマンドタスク ----------
+    demand_tasks = [
+        # DMND1001001 (screening)
+        ("DMNTSK4001001", "DMND1001001", "セキュリティ審査",       "2026-08-31", user_ids["佐藤 事務局"], "2 - 高",    "closed",     "セキュリティ要件を確認済み。問題なし。", 1, "セキュリティポリシー準拠確認"),
+        ("DMNTSK4001002", "DMND1001001", "アーキテクチャ審査",     "2026-09-30", user_ids["鈴木 一郎"],  "2 - 高",    "inprogress", "クラウドvs.オンプレ検討中",         1, "技術アーキテクチャの妥当性確認"),
+        ("DMNTSK4001003", "DMND1001001", "企画審査",               "2026-10-31", user_ids["山田 太郎"],  "3 - 中",    "open",       None,                                  1, "ビジネスケースと費用対効果の確認"),
+        ("DMNTSK4001004", "DMND1001001", "投資審査",               "2026-11-30", user_ids["佐藤 事務局"], "1 - 最重要", "open",       None,                                  1, "投資委員会への上程・承認取得"),
+        # DMND1001002 (submitted)
+        ("DMNTSK4002001", "DMND1001002", "セキュリティ審査",       "2026-12-31", user_ids["佐藤 事務局"], "1 - 最重要", "open",       None, 1, "グローバルセキュリティ基準適合確認"),
+        ("DMNTSK4002002", "DMND1001002", "アーキテクチャ審査",     "2027-01-31", user_ids["高橋 二郎"],  "1 - 最重要", "open",       None, 1, "統合アーキテクチャ設計の妥当性確認"),
+        # DMND1001003 (approved - all closed)
+        ("DMNTSK4003001", "DMND1001003", "セキュリティ審査",       "2025-11-30", user_ids["佐藤 事務局"], "2 - 高",    "closed",     "Salesforceセキュリティ審査完了。",    1, "SaaS利用基準の確認"),
+        ("DMNTSK4003002", "DMND1001003", "アーキテクチャ審査",     "2025-12-31", user_ids["鈴木 一郎"],  "2 - 高",    "closed",     "API連携設計確認済み。",               1, "既存システムとの連携設計確認"),
+        ("DMNTSK4003003", "DMND1001003", "企画審査",               "2026-01-31", user_ids["高橋 二郎"],  "3 - 中",    "closed",     "ビジネスケース承認。",                1, "ビジネスケース確認"),
+        ("DMNTSK4003004", "DMND1001003", "投資審査",               "2026-02-28", user_ids["佐藤 事務局"], "1 - 最重要", "closed",     "投資委員会承認取得。",                1, "投資委員会承認"),
+    ]
+    for (task_id, demand_id, name, due_date, assignee_id, priority, state, comment, ai_gen, rationale) in demand_tasks:
+        cur.execute(
+            """INSERT INTO demand_task
+               (task_id, demand_id, name, due_date, assignee_user_id, priority, state, comment, ai_generated, rationale)
+               VALUES (?,?,?,?,?,?,?,?,?,?)""",
+            [task_id, demand_id, name, due_date, assignee_id, priority, state, comment, ai_gen, rationale],
+        )
+
+    # ---------- プロジェクト ----------
+    cur.execute(
+        """INSERT INTO project (project_id, demand_id, title, status, created_date)
+           VALUES (?,?,?,?,?)""",
+        ["PROJ00001", "DMND1001003", "営業支援CRM導入（国内営業部門）", "active", "2026-03-01"],
+    )
+
     conn.commit()
     conn.close()
     print("✓ シードデータを投入しました")
     print(f"  部署: {len(departments)}件, ユーザー: {len(users)}件")
     print(f"  アプリケーション: {len(apps)}件 (インフラ含む), 環境: {len(envs)}件")
     print(f"  CI: {len(ci_data)}件, 依存関係: {len(deps)}件, 申請: {len(requests)}件")
+    print(f"  デマンド: {len(demands)}件, タスク: {len(demand_tasks)}件")
 
 
 if __name__ == "__main__":

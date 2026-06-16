@@ -130,3 +130,99 @@ class BubbleDependency(BaseModel):
 class BubbleData(BaseModel):
     apps: list
     dependencies: list
+
+
+class DemandCreate(BaseModel):
+    title: str
+    it_class: Optional[str] = None
+    category: Optional[str] = None
+    domain: Optional[str] = None
+    type: Optional[str] = None
+    start_date: Optional[str] = None
+    due_date: Optional[str] = None
+    submitter_user_id: Optional[int] = None
+    department_id: Optional[int] = None
+    manager_user_id: Optional[int] = None
+    system_owner_user_id: Optional[int] = None
+    pm_user_id: Optional[int] = None
+    description: Optional[str] = None
+    portfolio: Optional[str] = None
+    program: Optional[str] = None
+    change_type: Optional[str] = None
+    purpose: Optional[str] = None
+    feasibility: Optional[str] = None
+    priority: Optional[str] = None
+    region: Optional[str] = None
+    company: Optional[str] = None
+    business_unit: Optional[str] = None
+    related_application_id: Optional[str] = None
+    business_case: Optional[str] = None
+    expected_benefit: Optional[str] = None
+    target_date: Optional[str] = None
+    estimated_cost: Optional[int] = None
+    requested_budget: Optional[int] = None
+    cost_note: Optional[str] = None
+    notes: Optional[str] = None
+    stage: Optional[str] = 'draft'
+
+
+class DemandUpdate(BaseModel):
+    title: Optional[str] = None
+    it_class: Optional[str] = None
+    category: Optional[str] = None
+    domain: Optional[str] = None
+    type: Optional[str] = None
+    start_date: Optional[str] = None
+    due_date: Optional[str] = None
+    submitter_user_id: Optional[int] = None
+    department_id: Optional[int] = None
+    manager_user_id: Optional[int] = None
+    system_owner_user_id: Optional[int] = None
+    pm_user_id: Optional[int] = None
+    description: Optional[str] = None
+    portfolio: Optional[str] = None
+    program: Optional[str] = None
+    change_type: Optional[str] = None
+    purpose: Optional[str] = None
+    feasibility: Optional[str] = None
+    priority: Optional[str] = None
+    region: Optional[str] = None
+    company: Optional[str] = None
+    business_unit: Optional[str] = None
+    related_application_id: Optional[str] = None
+    business_case: Optional[str] = None
+    expected_benefit: Optional[str] = None
+    target_date: Optional[str] = None
+    estimated_cost: Optional[int] = None
+    requested_budget: Optional[int] = None
+    cost_note: Optional[str] = None
+    notes: Optional[str] = None
+    review_comment: Optional[str] = None
+    approval_comment: Optional[str] = None
+
+
+class DemandStageUpdate(BaseModel):
+    stage: str
+    reject_reason: Optional[str] = None
+    review_comment: Optional[str] = None
+    approval_comment: Optional[str] = None
+
+
+class DemandTaskCreate(BaseModel):
+    name: str
+    due_date: Optional[str] = None
+    assignee_user_id: Optional[int] = None
+    priority: Optional[str] = None
+    state: Optional[str] = 'open'
+    comment: Optional[str] = None
+    ai_generated: Optional[int] = 0
+    rationale: Optional[str] = None
+
+
+class DemandTaskUpdate(BaseModel):
+    name: Optional[str] = None
+    due_date: Optional[str] = None
+    assignee_user_id: Optional[int] = None
+    priority: Optional[str] = None
+    state: Optional[str] = None
+    comment: Optional[str] = None

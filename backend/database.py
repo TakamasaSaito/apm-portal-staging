@@ -17,6 +17,69 @@ async def init_db():
         await db.executescript("""
 PRAGMA foreign_keys = ON;
 
+CREATE TABLE IF NOT EXISTS demand (
+  demand_id      TEXT PRIMARY KEY,
+  title          TEXT NOT NULL,
+  it_class       TEXT,
+  category       TEXT,
+  domain         TEXT,
+  type           TEXT,
+  start_date     DATE,
+  due_date       DATE,
+  submitter_user_id   INTEGER REFERENCES user(user_id),
+  department_id       INTEGER REFERENCES department(department_id),
+  manager_user_id     INTEGER REFERENCES user(user_id),
+  system_owner_user_id INTEGER REFERENCES user(user_id),
+  pm_user_id          INTEGER REFERENCES user(user_id),
+  description    TEXT,
+  portfolio      TEXT,
+  program        TEXT,
+  change_type    TEXT,
+  purpose        TEXT,
+  feasibility    TEXT,
+  priority       TEXT,
+  region         TEXT,
+  company        TEXT,
+  business_unit  TEXT,
+  related_application_id TEXT,
+  business_case  TEXT,
+  expected_benefit TEXT,
+  target_date    DATE,
+  estimated_cost INTEGER,
+  requested_budget INTEGER,
+  cost_note      TEXT,
+  notes          TEXT,
+  stage          TEXT DEFAULT 'draft',
+  reject_reason  TEXT,
+  review_comment TEXT,
+  approval_comment TEXT,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS demand_task (
+  task_id        TEXT PRIMARY KEY,
+  demand_id      TEXT REFERENCES demand(demand_id),
+  name           TEXT NOT NULL,
+  due_date       DATE,
+  assignee_user_id INTEGER REFERENCES user(user_id),
+  priority       TEXT,
+  state          TEXT DEFAULT 'open',
+  comment        TEXT,
+  ai_generated   INTEGER DEFAULT 0,
+  rationale      TEXT,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS project (
+  project_id     TEXT PRIMARY KEY,
+  demand_id      TEXT REFERENCES demand(demand_id),
+  title          TEXT NOT NULL,
+  status         TEXT DEFAULT 'active',
+  created_date   DATE,
+  created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS department (
     department_id   INTEGER PRIMARY KEY AUTOINCREMENT,
     department_name TEXT NOT NULL UNIQUE
