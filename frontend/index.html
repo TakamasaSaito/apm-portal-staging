@@ -1542,6 +1542,13 @@ function showPage(page, navEl) {
   if (page === 'approval') renderApprovalList();
 }
 function showSidebarView(view, el) {
+  // デマンド系ページ等から戻ってきた場合に page-home を確実に表示する
+  ALL_PAGES.forEach(p => {
+    const pg = document.getElementById('page-' + p);
+    if (pg) pg.style.display = (p === 'home') ? 'block' : 'none';
+  });
+  currentPage = 'home';
+
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   if (el) el.classList.add('active');
   const isDash = view === 'dashboard';
@@ -1551,6 +1558,7 @@ function showSidebarView(view, el) {
   document.getElementById('view-envs').style.display         = view === 'envs'         ? 'block' : 'none';
   document.getElementById('view-ci').style.display           = view === 'ci'           ? 'block' : 'none';
   document.getElementById('view-ci-relations').style.display = view === 'ci-relations' ? 'block' : 'none';
+  if (view === 'apps')          renderAppTable();
   if (view === 'envs')          renderEnvTable();
   if (view === 'ci')            initCiView();
   if (view === 'ci-relations')  loadCiRelations();
