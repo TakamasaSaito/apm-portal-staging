@@ -2054,11 +2054,23 @@ function _buildNetworkSVG(d, containerW) {
   const C_DEP_FILL = '#f5f0ff', C_DEP_STROKE = '#9b7ee8', C_DEP_TEXT = '#3d2a8a';
   const C_DMD_FILL = '#f0fff8', C_DMD_STROKE = '#00b894', C_DMD_TEXT = '#00694d';
 
-  // Polar → absolute XY
+  // Polar → absolute XY (from system center)
   const p2xy = (r, deg) => ({
     x: cx + r * Math.cos(deg * Math.PI / 180),
     y: cy + r * Math.sin(deg * Math.PI / 180),
   });
+
+  // Compute edge endpoints on the circumference of two circles
+  // Returns {sx,sy} on circle-A surface, {ex,ey} on circle-B surface
+  const edgePts = (x1, y1, r1, x2, y2, r2) => {
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    return {
+      sx: x1 + r1 * Math.cos(angle),
+      sy: y1 + r1 * Math.sin(angle),
+      ex: x2 - r2 * Math.cos(angle),
+      ey: y2 - r2 * Math.sin(angle),
+    };
+  };
 
   // Evenly spaced angles in [startDeg, endDeg]
   const arcAngles = (n, s, e) => {
@@ -2067,25 +2079,33 @@ function _buildNetworkSVG(d, containerW) {
     return Array.from({length: n}, (_, i) => s + (e - s) * i / (n - 1));
   };
 
+  // Truncate label to fit inside a node (maxChars based on radius), append '…' if cut
+  const fitLabel = (text, maxChars) => {
+    const s = String(text || '');
+    return s.length <= maxChars ? s : s.slice(0, maxChars - 1) + '…';
+  };
+
   // Environment arc: upper half (angles around 270° = straight up in SVG)
   const envAngles = arcAngles(envList.length, 200, 340);
-  // Dependency arc: lower right
+  // Dependency arc: lower half
   const depAngles = arcAngles(depList.length, 30, 150);
-  // Demand arc: lower center (further out to avoid overlap with deps)
+  // Demand arc: lower center (further radius to avoid overlap with deps)
   const dmdAngles = arcAngles(dmdList.length, 60, 120);
 
   // Dependency type → edge color
   const depEdgeColor = t => ({auth:'#3B82F6',infra:'#8B5CF6',api:'#10B981',migration:'#EF4444',data:'#F59E0B'}[t] || C_DEP_STROKE);
 
+  const f = v => Number(v).toFixed(1);
   let edges = [], nodes = [];
 
   // ── System node ──
-  const sysName = (app.application_name||'').slice(0, 11);
-  const sysId   = (app.application_id  ||'');
+  const sysName = fitLabel(app.application_name, 11);
+  const sysId   = fitLabel(app.application_id,   9);
   nodes.push(`<g>
-    <circle cx="${cx}" cy="${cy}" r="${R_SYS}" fill="${C_SYS_FILL}" stroke="${C_SYS_STROKE}" stroke-width="2.5"/>
-    <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700" font-family="sans-serif">${escHtml(sysName)}</text>
-    <text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,.82)" font-family="monospace">${escHtml(sysId)}</text>
+    <title>${escHtml(app.application_name||'')} (${escHtml(app.application_id||'')})</title>
+    <circle cx="${f(cx)}" cy="${f(cy)}" r="${R_SYS}" fill="${C_SYS_FILL}" stroke="${C_SYS_STROKE}" stroke-width="2.5"/>
+    <text x="${f(cx)}" y="${f(cy-8)}" text-anchor="middle" font-size="11" fill="#fff" font-weight="700" font-family="sans-serif">${escHtml(sysName)}</text>
+    <text x="${f(cx)}" y="${f(cy+8)}" text-anchor="middle" font-size="8.5" fill="rgba(255,255,255,.82)" font-family="monospace">${escHtml(sysId)}</text>
   </g>`);
 
   // ── Environment nodes + CI nodes ──
@@ -2093,14 +2113,16 @@ function _buildNetworkSVG(d, containerW) {
     const ea = envAngles[i];
     const ep = p2xy(D_ENV, ea);
 
-    // Edge: system → env (solid)
-    edges.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${ep.x.toFixed(1)}" y2="${ep.y.toFixed(1)}" stroke="${C_ENV_STROKE}" stroke-width="2" opacity=".7"/>`);
+    // Edge: system → env circumference (solid)
+    const se = edgePts(cx, cy, R_SYS, ep.x, ep.y, R_ENV);
+    edges.push(`<line x1="${f(se.sx)}" y1="${f(se.sy)}" x2="${f(se.ex)}" y2="${f(se.ey)}" stroke="${C_ENV_STROKE}" stroke-width="2" opacity=".7"/>`);
 
-    const envLbl = (env.env_type||'').replace('環境','').slice(0, 8);
+    const envLbl = fitLabel((env.env_type||'').replace('環境',''), 7);
     nodes.push(`<g cursor="pointer" onclick="closeDetailPanel();openEnvDetail(${env.environment_id})">
-      <circle cx="${ep.x.toFixed(1)}" cy="${ep.y.toFixed(1)}" r="${R_ENV}" fill="${C_ENV_FILL}" stroke="${C_ENV_STROKE}" stroke-width="2"/>
-      <text x="${ep.x.toFixed(1)}" y="${(ep.y-4).toFixed(1)}" text-anchor="middle" font-size="9" fill="${C_ENV_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(envLbl)}</text>
-      <text x="${ep.x.toFixed(1)}" y="${(ep.y+8).toFixed(1)}" text-anchor="middle" font-size="7.5" fill="${C_ENV_STROKE}" font-family="sans-serif">env</text>
+      <title>${escHtml(env.env_type||'')}</title>
+      <circle cx="${f(ep.x)}" cy="${f(ep.y)}" r="${R_ENV}" fill="${C_ENV_FILL}" stroke="${C_ENV_STROKE}" stroke-width="2"/>
+      <text x="${f(ep.x)}" y="${f(ep.y-4)}" text-anchor="middle" font-size="9" fill="${C_ENV_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(envLbl)}</text>
+      <text x="${f(ep.x)}" y="${f(ep.y+8)}" text-anchor="middle" font-size="7.5" fill="${C_ENV_STROKE}" font-family="sans-serif">env</text>
     </g>`);
 
     // CI nodes
@@ -2109,29 +2131,37 @@ function _buildNetworkSVG(d, containerW) {
     cis.forEach((ci, j) => {
       const ca = ciAng[j];
       const cp = p2xy(D_CI, ca);
-      const cp_env = p2xy(D_ENV + R_ENV, ca); // edge start = env surface
-      // Edge: env → CI (dashed)
-      edges.push(`<line x1="${cp_env.x.toFixed(1)}" y1="${cp_env.y.toFixed(1)}" x2="${cp.x.toFixed(1)}" y2="${cp.y.toFixed(1)}" stroke="${C_CI_STROKE}" stroke-width="1.5" stroke-dasharray="4,3" opacity=".6"/>`);
-      const ciLbl = (ci.ci_name||'').slice(0, 7);
+
+      // Edge: env node surface → CI node surface (dashed)
+      const ce = edgePts(ep.x, ep.y, R_ENV, cp.x, cp.y, R_CI);
+      edges.push(`<line x1="${f(ce.sx)}" y1="${f(ce.sy)}" x2="${f(ce.ex)}" y2="${f(ce.ey)}" stroke="${C_CI_STROKE}" stroke-width="1.5" stroke-dasharray="4,3" opacity=".6"/>`);
+
+      const ciLbl = fitLabel(ci.ci_name, 6);
       nodes.push(`<g cursor="pointer" onclick="closeDetailPanel();openCiViewForEnv(${env.environment_id},'${env.env_type.replace(/'/g,'&#39;')}')">
-        <circle cx="${cp.x.toFixed(1)}" cy="${cp.y.toFixed(1)}" r="${R_CI}" fill="${C_CI_FILL}" stroke="${C_CI_STROKE}" stroke-width="1.5"/>
-        <text x="${cp.x.toFixed(1)}" y="${cp.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="${C_CI_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(ciLbl)}</text>
+        <title>${escHtml(ci.ci_name||'')}</title>
+        <circle cx="${f(cp.x)}" cy="${f(cp.y)}" r="${R_CI}" fill="${C_CI_FILL}" stroke="${C_CI_STROKE}" stroke-width="1.5"/>
+        <text x="${f(cp.x)}" y="${f(cp.y)}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="${C_CI_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(ciLbl)}</text>
       </g>`);
     });
   });
 
   // ── Dependency nodes ──
   depList.forEach((dep, i) => {
-    const da  = depAngles[i];
-    const dp  = p2xy(D_DEP, da);
-    const ec  = depEdgeColor(dep.dependency_type);
-    edges.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${dp.x.toFixed(1)}" y2="${dp.y.toFixed(1)}" stroke="${ec}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".65"/>`);
-    const nm  = (dep.depends_on_name||dep.depends_on_app_id||'').slice(0,11);
-    const idl = (dep.depends_on_app_id||'').slice(0, 9);
+    const da = depAngles[i];
+    const dp = p2xy(D_DEP, da);
+    const ec = depEdgeColor(dep.dependency_type);
+
+    // Edge: system → dep circumference (dashed)
+    const de = edgePts(cx, cy, R_SYS, dp.x, dp.y, R_DEP);
+    edges.push(`<line x1="${f(de.sx)}" y1="${f(de.sy)}" x2="${f(de.ex)}" y2="${f(de.ey)}" stroke="${ec}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".65"/>`);
+
+    const nm  = fitLabel(dep.depends_on_name || dep.depends_on_app_id, 10);
+    const idl = fitLabel(dep.depends_on_app_id, 9);
     nodes.push(`<g cursor="pointer" onclick="openDetail('${escHtml(dep.depends_on_app_id)}')">
-      <circle cx="${dp.x.toFixed(1)}" cy="${dp.y.toFixed(1)}" r="${R_DEP}" fill="${C_DEP_FILL}" stroke="${C_DEP_STROKE}" stroke-width="2"/>
-      <text x="${dp.x.toFixed(1)}" y="${(dp.y-7).toFixed(1)}" text-anchor="middle" font-size="9" fill="${C_DEP_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(nm)}</text>
-      <text x="${dp.x.toFixed(1)}" y="${(dp.y+6).toFixed(1)}" text-anchor="middle" font-size="7.5" fill="${C_DEP_STROKE}" font-family="monospace">${escHtml(idl)}</text>
+      <title>${escHtml(dep.depends_on_name||'')} (${escHtml(dep.depends_on_app_id||'')})</title>
+      <circle cx="${f(dp.x)}" cy="${f(dp.y)}" r="${R_DEP}" fill="${C_DEP_FILL}" stroke="${C_DEP_STROKE}" stroke-width="2"/>
+      <text x="${f(dp.x)}" y="${f(dp.y-7)}" text-anchor="middle" font-size="9" fill="${C_DEP_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(nm)}</text>
+      <text x="${f(dp.x)}" y="${f(dp.y+6)}" text-anchor="middle" font-size="7.5" fill="${C_DEP_STROKE}" font-family="monospace">${escHtml(idl)}</text>
     </g>`);
   });
 
@@ -2139,12 +2169,17 @@ function _buildNetworkSVG(d, containerW) {
   dmdList.forEach((dm, i) => {
     const ma = dmdAngles[i];
     const mp = p2xy(D_DMD, ma);
-    edges.push(`<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${mp.x.toFixed(1)}" y2="${mp.y.toFixed(1)}" stroke="${C_DMD_STROKE}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".6"/>`);
-    const tl = (dm.title||'').slice(0, 9);
+
+    // Edge: system → demand circumference (dashed)
+    const me = edgePts(cx, cy, R_SYS, mp.x, mp.y, R_DMD);
+    edges.push(`<line x1="${f(me.sx)}" y1="${f(me.sy)}" x2="${f(me.ex)}" y2="${f(me.ey)}" stroke="${C_DMD_STROKE}" stroke-width="1.5" stroke-dasharray="5,4" opacity=".6"/>`);
+
+    const tl = fitLabel(dm.title, 8);
     nodes.push(`<g cursor="pointer" onclick="showDemandDetailById('${escHtml(dm.demand_id)}')">
-      <circle cx="${mp.x.toFixed(1)}" cy="${mp.y.toFixed(1)}" r="${R_DMD}" fill="${C_DMD_FILL}" stroke="${C_DMD_STROKE}" stroke-width="2"/>
-      <text x="${mp.x.toFixed(1)}" y="${(mp.y-5).toFixed(1)}" text-anchor="middle" font-size="8.5" fill="${C_DMD_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(tl)}</text>
-      <text x="${mp.x.toFixed(1)}" y="${(mp.y+7).toFixed(1)}" text-anchor="middle" font-size="7.5" fill="${C_DMD_STROKE}" font-family="sans-serif">demand</text>
+      <title>${escHtml(dm.title||'')}</title>
+      <circle cx="${f(mp.x)}" cy="${f(mp.y)}" r="${R_DMD}" fill="${C_DMD_FILL}" stroke="${C_DMD_STROKE}" stroke-width="2"/>
+      <text x="${f(mp.x)}" y="${f(mp.y-5)}" text-anchor="middle" font-size="8.5" fill="${C_DMD_TEXT}" font-weight="600" font-family="sans-serif">${escHtml(tl)}</text>
+      <text x="${f(mp.x)}" y="${f(mp.y+7)}" text-anchor="middle" font-size="7.5" fill="${C_DMD_STROKE}" font-family="sans-serif">demand</text>
     </g>`);
   });
 
