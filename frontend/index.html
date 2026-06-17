@@ -437,7 +437,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <div class="kpi-card kpi-yellow"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
             <div class="kpi-card kpi-red"><div class="kpi-label">廃止予定</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">12ヶ月以内</div></div>
             <div class="kpi-card kpi-blue"><div class="kpi-label">環境数</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
-            <div class="kpi-card kpi-orange kpi-clickable" onclick="openRetirementModal()"><div class="kpi-label">⚠️ 廃止リスク</div><div class="kpi-value" id="kpiRetirementRisk">-</div><div class="kpi-sub">未対応の依存システム</div></div>
+            <div class="kpi-card kpi-orange kpi-clickable" onclick="openRetirementModal()"><div class="kpi-label">⚠️ 廃止リスク（要対応インフラ数）</div><div class="kpi-value" id="kpiRetirementRisk">-</div><div class="kpi-sub">未対応の依存システムあり</div></div>
           </div>
           <div class="charts-row">
             <div class="chart-card"><div class="chart-title">ステータス別アプリ数</div><canvas id="statusChart"></canvas></div>
@@ -3345,7 +3345,7 @@ async function loadRetirementReadiness() {
 
 function renderRetirementKpi(d) {
   const el = document.getElementById('kpiRetirementRisk');
-  if (el) el.textContent = d.total_not_ready;
+  if (el) el.textContent = (d.retiring_infra || []).filter(r => r.not_ready_count > 0).length;
 }
 
 function openRetirementModal() {
