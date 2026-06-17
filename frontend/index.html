@@ -433,10 +433,10 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <!-- Tab 概要 -->
         <div id="dash-overview">
           <div class="kpi-grid">
-            <div class="kpi-card kpi-green"><div class="kpi-label">本番稼働中</div><div class="kpi-value" id="kpiRunning">-</div><div class="kpi-sub">アプリケーション</div></div>
-            <div class="kpi-card kpi-yellow"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
-            <div class="kpi-card kpi-red"><div class="kpi-label">廃止予定</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">12ヶ月以内</div></div>
-            <div class="kpi-card kpi-blue"><div class="kpi-label">環境数</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
+            <div class="kpi-card kpi-green kpi-clickable" onclick="gotoAppsWithFilter('running')"><div class="kpi-label">本番稼働中</div><div class="kpi-value" id="kpiRunning">-</div><div class="kpi-sub">アプリケーション</div></div>
+            <div class="kpi-card kpi-yellow kpi-clickable" onclick="gotoApprovalPage()"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
+            <div class="kpi-card kpi-red kpi-clickable" onclick="gotoAppsWithFilter('plan_dev')"><div class="kpi-label">企画・開発中</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">企画 + 開発中</div></div>
+            <div class="kpi-card kpi-blue kpi-clickable" onclick="gotoEnvsView()"><div class="kpi-label">システム環境</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
             <div class="kpi-card kpi-orange kpi-clickable" onclick="openRetirementModal()"><div class="kpi-label">⚠️ 廃止リスク（要対応インフラ数）</div><div class="kpi-value" id="kpiRetirementRisk">-</div><div class="kpi-sub">未対応の依存システムあり</div></div>
           </div>
           <div class="charts-row">
@@ -507,6 +507,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <select class="filter-select" id="filterStatus" onchange="appPage=1;renderAppTable()">
             <option value="">すべてのステータス</option>
             <option value="running">本番稼働中</option>
+            <option value="plan_dev">企画・開発中</option>
             <option value="dev">開発中</option>
             <option value="plan">企画</option>
             <option value="order">発注中</option>
@@ -1648,6 +1649,20 @@ function showSidebarView(view, el) {
   if (view === 'ci-relations')  { loadCiRelations(); loadAppDependencies(); }
   if (isDash && bubbleData)     renderBubbleChart();
 }
+function gotoAppsWithFilter(status) {
+  document.getElementById('filterStatus').value = status;
+  appPage = 1;
+  showSidebarView('apps', document.getElementById('sb-apps'));
+}
+
+function gotoApprovalPage() {
+  showPage('approval', document.querySelector('.nav-item[onclick*="approval"]'));
+}
+
+function gotoEnvsView() {
+  showSidebarView('envs', document.getElementById('sb-envs'));
+}
+
 function highlightSidebar(id) {
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   if (id) document.getElementById(id)?.classList.add('active');
@@ -1661,7 +1676,7 @@ function renderAppTable() {
   const dp = document.getElementById('filterDept').value;
   const filtered = apps.filter(a => {
     const matchQ  = !q  || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || a.dept.toLowerCase().includes(q);
-    const matchSt = !st || a.status === st;
+    const matchSt = !st || (st === 'plan_dev' ? (a.status === 'plan' || a.status === 'dev') : a.status === st);
     const matchDp = !dp || a.dept === dp;
     return matchQ && matchSt && matchDp;
   });
@@ -3428,7 +3443,7 @@ async function loadBubbleData() {
 function renderDashboardSummary(d) {
   document.getElementById('kpiRunning').textContent  = d.status_counts['running'] || 0;
   document.getElementById('kpiPending').textContent  = d.pending_requests;
-  document.getElementById('kpiRetiring').textContent = d.retiring_soon.length;
+  document.getElementById('kpiRetiring').textContent = (d.status_counts['plan'] || 0) + (d.status_counts['dev'] || 0);
   document.getElementById('kpiEnvs').textContent     = d.env_count;
   renderStatusChart(d.status_counts);
   renderCategoryChart(d.category_counts);
