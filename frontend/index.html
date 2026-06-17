@@ -336,12 +336,51 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .ov-tree-dmd-stage{font-size:10px;color:#00b894;}
 /* ─── ネットワーク表示 ─── */
 .ov-net-wrap{border-radius:8px;overflow:hidden;background:#fafbfc;border:1px solid var(--gray-200);}
+/* ── ハンバーガーメニュー ── */
+.hamburger-btn{display:none;flex-direction:column;gap:5px;width:36px;height:36px;align-items:center;justify-content:center;background:rgba(255,255,255,.1);border:none;border-radius:6px;cursor:pointer;flex-shrink:0;}
+.hamburger-btn span{display:block;width:18px;height:2px;background:var(--white);border-radius:1px;transition:all .2s;}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:140;}
+.sidebar-backdrop.show{display:block;}
+/* ── レスポンシブ (768px以下) ── */
+@media(max-width:768px){
+  .hamburger-btn{display:flex;}
+  .header-nav{display:none;}
+  .user-label{display:none;}
+  .user-toggle{display:none;}
+  .sidebar{position:fixed;left:-240px;top:56px;height:calc(100vh - 56px);z-index:150;transition:left .25s;overflow-y:auto;}
+  .sidebar.open{left:0;box-shadow:4px 0 20px rgba(0,0,0,.15);}
+  .content{padding:12px;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);padding:12px 12px 0;gap:10px;}
+  .kpi-value{font-size:28px;}
+  .kpi-label{font-size:10px;}
+  .charts-row{grid-template-columns:1fr;padding:10px 12px;gap:10px;}
+  .filter-bar{flex-direction:column;}
+  .filter-select{width:100%;box-sizing:border-box;}
+  .pagination-bar .pg-nav button{padding:8px 14px;font-size:13px;min-height:40px;}
+  .bubble-filter-bar{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding:10px 12px;}
+  .bubble-main{flex-direction:column;}
+  .bubble-detail-panel{width:100%;border-left:none;border-top:1px solid var(--gray-200);max-height:none;}
+  .bubble-svg-wrap svg{width:100% !important;}
+  .mobile-card-table thead{display:none;}
+  .mobile-card-table tbody tr{display:block;margin-bottom:10px;border:1px solid var(--gray-200);border-radius:8px;background:var(--white);overflow:hidden;}
+  .mobile-card-table td{display:flex;flex-direction:column;padding:8px 12px;border-bottom:1px solid var(--gray-100);border-right:none;font-size:13px;}
+  .mobile-card-table td::before{content:attr(data-label);font-size:10px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
+  .mobile-card-table td[data-hide]{display:none;}
+  .table-search-wrap{flex-wrap:wrap;gap:6px;}
+  .modal{width:calc(100vw - 24px);max-width:none;}
+  .detail-panel{width:100vw;}
+  .approval-modal{width:calc(100vw - 24px);}
+  .retiring-section{padding:0 12px 16px;}
+}
 </style>
 </head>
 <body>
 
 <header class="header">
   <div class="header-left">
+    <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="メニュー">
+      <span></span><span></span><span></span>
+    </button>
     <div class="header-logo">APM <span>Portal</span></div>
     <nav class="header-nav">
       <div class="nav-item active" onclick="showPage('home',this)">ホーム</div>
@@ -361,6 +400,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 </header>
 
 <div class="main">
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
   <aside class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-item active" id="sb-dashboard" onclick="showSidebarView('dashboard',this)">
@@ -529,7 +569,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </select>
         </div>
         <div class="table-scroll-wrap" style="margin-top:8px;">
-        <table id="appTable">
+        <table id="appTable" class="mobile-card-table">
           <thead><tr>
             <th style="min-width:90px">システムID</th><th style="min-width:180px">アプリケーション名</th><th style="min-width:100px">所属部門</th>
             <th style="min-width:110px">ステータス</th><th style="min-width:200px">カテゴリ</th><th style="min-width:120px">ビジネスオーナー</th><th style="min-width:120px">環境</th><th style="min-width:120px">サービス開始</th><th style="min-width:110px">廃止予定日</th>
@@ -549,7 +589,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </div>
         </div>
         <div class="table-scroll-wrap">
-        <table id="envTable">
+        <table id="envTable" class="mobile-card-table">
           <thead><tr>
             <th style="min-width:200px">対象アプリ</th><th style="min-width:120px">環境種別</th><th style="min-width:150px">ロケーション</th>
             <th style="min-width:140px">IPアドレス</th><th style="min-width:120px">OS</th><th style="min-width:120px">CPU/MEM</th><th style="min-width:70px">操作</th>
@@ -591,7 +631,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </select>
         </div>
         <div class="table-scroll-wrap" style="margin-top:8px;">
-        <table id="ciTable">
+        <table id="ciTable" class="mobile-card-table">
           <thead><tr>
             <th style="min-width:200px">CI名</th><th style="min-width:100px">種別</th><th style="min-width:180px">ホスト名</th><th style="min-width:130px">IPアドレス</th><th style="min-width:130px">OS</th><th style="min-width:100px">ステータス</th><th style="min-width:120px">操作</th>
           </tr></thead>
@@ -744,7 +784,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <div class="table-card" style="margin-bottom:20px;">
         <div class="table-header"><span class="table-header-title">デマンド一覧</span></div>
         <div class="table-scroll-wrap">
-          <table id="demandTable">
+          <table id="demandTable" class="mobile-card-table">
             <thead><tr>
               <th style="min-width:110px">申請番号</th>
               <th style="min-width:220px">タイトル</th>
@@ -1626,9 +1666,22 @@ function doLogout() {
   showLoginPage();
 }
 
+// ========== モバイルサイドバー ==========
+function toggleSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sidebarBackdrop');
+  const open = sb.classList.toggle('open');
+  bd.classList.toggle('show', open);
+}
+function closeSidebar() {
+  document.querySelector('.sidebar')?.classList.remove('open');
+  document.getElementById('sidebarBackdrop')?.classList.remove('show');
+}
+
 // ========== ページ切り替え ==========
 const ALL_PAGES = ['home','history','approval','demand-list','demand-form','demand-review','demand-tasks','demand-approve','demand-complete'];
 function showPage(page, navEl) {
+  if (window.innerWidth <= 768) closeSidebar();
   currentPage = page;
   ALL_PAGES.forEach(p => {
     const el = document.getElementById('page-' + p);
@@ -1640,6 +1693,7 @@ function showPage(page, navEl) {
   if (page === 'approval') renderApprovalList();
 }
 function showSidebarView(view, el) {
+  if (window.innerWidth <= 768) closeSidebar();
   // デマンド系ページ等から戻ってきた場合に page-home を確実に表示する
   ALL_PAGES.forEach(p => {
     const pg = document.getElementById('page-' + p);
@@ -1717,15 +1771,15 @@ function renderAppTable() {
       ? app.startActual
       : app.startPlan + '<span style="color:var(--gray-400)">(予定)</span>';
     return `<tr class="clickable" onclick="openDetail('${app.id}')">
-      <td><span class="sys-id">${app.id}</span></td>
-      <td><strong>${escHtml(app.name)}</strong></td>
-      <td>${escHtml(app.dept)}</td>
-      <td><span class="badge ${st2.cls}">${st2.label}</span></td>
-      <td style="font-size:11px;color:var(--gray-600);">${app.appCategory !== '-' ? escHtml(app.appCategory) : '<span style="color:var(--gray-400);">－</span>'}</td>
-      <td>${escHtml(app.bizOwner)}</td>
-      <td><div class="env-chips">${chips||'<span style="color:var(--gray-400);font-size:11px;">－</span>'}</div></td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${startDisp}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${app.endPlan !== '-' ? escHtml(app.endPlan) : '<span style="color:var(--gray-400);">－</span>'}</td>
+      <td data-label="ID"><span class="sys-id">${app.id}</span></td>
+      <td data-label="名前"><strong>${escHtml(app.name)}</strong></td>
+      <td data-label="部門" data-hide="1">${escHtml(app.dept)}</td>
+      <td data-label="ステータス"><span class="badge ${st2.cls}">${st2.label}</span></td>
+      <td data-label="カテゴリ" data-hide="1" style="font-size:11px;color:var(--gray-600);">${app.appCategory !== '-' ? escHtml(app.appCategory) : '<span style="color:var(--gray-400);">－</span>'}</td>
+      <td data-label="担当者" data-hide="1">${escHtml(app.bizOwner)}</td>
+      <td data-label="環境" data-hide="1"><div class="env-chips">${chips||'<span style="color:var(--gray-400);font-size:11px;">－</span>'}</div></td>
+      <td data-label="開始日" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${startDisp}</td>
+      <td data-label="廃止予定" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${app.endPlan !== '-' ? escHtml(app.endPlan) : '<span style="color:var(--gray-400);">－</span>'}</td>
     </tr>`;
   }).join('');
   makeResizable(document.getElementById('appTable'));
@@ -1751,13 +1805,13 @@ function renderEnvTable() {
     return;
   }
   tbody.innerHTML = paged.map(e => `<tr class="clickable" onclick="openEnvDetail(${e.envId})">
-    <td><span class="sys-id">${e.appId}</span> ${escHtml(e.appName)}</td>
-    <td><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
-    <td>${escHtml(e.loc)}</td>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(e.ip)}</td>
-    <td>${escHtml(e.os)}</td>
-    <td>${escHtml(e.cpu)}</td>
-    <td><button class="btn btn-sm" style="background:var(--red-light);color:var(--red);border:1px solid #FCA5A5;font-size:11px;"
+    <td data-label="システム"><span class="sys-id">${e.appId}</span> ${escHtml(e.appName)}</td>
+    <td data-label="環境種別"><span class="env-chip ${envTypeClass[e.type]||'env-dev'}">${e.type}</span></td>
+    <td data-label="ロケーション">${escHtml(e.loc)}</td>
+    <td data-label="IP" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(e.ip)}</td>
+    <td data-label="OS" data-hide="1">${escHtml(e.os)}</td>
+    <td data-label="CPU/MEM" data-hide="1">${escHtml(e.cpu)}</td>
+    <td data-hide="1"><button class="btn btn-sm" style="background:var(--red-light);color:var(--red);border:1px solid #FCA5A5;font-size:11px;"
         onclick="event.stopPropagation();deleteEnv(${e.envId})">削除</button></td>
   </tr>`).join('');
   makeResizable(document.getElementById('envTable'));
@@ -3125,13 +3179,13 @@ function renderCiTable() {
     const typeColor = ciTypeColor[c.ci_type] || '#6B7280';
     const stCls = ciStatusColor[c.status] || 'badge-plan';
     return `<tr class="clickable" onclick="openCiDetail(${c.ci_id})">
-      <td><strong>${escHtml(c.ci_name)}</strong><div style="font-size:10px;color:var(--gray-400);">${escHtml(c.application_name||'')} / ${escHtml(c.env_type||'')}</div></td>
-      <td><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:${typeColor};">${escHtml(c.ci_type||'-')}</span></td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(c.hostname||'-')}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(c.ip_address||'-')}</td>
-      <td>${escHtml(c.os||'-')}</td>
-      <td><span class="badge ${stCls}">${ciStatusLabel[c.status]||c.status}</span></td>
-      <td><button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="event.stopPropagation();openCiModal(${c.ci_id})">編集</button>
+      <td data-label="CI名"><strong>${escHtml(c.ci_name)}</strong><div style="font-size:10px;color:var(--gray-400);">${escHtml(c.application_name||'')} / ${escHtml(c.env_type||'')}</div></td>
+      <td data-label="種別"><span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff;background:${typeColor};">${escHtml(c.ci_type||'-')}</span></td>
+      <td data-label="ホスト名" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(c.hostname||'-')}</td>
+      <td data-label="IP" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${escHtml(c.ip_address||'-')}</td>
+      <td data-label="OS" data-hide="1">${escHtml(c.os||'-')}</td>
+      <td data-label="ステータス"><span class="badge ${stCls}">${ciStatusLabel[c.status]||c.status}</span></td>
+      <td data-hide="1"><button class="btn btn-secondary btn-sm" style="font-size:11px;" onclick="event.stopPropagation();openCiModal(${c.ci_id})">編集</button>
           <button class="btn btn-danger btn-sm" style="font-size:11px;" onclick="event.stopPropagation();deleteCi(${c.ci_id})">削除</button></td>
     </tr>`;
   }).join('');
@@ -3915,6 +3969,7 @@ function priorityBadge(priority) {
 
 // デマンドページへ移動
 function showDemandPage(page) {
+  if (window.innerWidth <= 768) closeSidebar();
   showPage(page, null);
   document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
   if (page === 'demand-list') document.getElementById('sb-demand-list')?.classList.add('active');
@@ -3966,14 +4021,14 @@ function renderDemandTable() {
     return;
   }
   tbody.innerHTML = filtered.map(d => `<tr class="clickable" onclick="openDemandReviewById('${d.demand_id}')">
-    <td><span class="sys-id">${escHtml(d.demand_id)}</span></td>
-    <td>${escHtml(d.title)}</td>
-    <td>${priorityBadge(d.priority)}</td>
-    <td>${stageBadge(d.stage)}</td>
-    <td>${escHtml(d.submitter_name||'-')}</td>
-    <td>${escHtml(d.manager_name||'-')}</td>
-    <td>${d.related_app_ids ? d.related_app_ids.split(',').map(id=>`<span class="sys-id">${escHtml(id.trim())}</span>`).join(' ') : '-'}</td>
-    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${d.requested_budget ? '¥'+Number(d.requested_budget).toLocaleString() : '-'}</td>
+    <td data-label="ID" data-hide="1"><span class="sys-id">${escHtml(d.demand_id)}</span></td>
+    <td data-label="タイトル">${escHtml(d.title)}</td>
+    <td data-label="優先度">${priorityBadge(d.priority)}</td>
+    <td data-label="ステージ">${stageBadge(d.stage)}</td>
+    <td data-label="申請者" data-hide="1">${escHtml(d.submitter_name||'-')}</td>
+    <td data-label="担当者" data-hide="1">${escHtml(d.manager_name||'-')}</td>
+    <td data-label="関連システム" data-hide="1">${d.related_app_ids ? d.related_app_ids.split(',').map(id=>`<span class="sys-id">${escHtml(id.trim())}</span>`).join(' ') : '-'}</td>
+    <td data-label="予算" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${d.requested_budget ? '¥'+Number(d.requested_budget).toLocaleString() : '-'}</td>
   </tr>`).join('');
 }
 
