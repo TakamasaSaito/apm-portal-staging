@@ -198,7 +198,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .dash-tab{padding:14px 20px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .dash-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .dash-tab:hover:not(.active){color:var(--gray-700);}
-.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:20px 24px 0;}
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;padding:20px 24px 0;}
 .kpi-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .kpi-label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .kpi-value{font-size:36px;font-weight:700;line-height:1;margin-bottom:4px;}
@@ -434,9 +434,10 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <div id="dash-overview">
           <div class="kpi-grid">
             <div class="kpi-card kpi-green kpi-clickable" onclick="gotoAppsWithFilter('running')"><div class="kpi-label">本番稼働中</div><div class="kpi-value" id="kpiRunning">-</div><div class="kpi-sub">アプリケーション</div></div>
-            <div class="kpi-card kpi-yellow kpi-clickable" onclick="gotoApprovalPage()"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
             <div class="kpi-card kpi-red kpi-clickable" onclick="gotoAppsWithFilter('plan_dev')"><div class="kpi-label">企画・開発中</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">企画 + 開発中</div></div>
             <div class="kpi-card kpi-blue kpi-clickable" onclick="gotoEnvsView()"><div class="kpi-label">システム環境</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
+            <div class="kpi-card kpi-blue kpi-clickable" onclick="gotoCiView()"><div class="kpi-label">構成情報（CI）</div><div class="kpi-value" id="kpiCI">-</div><div class="kpi-sub">CIアイテム</div></div>
+            <div class="kpi-card kpi-yellow kpi-clickable" onclick="gotoApprovalPage()"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
             <div class="kpi-card kpi-orange kpi-clickable" onclick="openRetirementModal()"><div class="kpi-label">⚠️ 廃止リスク（要対応インフラ数）</div><div class="kpi-value" id="kpiRetirementRisk">-</div><div class="kpi-sub">未対応の依存システムあり</div></div>
           </div>
           <div class="charts-row">
@@ -703,10 +704,10 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
       <!-- KPI -->
       <div class="stats-grid" style="margin-bottom:20px;" id="demandKpiGrid">
-        <div class="stat-card blue"><div class="stat-label">総件数</div><div class="stat-value" id="dKpiTotal">-</div><div class="stat-sub">デマンド</div></div>
-        <div class="stat-card yellow"><div class="stat-label">審査中</div><div class="stat-value" id="dKpiScreening">-</div><div class="stat-sub">screening</div></div>
-        <div class="stat-card green"><div class="stat-label">承認済</div><div class="stat-value" id="dKpiApproved">-</div><div class="stat-sub">approved</div></div>
-        <div class="stat-card red"><div class="stat-label">差戻し</div><div class="stat-value" id="dKpiRejected">-</div><div class="stat-sub">rejected</div></div>
+        <div class="stat-card blue kpi-clickable" onclick="gotoDemandWithFilter('')"><div class="stat-label">総件数</div><div class="stat-value" id="dKpiTotal">-</div><div class="stat-sub">デマンド</div></div>
+        <div class="stat-card yellow kpi-clickable" onclick="gotoDemandWithFilter('screening')"><div class="stat-label">審査中</div><div class="stat-value" id="dKpiScreening">-</div><div class="stat-sub">screening</div></div>
+        <div class="stat-card green kpi-clickable" onclick="gotoDemandWithFilter('approved_completed')"><div class="stat-label">承認済</div><div class="stat-value" id="dKpiApproved">-</div><div class="stat-sub">approved / completed</div></div>
+        <div class="stat-card red kpi-clickable" onclick="gotoDemandWithFilter('rejected')"><div class="stat-label">差戻し</div><div class="stat-value" id="dKpiRejected">-</div><div class="stat-sub">rejected</div></div>
       </div>
       <!-- Filter -->
       <div class="filter-bar" style="margin-bottom:12px;">
@@ -716,7 +717,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <option value="submitted">提出済</option>
           <option value="screening">審査中</option>
           <option value="qualified">承認申請</option>
+          <option value="approved_completed">承認済・完了</option>
           <option value="approved">承認済</option>
+          <option value="completed">完了</option>
           <option value="rejected">差戻し</option>
         </select>
         <select class="filter-select" id="dFilterPriority" onchange="renderDemandTable()">
@@ -1661,6 +1664,10 @@ function gotoApprovalPage() {
 
 function gotoEnvsView() {
   showSidebarView('envs', document.getElementById('sb-envs'));
+}
+
+function gotoCiView() {
+  showSidebarView('ci', document.getElementById('sb-ci'));
 }
 
 function highlightSidebar(id) {
@@ -3445,6 +3452,8 @@ function renderDashboardSummary(d) {
   document.getElementById('kpiPending').textContent  = d.pending_requests;
   document.getElementById('kpiRetiring').textContent = (d.status_counts['plan'] || 0) + (d.status_counts['dev'] || 0);
   document.getElementById('kpiEnvs').textContent     = d.env_count;
+  const kpiCI = document.getElementById('kpiCI');
+  if (kpiCI) kpiCI.textContent = d.ci_count || 0;
   renderStatusChart(d.status_counts);
   renderCategoryChart(d.category_counts);
   renderDeptChart(d.dept_counts);
@@ -3857,6 +3866,15 @@ function showDemandPage(page) {
   if (page === 'demand-form') document.getElementById('sb-demand-form')?.classList.add('active');
 }
 
+function gotoDemandWithFilter(stage) {
+  const sel = document.getElementById('dFilterStage');
+  if (sel) sel.value = stage;
+  showDemandPage('demand-list');
+  // データ未ロード時はloadDemandDataを実行
+  if (!demandList.length) loadDemandData();
+  else renderDemandTable();
+}
+
 // ──────────────────────────────────────────────────────────────────
 // デマンド一覧
 // ──────────────────────────────────────────────────────────────────
@@ -3882,9 +3900,11 @@ function updateDemandKpi() {
 function renderDemandTable() {
   const stageF = document.getElementById('dFilterStage')?.value || '';
   const prioF  = document.getElementById('dFilterPriority')?.value || '';
-  const filtered = demandList.filter(d =>
-    (!stageF || d.stage === stageF) && (!prioF || d.priority === prioF)
-  );
+  const filtered = demandList.filter(d => {
+    const matchStage = !stageF ||
+      (stageF === 'approved_completed' ? (d.stage === 'approved' || d.stage === 'completed') : d.stage === stageF);
+    return matchStage && (!prioF || d.priority === prioF);
+  });
   const tbody = document.getElementById('demandTableBody');
   if (!filtered.length) {
     tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">📋</div>デマンドがありません</div></td></tr>`;
