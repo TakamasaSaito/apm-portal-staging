@@ -214,6 +214,14 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .chart-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .chart-title{font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:12px;}
 .retiring-section{padding:0 24px 24px;}
+.heatmap-wrap{overflow-y:auto;max-height:220px;}
+.heatmap-table{width:100%;border-collapse:collapse;font-size:10px;}
+.heatmap-table th{padding:4px 6px;text-align:center;font-weight:600;color:var(--gray-500);font-size:9px;white-space:nowrap;border-bottom:2px solid var(--gray-200);}
+.heatmap-table th:first-child{text-align:left;}
+.heatmap-table td{padding:5px 4px;text-align:center;border:1px solid var(--gray-100);transition:opacity .1s;}
+.heatmap-table td:first-child{text-align:left;padding-left:8px;font-size:9px;color:var(--gray-700);white-space:nowrap;cursor:default;background:#fff!important;}
+.heatmap-table td:not(:first-child){cursor:pointer;}
+.heatmap-table td:not(:first-child):hover{outline:2px solid #3B82F6;outline-offset:-1px;}
 .retiring-title{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .bubble-filter-bar{display:flex;align-items:center;gap:8px;padding:10px 24px;flex-wrap:wrap;border-bottom:1px solid #E2E8F0;background:#ffffff;}
 .bubble-filter-label{font-size:11px;color:var(--gray-600);font-weight:600;}
@@ -441,7 +449,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </div>
           <div class="charts-row">
             <div class="chart-card"><div class="chart-title">ステータス別アプリ数</div><canvas id="statusChart"></canvas></div>
-            <div class="chart-card"><div class="chart-title">カテゴリ別アプリ分布</div><canvas id="categoryChart"></canvas></div>
+            <div class="chart-card"><div class="chart-title">カテゴリ × ステータス分布</div><div class="heatmap-wrap" id="categoryHeatmap"></div></div>
             <div class="chart-card"><div class="chart-title">部署別アプリ数</div><canvas id="deptChart"></canvas></div>
           </div>
           <div class="retiring-section">
@@ -515,6 +523,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           </select>
           <select class="filter-select" id="filterDept" onchange="appPage=1;renderAppTable()">
             <option value="">すべての部門</option>
+          </select>
+          <select class="filter-select" id="filterCategory" onchange="appPage=1;renderAppTable()">
+            <option value="">すべてのカテゴリ</option>
           </select>
         </div>
         <div class="table-scroll-wrap" style="margin-top:8px;">
@@ -1653,6 +1664,8 @@ function showSidebarView(view, el) {
 }
 function gotoAppsWithFilter(status) {
   document.getElementById('filterStatus').value = status;
+  const catSel = document.getElementById('filterCategory');
+  if (catSel) catSel.value = '';
   appPage = 1;
   showSidebarView('apps', document.getElementById('sb-apps'));
 }
@@ -1673,14 +1686,17 @@ function highlightSidebar(id) {
 // ========== アプリ一覧 ==========
 function setAppPage(p) { appPage = p; renderAppTable(); }
 function renderAppTable() {
-  const q  = (document.getElementById('searchApp').value || '').toLowerCase();
-  const st = document.getElementById('filterStatus').value;
-  const dp = document.getElementById('filterDept').value;
+  const q   = (document.getElementById('searchApp').value || '').toLowerCase();
+  const st  = document.getElementById('filterStatus').value;
+  const dp  = document.getElementById('filterDept').value;
+  const cat = document.getElementById('filterCategory')?.value || '';
   const filtered = apps.filter(a => {
-    const matchQ  = !q  || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || a.dept.toLowerCase().includes(q);
-    const matchSt = !st || (st === 'plan_dev' ? (a.status === 'plan' || a.status === 'dev') : a.status === st);
-    const matchDp = !dp || a.dept === dp;
-    return matchQ && matchSt && matchDp;
+    const matchQ   = !q   || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || a.dept.toLowerCase().includes(q);
+    const matchSt  = !st  || (st === 'plan_dev' ? (a.status === 'plan' || a.status === 'dev') : a.status === st);
+    const matchDp  = !dp  || a.dept === dp;
+    const appCat   = a.appCategory && a.appCategory !== '-' ? a.appCategory : 'その他';
+    const matchCat = !cat || appCat === cat;
+    return matchQ && matchSt && matchDp && matchCat;
   });
   const total = filtered.length;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -3311,6 +3327,7 @@ async function initApp() {
   try {
     await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts(), loadDashboardSummary(), loadBubbleData(), loadRetirementReadiness()]);
     renderAppTable();
+    renderCategoryHeatmap();
     await loadStats();
     loadDemandData();
     loadDemandFormSelects();
@@ -3338,7 +3355,7 @@ let bubbleAreaFilter = '';
 let bubbleInfraFilter = '';
 let selectedBubbleId = null;
 let _bubbleResizeObs = null;
-let _statusChart = null, _categoryChart = null, _deptChart = null;
+let _statusChart = null, _deptChart = null;
 
 const DEP_COLORS = {infra:'#b03ae8', auth:'#74b9ff', api:'#55efc4', migration:'#e74c3c', data:'#fdcb6e'};
 const DEP_LABELS = {infra:'インフラ依存', auth:'認証連携', api:'API連携', migration:'移行先', data:'データ連携'};
@@ -3449,7 +3466,6 @@ function renderDashboardSummary(d) {
   const kpiCI = document.getElementById('kpiCI');
   if (kpiCI) kpiCI.textContent = d.ci_count || 0;
   renderStatusChart(d.status_counts);
-  renderCategoryChart(d.category_counts);
   renderDeptChart(d.dept_counts);
   renderRetiringTable(d.retiring_soon);
 }
@@ -3470,19 +3486,64 @@ function renderStatusChart(sc) {
   });
 }
 
-function renderCategoryChart(cc) {
-  if (_categoryChart) _categoryChart.destroy();
-  const top = cc.slice(0,10);
-  const COLORS = ['#10B981','#3B82F6','#F59E0B','#8B5CF6','#EF4444','#06B6D4','#F97316','#84CC16','#EC4899','#6B7280'];
-  const ctx = document.getElementById('categoryChart').getContext('2d');
-  _categoryChart = new Chart(ctx, {
-    type:'doughnut',
-    data:{
-      labels: top.map(c => c.category.replace(/（[^）]*）/,'').trim()),
-      datasets:[{ data: top.map(c => c.count), backgroundColor: COLORS, borderWidth:2, borderColor:'#fff' }]
-    },
-    options:{ responsive:true, cutout:'58%', plugins:{ legend:{ position:'right', labels:{ boxWidth:10, font:{size:9} } } } }
-  });
+function renderCategoryHeatmap() {
+  const el = document.getElementById('categoryHeatmap');
+  if (!el || !apps.length) return;
+
+  const ST_KEYS   = ['running','dev','plan','order','retire'];
+  const ST_LABELS = {running:'稼働中', dev:'開発中', plan:'企画', order:'発注中', retire:'廃止'};
+
+  // カテゴリ集計（合計件数降順）
+  const catTotal = {};
+  for (const a of apps) {
+    const c = (a.appCategory && a.appCategory !== '-') ? a.appCategory : 'その他';
+    catTotal[c] = (catTotal[c] || 0) + 1;
+  }
+  const cats = Object.keys(catTotal).sort((a, b) => catTotal[b] - catTotal[a]);
+
+  // クロス集計
+  const matrix = {};
+  for (const c of cats) { matrix[c] = {}; for (const s of ST_KEYS) matrix[c][s] = 0; }
+  for (const a of apps) {
+    const c = (a.appCategory && a.appCategory !== '-') ? a.appCategory : 'その他';
+    if (a.status in matrix[c]) matrix[c][a.status]++;
+  }
+
+  // 最大値
+  let maxN = 1;
+  for (const c of cats) for (const s of ST_KEYS) maxN = Math.max(maxN, matrix[c][s]);
+
+  // filterCategory を populate
+  const catSel = document.getElementById('filterCategory');
+  if (catSel) {
+    const cur = catSel.value;
+    catSel.innerHTML = '<option value="">すべてのカテゴリ</option>' +
+      cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+    catSel.value = cur;
+  }
+
+  const headerCells = ST_KEYS.map(s => `<th>${ST_LABELS[s]}</th>`).join('');
+  const rows = cats.map(cat => {
+    const shortCat = cat.replace(/（[^）]*）/g, '').trim() || cat;
+    const cells = ST_KEYS.map(s => {
+      const n = matrix[cat][s];
+      const alpha = n === 0 ? 0 : Math.max(0.12, n / maxN);
+      const bg    = n === 0 ? '#F8FAFC' : `rgba(59,130,246,${alpha.toFixed(2)})`;
+      const fg    = alpha > 0.55 ? '#fff' : '#1e293b';
+      return `<td style="background:${bg};color:${fg};" title="${escHtml(cat)} × ${ST_LABELS[s]}: ${n}件" data-cat="${escHtml(cat)}" data-st="${s}" onclick="gotoAppsByCategoryAndStatus(this.dataset.cat,this.dataset.st)">${n || ''}</td>`;
+    }).join('');
+    return `<tr><td title="${escHtml(cat)}">${escHtml(shortCat)}</td>${cells}</tr>`;
+  }).join('');
+
+  el.innerHTML = `<table class="heatmap-table"><thead><tr><th>カテゴリ</th>${headerCells}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function gotoAppsByCategoryAndStatus(category, status) {
+  const catSel = document.getElementById('filterCategory');
+  if (catSel) catSel.value = category;
+  document.getElementById('filterStatus').value = status;
+  appPage = 1;
+  showSidebarView('apps', document.getElementById('sb-apps'));
 }
 
 function renderDeptChart(dc) {
