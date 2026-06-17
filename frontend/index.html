@@ -198,7 +198,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .dash-tab{padding:14px 20px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .dash-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .dash-tab:hover:not(.active){color:var(--gray-700);}
-.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;padding:20px 24px 0;}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:20px 24px 0;}
 .kpi-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .kpi-label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .kpi-value{font-size:36px;font-weight:700;line-height:1;margin-bottom:4px;}
@@ -437,7 +437,6 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <div class="kpi-card kpi-red kpi-clickable" onclick="gotoAppsWithFilter('plan_dev')"><div class="kpi-label">企画・開発中</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">企画 + 開発中</div></div>
             <div class="kpi-card kpi-blue kpi-clickable" onclick="gotoEnvsView()"><div class="kpi-label">システム環境</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
             <div class="kpi-card kpi-blue kpi-clickable" onclick="gotoCiView()"><div class="kpi-label">構成情報（CI）</div><div class="kpi-value" id="kpiCI">-</div><div class="kpi-sub">CIアイテム</div></div>
-            <div class="kpi-card kpi-yellow kpi-clickable" onclick="gotoApprovalPage()"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
             <div class="kpi-card kpi-orange kpi-clickable" onclick="openRetirementModal()"><div class="kpi-label">⚠️ 廃止リスク（要対応インフラ数）</div><div class="kpi-value" id="kpiRetirementRisk">-</div><div class="kpi-sub">未対応の依存システムあり</div></div>
           </div>
           <div class="charts-row">
@@ -1656,10 +1655,6 @@ function gotoAppsWithFilter(status) {
   document.getElementById('filterStatus').value = status;
   appPage = 1;
   showSidebarView('apps', document.getElementById('sb-apps'));
-}
-
-function gotoApprovalPage() {
-  showPage('approval', document.querySelector('.nav-item[onclick*="approval"]'));
 }
 
 function gotoEnvsView() {
@@ -3449,7 +3444,6 @@ async function loadBubbleData() {
 
 function renderDashboardSummary(d) {
   document.getElementById('kpiRunning').textContent  = d.status_counts['running'] || 0;
-  document.getElementById('kpiPending').textContent  = d.pending_requests;
   document.getElementById('kpiRetiring').textContent = (d.status_counts['plan'] || 0) + (d.status_counts['dev'] || 0);
   document.getElementById('kpiEnvs').textContent     = d.env_count;
   const kpiCI = document.getElementById('kpiCI');
