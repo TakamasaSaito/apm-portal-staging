@@ -198,7 +198,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .dash-tab{padding:14px 20px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .dash-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .dash-tab:hover:not(.active){color:var(--gray-700);}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:20px 24px 0;}
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;padding:20px 24px 0;}
 .kpi-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:18px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .kpi-label{font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
 .kpi-value{font-size:36px;font-weight:700;line-height:1;margin-bottom:4px;}
@@ -207,6 +207,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .kpi-yellow .kpi-value{color:#F59E0B;}
 .kpi-red .kpi-value{color:#EF4444;}
 .kpi-blue .kpi-value{color:#3B82F6;}
+.kpi-orange .kpi-value{color:#F97316;}
+.kpi-clickable{cursor:pointer;transition:box-shadow .15s;}
+.kpi-clickable:hover{box-shadow:0 4px 12px rgba(0,0,0,.1);}
 .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;padding:16px 24px;}
 .chart-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;padding:16px 20px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .chart-title{font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:12px;}
@@ -434,6 +437,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <div class="kpi-card kpi-yellow"><div class="kpi-label">承認待ち申請</div><div class="kpi-value" id="kpiPending">-</div><div class="kpi-sub">件</div></div>
             <div class="kpi-card kpi-red"><div class="kpi-label">廃止予定</div><div class="kpi-value" id="kpiRetiring">-</div><div class="kpi-sub">12ヶ月以内</div></div>
             <div class="kpi-card kpi-blue"><div class="kpi-label">環境数</div><div class="kpi-value" id="kpiEnvs">-</div><div class="kpi-sub">登録環境</div></div>
+            <div class="kpi-card kpi-orange kpi-clickable" onclick="openRetirementModal()"><div class="kpi-label">⚠️ 廃止リスク</div><div class="kpi-value" id="kpiRetirementRisk">-</div><div class="kpi-sub">未対応の依存システム</div></div>
           </div>
           <div class="charts-row">
             <div class="chart-card"><div class="chart-title">ステータス別アプリ数</div><canvas id="statusChart"></canvas></div>
@@ -585,33 +589,65 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <div id="ciPagination" class="pagination-bar" style="display:none;"></div>
       </div>
 
-      <!-- CIリレーション一覧 -->
-      <div id="view-ci-relations" class="table-card" style="display:none;">
-        <div class="table-header">
-          <div class="table-header-title">🔗 CIリレーション一覧</div>
-          <div class="table-search-wrap" style="gap:8px;">
-            <button class="btn btn-secondary btn-sm" onclick="loadCiRelations()">🔄 再読込</button>
-            <button id="btnAddCmdbRel" class="btn btn-primary btn-sm" onclick="openCmdbRelModal(null)" style="display:none;">＋ リレーション追加</button>
+      <!-- CIリレーション一覧 + アプリ依存関係 -->
+      <div id="view-ci-relations" style="display:none;">
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-header-title">🔗 CIリレーション一覧</div>
+            <div class="table-search-wrap" style="gap:8px;">
+              <button class="btn btn-secondary btn-sm" onclick="loadCiRelations()">🔄 再読込</button>
+              <button id="btnAddCmdbRel" class="btn btn-primary btn-sm" onclick="openCmdbRelModal(null)" style="display:none;">＋ リレーション追加</button>
+            </div>
+          </div>
+          <div style="padding:6px 16px 0;font-size:11px;color:var(--gray-400);">
+            cmdb_rel_ci テーブルの全リレーションを表示します。事務局ロールのみ追加・編集・削除が可能です。
+          </div>
+          <div class="table-scroll-wrap" style="margin-top:8px;">
+            <table id="cmdbRelTable">
+              <thead><tr>
+                <th style="min-width:70px">ID</th>
+                <th style="min-width:80px">親種別</th>
+                <th style="min-width:180px">親名</th>
+                <th style="min-width:30px;text-align:center;">→</th>
+                <th style="min-width:80px">子種別</th>
+                <th style="min-width:180px">子名</th>
+                <th style="min-width:130px">リレーション種別</th>
+                <th style="min-width:140px">備考</th>
+                <th style="min-width:90px">操作</th>
+              </tr></thead>
+              <tbody id="cmdbRelTableBody"></tbody>
+            </table>
           </div>
         </div>
-        <div style="padding:6px 16px 0;font-size:11px;color:var(--gray-400);">
-          cmdb_rel_ci テーブルの全リレーションを表示します。事務局ロールのみ追加・編集・削除が可能です。
-        </div>
-        <div class="table-scroll-wrap" style="margin-top:8px;">
-          <table id="cmdbRelTable">
-            <thead><tr>
-              <th style="min-width:70px">ID</th>
-              <th style="min-width:80px">親種別</th>
-              <th style="min-width:180px">親名</th>
-              <th style="min-width:30px;text-align:center;">→</th>
-              <th style="min-width:80px">子種別</th>
-              <th style="min-width:180px">子名</th>
-              <th style="min-width:130px">リレーション種別</th>
-              <th style="min-width:140px">備考</th>
-              <th style="min-width:90px">操作</th>
-            </tr></thead>
-            <tbody id="cmdbRelTableBody"></tbody>
-          </table>
+
+        <!-- アプリケーション依存関係 -->
+        <div class="table-card" style="margin-top:20px;">
+          <div class="table-header">
+            <div class="table-header-title">🔗 アプリケーション依存関係</div>
+            <div class="table-search-wrap">
+              <button class="btn btn-secondary btn-sm" onclick="loadAppDependencies()">🔄 再読込</button>
+            </div>
+          </div>
+          <div style="padding:6px 16px 0;font-size:11px;color:var(--gray-400);">
+            application_dependency テーブルの依存関係。移行対応ステータスは事務局のみ編集可能です。
+          </div>
+          <div class="table-scroll-wrap" style="margin-top:8px;">
+            <table id="appDepTable">
+              <thead><tr>
+                <th style="min-width:70px">ID</th>
+                <th style="min-width:160px">依存元システム</th>
+                <th style="min-width:30px;text-align:center;">→</th>
+                <th style="min-width:160px">依存先システム</th>
+                <th style="min-width:90px">依存種別</th>
+                <th style="min-width:170px">備考</th>
+                <th style="min-width:110px">移行ステータス</th>
+                <th style="min-width:110px">移行予定日</th>
+                <th style="min-width:170px">移行メモ</th>
+                <th style="min-width:70px">操作</th>
+              </tr></thead>
+              <tbody id="appDepTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
@@ -1119,6 +1155,54 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
   </div>
 </div>
 
+<!-- 廃止リスク詳細モーダル -->
+<div class="modal-overlay" id="retirementRiskModal" onclick="if(event.target===this)closeRetirementModal()" style="display:none;">
+  <div class="modal" style="max-width:860px;width:95%;">
+    <div class="modal-header">
+      <div class="modal-title">⚠️ インフラ廃止リスク — 対応状況</div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeRetirementModal()">✕</button>
+    </div>
+    <div class="modal-body" id="retirementRiskModalBody" style="max-height:70vh;overflow-y:auto;padding:16px 20px;">
+      <div style="text-align:center;padding:24px;color:var(--gray-400);">読み込み中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- アプリ依存関係 移行ステータス編集モーダル -->
+<div class="modal-overlay" id="appDepEditModal" onclick="if(event.target===this)closeAppDepEditModal()" style="display:none;">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <div class="modal-title">依存関係 移行ステータス編集</div>
+      <button class="close-btn" style="background:var(--gray-100);color:var(--gray-600)" onclick="closeAppDepEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="appDepEditId">
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;" id="appDepEditLabel"></div>
+      <div class="form-group">
+        <label>移行ステータス</label>
+        <select class="form-control" id="appDepEditStatus">
+          <option value="not_planned">not_planned（未計画）</option>
+          <option value="planned">planned（計画中）</option>
+          <option value="in_progress">in_progress（進行中）</option>
+          <option value="completed">completed（完了）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>移行予定日</label>
+        <input class="form-control" id="appDepEditDue" type="date">
+      </div>
+      <div class="form-group">
+        <label>移行メモ</label>
+        <input class="form-control" id="appDepEditNote" placeholder="移行メモ（任意）">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAppDepEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveAppDepEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- CI 詳細パネル -->
 <div class="detail-overlay" id="ciDetailOverlay" onclick="if(event.target===this)closeCiDetail()">
   <div class="detail-panel">
@@ -1561,7 +1645,7 @@ function showSidebarView(view, el) {
   if (view === 'apps')          renderAppTable();
   if (view === 'envs')          renderEnvTable();
   if (view === 'ci')            initCiView();
-  if (view === 'ci-relations')  loadCiRelations();
+  if (view === 'ci-relations')  { loadCiRelations(); loadAppDependencies(); }
   if (isDash && bubbleData)     renderBubbleChart();
 }
 function highlightSidebar(id) {
@@ -2354,6 +2438,85 @@ async function deleteCmdbRel(relId) {
   } catch(e) { showToast('削除に失敗しました', 'error'); }
 }
 
+// ─── アプリケーション依存関係 ───────────────────────────────────
+const MIGRATION_LABEL = {not_planned:'未計画', planned:'計画中', in_progress:'進行中', completed:'完了'};
+const MIGRATION_COLOR = {not_planned:'var(--red)', planned:'#F59E0B', in_progress:'#3B82F6', completed:'#10B981'};
+let appDependencies = [];
+
+async function loadAppDependencies() {
+  const tbody = document.getElementById('appDepTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--gray-400);">読み込み中...</td></tr>';
+  try {
+    appDependencies = await apiFetch('/api/application-dependencies') || [];
+    renderAppDepTable();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--red);">読み込みに失敗しました</td></tr>';
+  }
+}
+
+function renderAppDepTable() {
+  const tbody = document.getElementById('appDepTableBody');
+  if (!tbody) return;
+  if (!appDependencies.length) {
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state">依存関係なし</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = appDependencies.map(dep => {
+    const mColor = MIGRATION_COLOR[dep.migration_status] || 'var(--gray-300)';
+    const mLabel = MIGRATION_LABEL[dep.migration_status] || dep.migration_status;
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);">${dep.dependency_id}</td>
+      <td>
+        <div style="font-weight:600;font-size:12px;">${escHtml(dep.app_name)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gray-400);">${escHtml(dep.app_id)}</div>
+      </td>
+      <td style="text-align:center;color:var(--gray-400);">→</td>
+      <td>
+        <div style="font-weight:600;font-size:12px;">${escHtml(dep.depends_on_name)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gray-400);">${escHtml(dep.depends_on_app_id)}</div>
+      </td>
+      <td style="font-size:11px;">${escHtml(dep.dependency_type || '-')}</td>
+      <td style="font-size:11px;color:var(--gray-600);">${escHtml(dep.note || '-')}</td>
+      <td><span style="background:${mColor};color:#fff;border-radius:4px;padding:2px 7px;font-size:10px;">${escHtml(mLabel)}</span></td>
+      <td style="font-size:11px;">${escHtml(dep.migration_due_date || '-')}</td>
+      <td style="font-size:11px;color:var(--gray-600);">${escHtml(dep.migration_note || '-')}</td>
+      <td>${currentUser === 'admin' ? `<button class="btn btn-secondary btn-sm" style="font-size:11px;padding:2px 8px;" onclick="openAppDepEditModal(${dep.dependency_id})">編集</button>` : '-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function openAppDepEditModal(depId) {
+  const dep = appDependencies.find(d => d.dependency_id === depId);
+  if (!dep) return;
+  document.getElementById('appDepEditId').value = depId;
+  document.getElementById('appDepEditLabel').textContent = `${dep.app_name} (${dep.app_id}) → ${dep.depends_on_name} (${dep.depends_on_app_id})`;
+  document.getElementById('appDepEditStatus').value = dep.migration_status || 'not_planned';
+  document.getElementById('appDepEditDue').value = dep.migration_due_date || '';
+  document.getElementById('appDepEditNote').value = dep.migration_note || '';
+  document.getElementById('appDepEditModal').style.display = 'flex';
+}
+
+function closeAppDepEditModal() {
+  document.getElementById('appDepEditModal').style.display = 'none';
+}
+
+async function saveAppDepEdit() {
+  const depId = document.getElementById('appDepEditId').value;
+  const payload = {
+    migration_status:   document.getElementById('appDepEditStatus').value,
+    migration_due_date: document.getElementById('appDepEditDue').value || null,
+    migration_note:     document.getElementById('appDepEditNote').value.trim() || null,
+  };
+  try {
+    await apiFetch(`/api/application-dependencies/${depId}`, {method:'PUT', body:payload});
+    closeAppDepEditModal();
+    showToast('保存しました', 'success');
+    loadAppDependencies();
+    loadRetirementReadiness();
+  } catch(e) { showToast('保存に失敗しました', 'error'); }
+}
+
 async function saveAppEdit(id) {
   const payload = {
     application_name: document.getElementById('ed_name').value.trim() || undefined,
@@ -3129,7 +3292,7 @@ function makeResizable(table) {
 // ========== 初期化 ==========
 async function initApp() {
   try {
-    await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts(), loadDashboardSummary(), loadBubbleData()]);
+    await Promise.all([loadApps(), loadEnvs(), loadRequests(), loadDepts(), loadDashboardSummary(), loadBubbleData(), loadRetirementReadiness()]);
     renderAppTable();
     await loadStats();
     loadDemandData();
@@ -3168,6 +3331,89 @@ async function loadDashboardSummary() {
   if (!d) return;
   dashSummaryData = d;
   renderDashboardSummary(d);
+}
+
+// ─── 廃止リスク警告 ──────────────────────────────────────────────
+let retirementRiskData = null;
+
+async function loadRetirementReadiness() {
+  const d = await apiFetch('/api/dashboard/retirement-readiness');
+  if (!d) return;
+  retirementRiskData = d;
+  renderRetirementKpi(d);
+}
+
+function renderRetirementKpi(d) {
+  const el = document.getElementById('kpiRetirementRisk');
+  if (el) el.textContent = d.total_not_ready;
+}
+
+function openRetirementModal() {
+  const modal = document.getElementById('retirementRiskModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  renderRetirementModal(retirementRiskData);
+}
+
+function closeRetirementModal() {
+  const modal = document.getElementById('retirementRiskModal');
+  if (modal) modal.style.display = 'none';
+}
+
+const URGENCY_LABEL = {today_period:'🔴 3ヶ月以内', this_year:'🟡 12ヶ月以内', next_year:'⚪ 1年超', overdue:'🔴 廃止済/期限不明'};
+
+function renderRetirementModal(data) {
+  const body = document.getElementById('retirementRiskModalBody');
+  if (!body) return;
+  if (!data || !data.retiring_infra || !data.retiring_infra.length) {
+    body.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gray-400);">廃止予定インフラはありません</div>';
+    return;
+  }
+  body.innerHTML = data.retiring_infra.map((sys, si) => {
+    const notReadyDeps = sys.dependents.filter(d => !d.is_ready);
+    const readyDeps    = sys.dependents.filter(d => d.is_ready);
+    return `
+    <div style="border:1px solid var(--gray-200);border-radius:10px;margin-bottom:16px;overflow:hidden;">
+      <div style="background:${sys.not_ready_count > 0 ? '#FFF7ED' : '#F0FDF4'};padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <span style="font-weight:700;font-size:14px;">${escHtml(sys.application_name)}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-400);">${escHtml(sys.application_id)}</span>
+        <span style="font-size:12px;color:var(--gray-500);">廃止予定: ${sys.end_plan || '不明'}</span>
+        <span style="font-size:12px;">${URGENCY_LABEL[sys.urgency] || sys.urgency}</span>
+        <span style="margin-left:auto;font-size:12px;">依存 ${sys.total_dependents}件 / <span style="color:var(--red);font-weight:700;">未対応 ${sys.not_ready_count}</span> / <span style="color:#10B981;">対応済 ${sys.ready_count}</span></span>
+      </div>
+      ${sys.dependents.length === 0 ? '<div style="padding:12px 16px;font-size:12px;color:var(--gray-400);">依存システムなし</div>' : `
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead><tr style="background:var(--gray-50);">
+          <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);">依存システム</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);">依存種別</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);">対応状況</th>
+          <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--gray-200);">詳細</th>
+        </tr></thead>
+        <tbody>
+          ${sys.dependents.map((dep, di) => `
+          <tr style="border-bottom:1px solid var(--gray-100);">
+            <td style="padding:8px 12px;">
+              <div style="font-weight:600;">${escHtml(dep.application_name)}</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gray-400);">${escHtml(dep.application_id)}</div>
+            </td>
+            <td style="padding:8px 12px;color:var(--gray-500);">${escHtml(dep.dependency_type || '-')}</td>
+            <td style="padding:8px 12px;">
+              ${dep.is_ready
+                ? '<span style="color:#10B981;font-weight:600;">✅ 対応済</span>'
+                : '<span style="color:var(--red);font-weight:600;">❌ 未対応</span>'}
+            </td>
+            <td style="padding:8px 12px;">
+              <span style="display:inline-block;background:${MIGRATION_COLOR[dep.migration_status]||'var(--gray-300)'};color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;">${MIGRATION_LABEL[dep.migration_status]||dep.migration_status}</span>
+              ${dep.is_ready
+                ? `<div style="font-size:11px;color:var(--gray-500);margin-top:2px;">${escHtml(dep.ready_reason||'')}</div>`
+                : `<div style="font-size:11px;color:var(--red);margin-top:2px;">${escHtml(dep.not_ready_reason||'')}</div>`}
+              ${dep.migration_due_date ? `<div style="font-size:11px;color:var(--gray-400);">移行予定: ${escHtml(dep.migration_due_date)}</div>` : ''}
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>`;
+  }).join('');
 }
 
 async function loadBubbleData() {

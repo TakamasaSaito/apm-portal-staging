@@ -60,7 +60,10 @@ CREATE TABLE IF NOT EXISTS application_dependency (
     app_id            TEXT REFERENCES application(application_id),
     depends_on_app_id TEXT REFERENCES application(application_id),
     dependency_type   TEXT,
-    note              TEXT
+    note              TEXT,
+    migration_status  TEXT DEFAULT 'not_planned',
+    migration_due_date DATE,
+    migration_note    TEXT
 );
 CREATE TABLE IF NOT EXISTS environment (
     environment_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -252,6 +255,17 @@ CREATE TABLE configuration_item (
 );
     """)
 
+    # migration カラム追加（既存DBへの後方互換）
+    for stmt in (
+        "ALTER TABLE application_dependency ADD COLUMN migration_status TEXT DEFAULT 'not_planned'",
+        "ALTER TABLE application_dependency ADD COLUMN migration_due_date DATE",
+        "ALTER TABLE application_dependency ADD COLUMN migration_note TEXT",
+    ):
+        try:
+            cur.execute(stmt)
+        except Exception:
+            pass
+
     # relation_type 初期データ投入
     cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('has_environment','環境を持つ','環境である')")
     cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('has_ci','構成情報を持つ','構成情報である')")
@@ -442,21 +456,21 @@ CREATE TABLE configuration_item (
         ("APM-012", "カスタマーサポートチケット管理",  "カスタマーサポート部", "running",
          "Zendesk Japan",
          "木村 梅子", "木村 梅子", "山田 太郎", "中村 五郎",
-         "2021-07-01", "2021-07-01", "2029-06-30", None,
+         "2021-07-01", "2021-07-01", None, None,
          "ITSM / ITOM（ITサービス・運用管理）",
          3, None, 240, 0),
 
         ("APM-013", "勤怠管理システム",                "人事部",         "running",
          "株式会社TIME-Pro",
          "田中 花子", "田中 花子", "山田 太郎", "中村 五郎",
-         "2022-07-01", "2022-07-01", "2030-06-30", None,
+         "2022-07-01", "2022-07-01", None, None,
          "HRM（人事・労務・給与）",
          2, None, 190, 0),
 
         ("APM-014", "社内ポータル",                    "総務部",         "running",
          "Microsoft",
          "渡辺 四郎", "渡辺 四郎", "山田 太郎", "中村 五郎",
-         "2018-04-01", "2018-04-01", "2028-03-31", None,
+         "2018-04-01", "2018-04-01", None, None,
          "Collaboration（グループウェア・社内コミュニケーション）",
          2, None, 180, 0),
 
@@ -537,53 +551,63 @@ CREATE TABLE configuration_item (
              portfolio_area, migration_target_id, annual_cost, is_infra],
         )
 
-    # ---------- 依存関係（28件） ----------
+    # ---------- 依存関係 ----------
+    def _dep(a, b, t, n, m_st='not_planned', m_due=None, m_note=None):
+        return (a, b, t, n, m_st, m_due, m_note)
+
     deps = [
         # オンプレ系業務アプリ → 国内インフラ
-        ("APM-001", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働"),
-        ("APM-001", "INF-AUTH", "auth",  "社内認証基盤でSSO連携"),
-        ("APM-003", "INF-DC1",  "infra", "大阪DCオンプレサーバー上で稼働"),
-        ("APM-003", "INF-AUTH", "auth",  "社内認証基盤でSSO連携"),
-        ("APM-007", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働（廃止済）"),
-        ("APM-007", "G-HRM",    "data",  "G-HRMへ人事データ移行完了"),
-        ("APM-010", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働"),
-        ("APM-011", "INF-DC1",  "infra", "大阪DCオンプレサーバー上で稼働"),
+        _dep("APM-001", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働"),
+        _dep("APM-001", "INF-AUTH", "auth",  "社内認証基盤でSSO連携"),
+        _dep("APM-003", "INF-DC1",  "infra", "大阪DCオンプレサーバー上で稼働"),
+        _dep("APM-003", "INF-AUTH", "auth",  "社内認証基盤でSSO連携"),
+        _dep("APM-007", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働（廃止済）", "completed"),
+        _dep("APM-007", "G-HRM",    "data",  "G-HRMへ人事データ移行完了",               "completed"),
+        _dep("APM-010", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働"),
+        _dep("APM-011", "INF-DC1",  "infra", "大阪DCオンプレサーバー上で稼働"),
         # クラウド系業務アプリ → G-CLOUD / G-SSO
-        ("APM-002", "G-CLOUD",  "infra", "AWS上でホスティング"),
-        ("APM-002", "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("APM-004", "G-CLOUD",  "infra", "AWS上でホスティング"),
-        ("APM-004", "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("APM-005", "G-CLOUD",  "infra", "AWS上で開発中"),
-        ("APM-005", "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("APM-006", "G-CLOUD",  "infra", "AWS上で構築予定"),
-        ("APM-008", "G-CLOUD",  "infra", "AWS上でホスティング"),
-        ("APM-008", "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("APM-009", "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("APM-012", "G-CLOUD",  "infra", "AWS上でホスティング"),
-        ("APM-013", "G-CLOUD",  "infra", "SaaS連携（KING OF TIME）"),
-        ("APM-013", "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("APM-014", "G-CLOUD",  "infra", "SharePoint Online（M365 / AWS連携）"),
-        ("APM-014", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-002", "G-CLOUD",  "infra", "AWS上でホスティング"),
+        _dep("APM-002", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-004", "G-CLOUD",  "infra", "AWS上でホスティング"),
+        _dep("APM-004", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-005", "G-CLOUD",  "infra", "AWS上で開発中"),
+        _dep("APM-005", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-006", "G-CLOUD",  "infra", "AWS上で構築予定"),
+        _dep("APM-008", "G-CLOUD",  "infra", "AWS上でホスティング"),
+        _dep("APM-008", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-009", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-012", "G-CLOUD",  "infra", "AWS上でホスティング"),
+        _dep("APM-013", "G-CLOUD",  "infra", "SaaS連携（KING OF TIME）"),
+        _dep("APM-013", "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("APM-014", "G-CLOUD",  "infra", "SharePoint Online（M365 / AWS連携）"),
+        _dep("APM-014", "G-SSO",    "auth",  "グローバルSSO連携"),
         # インフラ間移行依存
-        ("INF-DC1", "G-CLOUD",  "infra", "AWSへ段階移行中"),
-        ("INF-AUTH","G-SSO",    "auth",  "G-SSO移行進行中"),
+        _dep("INF-DC1", "G-CLOUD",  "infra", "AWSへ段階移行中"),
+        _dep("INF-AUTH","G-SSO",    "auth",  "G-SSO移行進行中"),
         # グローバル基盤
-        ("G-ERP",   "G-CLOUD",  "infra", "AWS上で稼働"),
-        ("G-ERP",   "G-SSO",    "auth",  "グローバルSSO連携"),
-        ("G-HRM",   "G-CLOUD",  "infra", "AWS上で開発中"),
+        _dep("G-ERP",   "G-CLOUD",  "infra", "AWS上で稼働"),
+        _dep("G-ERP",   "G-SSO",    "auth",  "グローバルSSO連携"),
+        _dep("G-HRM",   "G-CLOUD",  "infra", "AWS上で開発中"),
         # エリア①廃止予定システム → 国内インフラ依存
-        ("APM-015", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働（廃止済）"),
-        ("APM-016", "INF-DC1",  "infra", "東京DCオンプレ帳票サーバー上で稼働"),
-        ("APM-020", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働（廃止予定）"),
-        ("APM-021", "INF-DC1",  "infra", "東京DCオンプレバッチサーバー上で稼働"),
-        ("APM-022", "INF-AUTH", "auth",  "旧社内認証基盤でSSO連携（廃止予定）"),
+        _dep("APM-015", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働（廃止済）",   "completed"),
+        _dep("APM-016", "INF-DC1",  "infra", "東京DCオンプレ帳票サーバー上で稼働"),
+        _dep("APM-020", "INF-DC1",  "infra", "東京DCオンプレサーバー上で稼働（廃止予定）"),
+        _dep("APM-021", "INF-DC1",  "infra", "東京DCオンプレバッチサーバー上で稼働",       "in_progress", "2026-12-31", "AWS移行プロジェクト進行中"),
+        _dep("APM-022", "INF-AUTH", "auth",  "旧社内認証基盤でSSO連携（廃止予定）",        "planned",     "2026-09-30", "G-SSOへの切替を計画中"),
+        # 廃止リスク警告用：INF-AUTH廃止予定への未対応依存（NOT READY）
+        _dep("APM-021", "INF-AUTH", "auth",  "認証基盤依存",                              "planned", "2026-08-31", "グローバル認証基盤への切替を計画中"),
+        _dep("APM-013", "INF-AUTH", "auth",  "勤怠管理がINF-AUTHに依存（未対応）"),
+        _dep("APM-012", "INF-AUTH", "auth",  "CSがINF-AUTHに依存（未対応）"),
+        # 廃止リスク警告用：INF-DC1廃止予定への未対応依存（NOT READY）
+        _dep("APM-014", "INF-DC1",  "infra", "ポータルのオンプレ系処理がINF-DC1に依存（未対応）"),
     ]
-    for app_id, dep_id, dep_type, note in deps:
+    for app_id, dep_id, dep_type, note, m_st, m_due, m_note in deps:
         cur.execute(
             """INSERT INTO application_dependency
-                   (app_id, depends_on_app_id, dependency_type, note)
-               VALUES (?, ?, ?, ?)""",
-            [app_id, dep_id, dep_type, note],
+                   (app_id, depends_on_app_id, dependency_type, note,
+                    migration_status, migration_due_date, migration_note)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            [app_id, dep_id, dep_type, note, m_st, m_due, m_note],
         )
 
     # ---------- 環境（30件） ----------

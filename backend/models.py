@@ -96,6 +96,12 @@ class ConfigurationItemUpdate(BaseModel):
     note: Optional[str] = None
 
 
+class AppDepUpdate(BaseModel):
+    migration_status: Optional[str] = None
+    migration_due_date: Optional[str] = None
+    migration_note: Optional[str] = None
+
+
 class DashboardSummary(BaseModel):
     status_counts: dict
     category_counts: list

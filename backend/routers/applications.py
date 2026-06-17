@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 import aiosqlite
 from ..database import get_db
-from ..models import ApplicationUpdate
+from ..models import ApplicationUpdate, AppDepUpdate
 from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
@@ -240,6 +240,59 @@ async def get_stats(
     async with db.execute("SELECT COUNT(*) AS c FROM environment") as cur:
         env_count = (await cur.fetchone())["c"]
     return {"running": running, "dev": dev, "pending": pending, "env_count": env_count}
+
+
+@router.get("/application-dependencies")
+async def list_application_dependencies(
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute("""
+        SELECT ad.dependency_id, ad.app_id, a1.application_name AS app_name,
+               ad.depends_on_app_id, a2.application_name AS depends_on_name,
+               ad.dependency_type, ad.note,
+               COALESCE(ad.migration_status, 'not_planned') AS migration_status,
+               ad.migration_due_date, ad.migration_note
+        FROM application_dependency ad
+        JOIN application a1 ON a1.application_id = ad.app_id
+        JOIN application a2 ON a2.application_id = ad.depends_on_app_id
+        ORDER BY ad.app_id, ad.depends_on_app_id
+    """) as cur:
+        return [dict(r) for r in await cur.fetchall()]
+
+
+@router.put("/application-dependencies/{dep_id}")
+async def update_application_dependency(
+    dep_id: int,
+    data: AppDepUpdate,
+    db: aiosqlite.Connection = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "Admin only")
+
+    async with db.execute(
+        "SELECT dependency_id FROM application_dependency WHERE dependency_id = ?", [dep_id]
+    ) as cur:
+        if not await cur.fetchone():
+            raise HTTPException(404, "Dependency not found")
+
+    updates: dict = {}
+    if data.migration_status is not None:
+        updates["migration_status"] = data.migration_status
+    if data.migration_due_date is not None:
+        updates["migration_due_date"] = data.migration_due_date or None
+    if data.migration_note is not None:
+        updates["migration_note"] = data.migration_note or None
+
+    if updates:
+        sets = ", ".join(f"{k} = ?" for k in updates)
+        await db.execute(
+            f"UPDATE application_dependency SET {sets} WHERE dependency_id = ?",
+            [*updates.values(), dep_id],
+        )
+        await db.commit()
+    return {"status": "updated"}
 
 
 @router.get("/departments")

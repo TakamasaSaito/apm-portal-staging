@@ -236,6 +236,9 @@ CREATE TABLE IF NOT EXISTS apm_request (
             "ALTER TABLE application ADD COLUMN is_infrastructure INTEGER DEFAULT 0",
             "ALTER TABLE application ADD COLUMN vendor TEXT",
             "ALTER TABLE apm_request ADD COLUMN app_category TEXT",
+            "ALTER TABLE application_dependency ADD COLUMN migration_status TEXT DEFAULT 'not_planned'",
+            "ALTER TABLE application_dependency ADD COLUMN migration_due_date DATE",
+            "ALTER TABLE application_dependency ADD COLUMN migration_note TEXT",
         ):
             try:
                 await db.execute(stmt)
