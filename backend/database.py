@@ -239,6 +239,18 @@ CREATE TABLE IF NOT EXISTS apm_request (
             "ALTER TABLE application_dependency ADD COLUMN migration_status TEXT DEFAULT 'not_planned'",
             "ALTER TABLE application_dependency ADD COLUMN migration_due_date DATE",
             "ALTER TABLE application_dependency ADD COLUMN migration_note TEXT",
+            "ALTER TABLE demand ADD COLUMN score INTEGER",
+            "ALTER TABLE demand ADD COLUMN investment_class TEXT",
+            "ALTER TABLE demand ADD COLUMN capital_expense INTEGER",
+            "ALTER TABLE demand ADD COLUMN operating_expense INTEGER",
+            "ALTER TABLE demand ADD COLUMN financial_benefit INTEGER",
+            "ALTER TABLE demand ADD COLUMN roi_percent REAL",
+            "ALTER TABLE demand ADD COLUMN npv INTEGER",
+            "ALTER TABLE demand ADD COLUMN irr REAL",
+            "ALTER TABLE demand ADD COLUMN capital_budget INTEGER",
+            "ALTER TABLE demand ADD COLUMN operating_budget INTEGER",
+            "ALTER TABLE demand ADD COLUMN discount_rate REAL",
+            "ALTER TABLE demand ADD COLUMN demand_actual_cost INTEGER",
         ):
             try:
                 await db.execute(stmt)

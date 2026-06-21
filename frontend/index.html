@@ -244,10 +244,17 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .stage-step.current{background:var(--accent);color:#fff;}
 .stage-step.pending{background:var(--gray-100);color:var(--gray-400);}
 .stage-arrow{color:var(--gray-300);font-size:12px;margin:0 2px;}
+.stage-chevron-bar{display:flex;align-items:stretch;margin:12px 0 16px;overflow-x:auto;gap:0;}
+.stage-chevron{position:relative;display:flex;align-items:center;justify-content:center;padding:6px 20px 6px 28px;font-size:11px;font-weight:600;white-space:nowrap;background:#e2e8f0;color:#64748b;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%,10px 50%);min-width:90px;cursor:default;}
+.stage-chevron:first-child{clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);padding-left:16px;}
+.stage-chevron.done{background:#bbf7d0;color:#166534;}
+.stage-chevron.current{background:#2563eb;color:#fff;}
+.stage-chevron.pending{background:#e2e8f0;color:#94a3b8;}
 .demand-form-tabs{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:20px;overflow-x:auto;}
 .demand-tab{padding:10px 18px;border:none;background:none;font-size:13px;font-weight:500;color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
 .demand-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .demand-tab-pane{display:none;} .demand-tab-pane.active{display:block;}
+.review-tab-pane{display:none;} .review-tab-pane.active{display:block;}
 .demand-review-layout{display:flex;min-height:calc(100vh - 180px);background:var(--white);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;}
 .demand-review-left{width:320px;flex-shrink:0;border-right:1px solid var(--gray-200);overflow-y:auto;}
 .demand-review-right{flex:1;overflow-y:auto;padding:24px;background:var(--gray-50);}
@@ -263,14 +270,16 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
 .task-state-closed{background:var(--green-light);color:var(--green);}
 .task-meta{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;}
 .task-meta-item{font-size:11px;color:var(--gray-500);}
-.sbadge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
-.sbadge-draft{background:#F1F5F9;color:#64748B;}
-.sbadge-submitted{background:#EFF6FF;color:#3B82F6;}
-.sbadge-screening{background:#FEF3C7;color:#D97706;}
-.sbadge-qualified{background:#EDE9FE;color:#7C3AED;}
-.sbadge-approved{background:var(--green-light);color:var(--green);}
-.sbadge-completed{background:#F0FDF4;color:#15803D;}
-.sbadge-rejected{background:var(--red-light);color:var(--red);}
+.sbadge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap;}
+.sbadge-draft{background:#f1f3f5;color:#6c757d;}
+.sbadge-submitted{background:#dbeafe;color:#1d4ed8;}
+.sbadge-screening{background:#dbeafe;color:#1d4ed8;}
+.sbadge-qualified{background:#dbeafe;color:#1d4ed8;}
+.sbadge-approved{background:#dcfce7;color:#166534;}
+.sbadge-completed{background:#dcfce7;color:#166534;}
+.sbadge-rejected{background:#fee2e2;color:#991b1b;}
+.sbadge-project-pending{background:#fef9c3;color:#854d0e;}
+.sbadge-project-wip{background:#dbeafe;color:#1d4ed8;}
 .pbadge-1{background:#FEE2E2;color:#DC2626;display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
 .pbadge-2{background:#FEF3C7;color:#D97706;display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
 .pbadge-3{background:#EFF6FF;color:#3B82F6;display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
@@ -788,19 +797,32 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
             <thead><tr>
               <th style="min-width:110px">申請番号</th>
               <th style="min-width:220px">タイトル</th>
-              <th style="min-width:80px">優先度</th>
-              <th style="min-width:100px">ステータス</th>
-              <th style="min-width:120px">申請者</th>
-              <th style="min-width:120px">審査責任者</th>
-              <th style="min-width:100px">関連システム</th>
-              <th style="min-width:100px">予算規模</th>
+              <th style="min-width:100px">ポートフォリオ</th>
+              <th style="min-width:180px">ステージ</th>
+              <th style="min-width:130px">プロジェクト</th>
+              <th style="min-width:60px">スコア</th>
+              <th style="min-width:100px">開始予定日</th>
+              <th style="min-width:100px">終了予定日</th>
             </tr></thead>
             <tbody id="demandTableBody"></tbody>
           </table>
         </div>
       </div>
+      <div style="margin-top:16px; padding:12px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;">
+        <div style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em;">Related Links</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <a href="#" onclick="showPage('home',null);switchDashTab('bubble');return false;"
+             style="font-size:13px; color:#2563eb; text-decoration:none; display:flex; align-items:center; gap:4px;">
+            🫧 Demand Workbench
+          </a>
+          <span style="font-size:13px; color:#94a3b8; cursor:not-allowed; display:flex; align-items:center; gap:4px;"
+                title="準備中">
+            📅 Timeline Visualization
+          </span>
+        </div>
+      </div>
       <!-- Projects table -->
-      <div class="table-card">
+      <div class="table-card" style="margin-top:20px;">
         <div class="table-header"><span class="table-header-title">🚀 プロジェクト化済み一覧</span></div>
         <div class="table-scroll-wrap">
           <table id="projectTable">
@@ -3954,13 +3976,34 @@ let demandApplications = [];
 let demandDepts = [];
 
 const STAGE_LABEL = {
-  draft:'下書き', submitted:'提出済', screening:'審査中',
-  qualified:'承認申請', approved:'承認済', completed:'完了', rejected:'差戻し'
+  draft:     'Demand Draft',
+  submitted: 'Demand Submitted',
+  screening: 'Demand Screening',
+  qualified: 'Demand Qualified',
+  approved:  'Demand Approved',
+  completed: 'Demand Completed',
+  rejected:  'Demand Rejected',
 };
 const STAGE_ORDER = ['draft','submitted','screening','qualified','approved','completed'];
 
-function stageBadge(stage) {
-  return `<span class="sbadge sbadge-${stage}">${STAGE_LABEL[stage]||stage}</span>`;
+function stageBadge(stage, linkedProjectId, linkedProjectStatus) {
+  if (linkedProjectId && linkedProjectStatus === 'active') {
+    return `<span class="sbadge sbadge-project-wip">⊖ Project Work in Progress</span>`;
+  }
+  if (stage === 'approved' && linkedProjectId) {
+    return `<span class="sbadge sbadge-project-pending">⊖ Project Pending</span>`;
+  }
+  const cfg = {
+    draft:     { icon: '○', cls: 'draft'     },
+    submitted: { icon: '⊖', cls: 'submitted' },
+    screening: { icon: '⊖', cls: 'screening' },
+    qualified: { icon: '⊖', cls: 'qualified' },
+    approved:  { icon: '✓', cls: 'approved'  },
+    completed: { icon: '✓', cls: 'completed' },
+    rejected:  { icon: '✗', cls: 'rejected'  },
+  };
+  const c = cfg[stage] || { icon: '○', cls: 'draft' };
+  return `<span class="sbadge sbadge-${c.cls}">${c.icon} ${STAGE_LABEL[stage] || stage}</span>`;
 }
 function priorityBadge(priority) {
   const num = priority ? priority[0] : '3';
@@ -4021,14 +4064,14 @@ function renderDemandTable() {
     return;
   }
   tbody.innerHTML = filtered.map(d => `<tr class="clickable" onclick="openDemandReviewById('${d.demand_id}')">
-    <td data-label="ID" data-hide="1"><span class="sys-id">${escHtml(d.demand_id)}</span></td>
+    <td data-label="申請番号"><span class="sys-id">${escHtml(d.demand_id)}</span></td>
     <td data-label="タイトル">${escHtml(d.title)}</td>
-    <td data-label="優先度">${priorityBadge(d.priority)}</td>
-    <td data-label="ステージ">${stageBadge(d.stage)}</td>
-    <td data-label="申請者" data-hide="1">${escHtml(d.submitter_name||'-')}</td>
-    <td data-label="担当者" data-hide="1">${escHtml(d.manager_name||'-')}</td>
-    <td data-label="関連システム" data-hide="1">${d.related_app_ids ? d.related_app_ids.split(',').map(id=>`<span class="sys-id">${escHtml(id.trim())}</span>`).join(' ') : '-'}</td>
-    <td data-label="予算" data-hide="1" style="font-family:'JetBrains Mono',monospace;font-size:12px;">${d.requested_budget ? '¥'+Number(d.requested_budget).toLocaleString() : '-'}</td>
+    <td data-label="ポートフォリオ">${escHtml(d.portfolio||'-')}</td>
+    <td data-label="ステージ">${stageBadge(d.stage, d.linked_project_id, d.linked_project_status)}</td>
+    <td data-label="プロジェクト">${d.linked_project_id ? `<span class="sys-id">${escHtml(d.linked_project_id)}</span>` : '-'}</td>
+    <td data-label="スコア" style="text-align:center;">${d.score ?? '-'}</td>
+    <td data-label="開始予定日">${d.start_date||'-'}</td>
+    <td data-label="終了予定日">${d.due_date||'-'}</td>
   </tr>`).join('');
 }
 
@@ -4063,6 +4106,11 @@ function switchDemandTab(idx, btn) {
   demandFormTabIdx = idx;
   document.querySelectorAll('.demand-tab').forEach((b,i) => b.classList.toggle('active', i===idx));
   document.querySelectorAll('.demand-tab-pane').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+
+function switchReviewTab(idx, btn) {
+  document.querySelectorAll('#reviewTabs .demand-tab').forEach((b,i) => b.classList.toggle('active', i===idx));
+  document.querySelectorAll('.review-tab-pane').forEach((p,i) => p.classList.toggle('active', i===idx));
 }
 
 function resetDemandForm() {
@@ -4224,11 +4272,12 @@ async function selectDemandForReview(demandId) {
   currentDemandId = demandId;
   renderReviewLeftPane();
   try {
-    const [d, apps] = await Promise.all([
+    const [d, apps, costPlans] = await Promise.all([
       apiFetch(`/api/demands/${demandId}`),
       apiFetch(`/api/demands/${demandId}/applications`).catch(() => []),
+      apiFetch(`/api/demands/${demandId}/cost-plans`).catch(() => []),
     ]);
-    renderReviewRightPane(d);
+    renderReviewRightPane(d, costPlans || []);
     const relEl = document.getElementById('reviewRelatedApps');
     if (relEl) {
       if (apps && apps.length) {
@@ -4243,19 +4292,34 @@ async function selectDemandForReview(demandId) {
 function renderStageBar(currentStage) {
   const stages = STAGE_ORDER;
   const currentIdx = stages.indexOf(currentStage);
-  return stages.map((s, i) => {
-    let cls = 'pending';
-    if (i < currentIdx) cls = 'done';
-    else if (i === currentIdx) cls = 'current';
-    const icon = cls==='done'?'✓ ': '';
-    return `<span class="stage-step ${cls}">${icon}${STAGE_LABEL[s]}</span>${i<stages.length-1?'<span class="stage-arrow">›</span>':''}`;
+  const items = stages.map((s, i) => {
+    let cls = i < currentIdx ? 'done' : i === currentIdx ? 'current' : 'pending';
+    const icon = cls === 'done' ? '✓ ' : '';
+    return `<div class="stage-chevron ${cls}">${icon}${STAGE_LABEL[s]}</div>`;
   }).join('');
+  return `<div class="stage-chevron-bar">${items}</div>`;
 }
 
-function renderReviewRightPane(d) {
+function renderReviewRightPane(d, costPlans) {
   const el = document.getElementById('reviewRightPane');
   if (!el) return;
-  const fmt = v => v ? escHtml(String(v)) : '-';
+  const fmt = v => (v !== null && v !== undefined && v !== '') ? escHtml(String(v)) : '-';
+  const fmtYen = v => (v !== null && v !== undefined) ? '¥' + Number(v).toLocaleString() : '-';
+  const fmtPct = v => (v !== null && v !== undefined) ? Number(v).toFixed(1) + '%' : '-';
+  const totalPlanned = ((d.capital_expense || 0) + (d.operating_expense || 0));
+  const scoreBar = (d.score !== null && d.score !== undefined)
+    ? `<div style="background:#e2e8f0;border-radius:4px;height:8px;margin-top:4px;"><div style="background:#2563eb;border-radius:4px;height:8px;width:${Math.min(d.score,100)}%;"></div></div>`
+    : '';
+  const costPlanRows = (costPlans && costPlans.length)
+    ? costPlans.map(cp => `<tr>
+        <td>${escHtml(cp.fiscal_year ? cp.fiscal_year + (cp.fiscal_period ? ' ' + cp.fiscal_period : '') : (cp.fiscal_period||'-'))}</td>
+        <td>${escHtml(cp.cost_type||'-')}</td>
+        <td style="text-align:right;">${cp.planned_cost != null ? '¥'+Number(cp.planned_cost).toLocaleString() : '-'}</td>
+        <td style="text-align:right;">${cp.actual_cost != null ? '¥'+Number(cp.actual_cost).toLocaleString() : '-'}</td>
+        <td>${escHtml(cp.note||'-')}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:12px;">コスト計画がありません</td></tr>`;
+
   el.innerHTML = `
     <div class="review-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
@@ -4263,56 +4327,117 @@ function renderReviewRightPane(d) {
           <div style="font-size:18px;font-weight:700;color:var(--navy);">${escHtml(d.title)}</div>
           <div style="font-size:12px;color:var(--gray-400);font-family:'JetBrains Mono',monospace;margin-top:2px;">${escHtml(d.demand_id)}</div>
         </div>
-        <div style="display:flex;gap:6px;">${stageBadge(d.stage)}${priorityBadge(d.priority)}</div>
+        <div style="display:flex;gap:6px;">${stageBadge(d.stage, d.linked_project_id, d.linked_project_status)}${priorityBadge(d.priority)}</div>
       </div>
-      <div class="demand-stage-bar">${renderStageBar(d.stage)}</div>
+      ${renderStageBar(d.stage)}
     </div>
 
     <div class="review-card">
-      <div class="review-card-title">基本情報</div>
-      <div class="demand-detail-grid">
-        <div class="d-field"><label>デマンド種別</label><span>${fmt(d.type)}</span></div>
-        <div class="d-field"><label>ドメイン</label><span>${fmt(d.domain)}</span></div>
-        <div class="d-field"><label>IT分類</label><span>${fmt(d.it_class)}</span></div>
-        <div class="d-field"><label>カテゴリ</label><span>${fmt(d.category)}</span></div>
-        <div class="d-field"><label>申請者</label><span>${fmt(d.submitter_name)}</span></div>
-        <div class="d-field"><label>審査責任者</label><span>${fmt(d.manager_name)}</span></div>
-        <div class="d-field"><label>開始予定日</label><span>${fmt(d.start_date)}</span></div>
-        <div class="d-field"><label>目標完了日</label><span>${fmt(d.due_date)}</span></div>
-        <div class="d-field"><label>関連システム</label><span id="reviewRelatedApps"><span style="color:var(--gray-400);font-size:11px;">読み込み中...</span></span></div>
-        <div class="d-field"><label>申請部門</label><span>${fmt(d.department_name)}</span></div>
+      <div class="demand-form-tabs" id="reviewTabs">
+        <button class="demand-tab active"  onclick="switchReviewTab(0,this)">Details</button>
+        <button class="demand-tab"         onclick="switchReviewTab(1,this)">Business Case</button>
+        <button class="demand-tab"         onclick="switchReviewTab(2,this)">Financials</button>
+        <button class="demand-tab"         onclick="switchReviewTab(3,this)">Assessment Data</button>
+        <button class="demand-tab"         onclick="switchReviewTab(4,this)">Notes</button>
+        <button class="demand-tab"         onclick="switchReviewTab(5,this)">Preferences</button>
       </div>
-      <div class="d-field" style="margin-top:8px;"><label>概要</label><span>${fmt(d.description)}</span></div>
-    </div>
 
-    <div class="review-card">
-      <div class="review-card-title">ビジネスケース</div>
-      <div class="d-field" style="margin-bottom:10px;"><label>目的・背景</label><span>${fmt(d.purpose)}</span></div>
-      <div class="d-field" style="margin-bottom:10px;"><label>ビジネスケース</label><span>${fmt(d.business_case)}</span></div>
-      <div class="d-field"><label>期待効果</label><span>${fmt(d.expected_benefit)}</span></div>
-    </div>
-
-    <div class="review-card">
-      <div class="review-card-title">費用計画</div>
-      <div class="demand-detail-grid">
-        <div class="d-field"><label>概算費用</label><span style="font-weight:700;color:var(--accent);">${d.estimated_cost?'¥'+Number(d.estimated_cost).toLocaleString():'-'}</span></div>
-        <div class="d-field"><label>要求予算</label><span style="font-weight:700;color:var(--accent);">${d.requested_budget?'¥'+Number(d.requested_budget).toLocaleString():'-'}</span></div>
+      <!-- Tab 0: Details -->
+      <div class="review-tab-pane active">
+        <div class="demand-detail-grid">
+          <div class="d-field"><label>デマンド種別</label><span>${fmt(d.type)}</span></div>
+          <div class="d-field"><label>ドメイン</label><span>${fmt(d.domain)}</span></div>
+          <div class="d-field"><label>IT分類</label><span>${fmt(d.it_class)}</span></div>
+          <div class="d-field"><label>カテゴリ</label><span>${fmt(d.category)}</span></div>
+          <div class="d-field"><label>申請者</label><span>${fmt(d.submitter_name)}</span></div>
+          <div class="d-field"><label>審査責任者</label><span>${fmt(d.manager_name)}</span></div>
+          <div class="d-field"><label>開始予定日</label><span>${fmt(d.start_date)}</span></div>
+          <div class="d-field"><label>目標完了日</label><span>${fmt(d.due_date)}</span></div>
+          <div class="d-field"><label>関連システム</label><span id="reviewRelatedApps"><span style="color:var(--gray-400);font-size:11px;">読み込み中...</span></span></div>
+          <div class="d-field"><label>申請部門</label><span>${fmt(d.department_name)}</span></div>
+        </div>
+        <div class="d-field" style="margin-top:8px;"><label>概要</label><span>${fmt(d.description)}</span></div>
       </div>
-      <div class="d-field"><label>費用備考</label><span>${fmt(d.cost_note)}</span></div>
-    </div>
 
-    <div class="review-card">
-      <div class="review-card-title">審査アクション</div>
-      <div class="form-group">
-        <label>レビューコメント</label>
-        <textarea class="form-control" id="reviewCommentInput" rows="3" placeholder="審査コメントを入力してください">${escHtml(d.review_comment||'')}</textarea>
+      <!-- Tab 1: Business Case -->
+      <div class="review-tab-pane">
+        <div class="d-field" style="margin-bottom:10px;"><label>目的・背景</label><span>${fmt(d.purpose)}</span></div>
+        <div class="d-field" style="margin-bottom:10px;"><label>ビジネスケース</label><span>${fmt(d.business_case)}</span></div>
+        <div class="d-field" style="margin-bottom:10px;"><label>期待効果</label><span>${fmt(d.expected_benefit)}</span></div>
+        <div class="d-field"><label>実現可能性</label><span>${fmt(d.feasibility)}</span></div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
-        ${d.stage === 'submitted' ? `<button class="btn btn-primary" onclick="startScreening('${d.demand_id}')">🔍 審査開始</button>` : ''}
-        ${d.stage === 'screening' ? `<button class="btn btn-primary" onclick="loadTaskPage('${d.demand_id}')">✅ タスク管理へ</button>` : ''}
-        ${d.stage === 'qualified' || d.stage === 'screening' ? `<button class="btn btn-success" onclick="loadTaskPage('${d.demand_id}')">🎯 承認画面へ</button>` : ''}
-        <button class="btn btn-secondary" onclick="saveReviewComment('${d.demand_id}')">💾 コメント保存</button>
-        <button class="btn btn-danger btn-sm" onclick="openRejectModal()">❌ 差戻し</button>
+
+      <!-- Tab 2: Financials -->
+      <div class="review-tab-pane">
+        <div class="demand-detail-grid3" style="margin-bottom:16px;">
+          <div class="d-field"><label>Capital expense</label><span style="font-weight:700;">${fmtYen(d.capital_expense)}</span></div>
+          <div class="d-field"><label>Operating expense</label><span style="font-weight:700;">${fmtYen(d.operating_expense)}</span></div>
+          <div class="d-field"><label>Total planned cost</label><span style="font-weight:700;color:var(--accent);">${totalPlanned ? '¥'+totalPlanned.toLocaleString() : '-'}</span></div>
+          <div class="d-field"><label>Financial return</label><span>${fmtYen(d.financial_benefit)}</span></div>
+          <div class="d-field"><label>Financial benefit</label><span>${fmtYen(d.financial_benefit)}</span></div>
+          <div class="d-field"><label>ROI%</label><span>${fmtPct(d.roi_percent)}</span></div>
+          <div class="d-field"><label>Capital budget</label><span>${fmtYen(d.capital_budget)}</span></div>
+          <div class="d-field"><label>Operating budget</label><span>${fmtYen(d.operating_budget)}</span></div>
+          <div class="d-field"><label>Discount Rate%</label><span>${fmtPct(d.discount_rate)}</span></div>
+          <div class="d-field"><label>Net present value</label><span>${fmtYen(d.npv)}</span></div>
+          <div class="d-field"><label>Internal rate of return%</label><span>${fmtPct(d.irr)}</span></div>
+          <div class="d-field"><label>Demand Actual Cost</label><span>${fmtYen(d.demand_actual_cost)}</span></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Cost Plans</div>
+        <div class="table-scroll-wrap">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="background:var(--gray-50);border-bottom:1px solid var(--gray-200);">
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gray-500);">会計期間</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gray-500);">コスト種別</th>
+              <th style="padding:6px 8px;text-align:right;font-weight:600;color:var(--gray-500);">計画額</th>
+              <th style="padding:6px 8px;text-align:right;font-weight:600;color:var(--gray-500);">実績額</th>
+              <th style="padding:6px 8px;text-align:left;font-weight:600;color:var(--gray-500);">メモ</th>
+            </tr></thead>
+            <tbody>${costPlanRows}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: Assessment Data -->
+      <div class="review-tab-pane">
+        <div class="demand-detail-grid">
+          <div class="d-field"><label>Score</label>
+            <span>${d.score ?? '-'}</span>
+            ${scoreBar}
+          </div>
+          <div class="d-field"><label>Investment class</label><span>${fmt(d.investment_class)}</span></div>
+          <div class="d-field"><label>優先度</label><span>${fmt(d.priority)}</span></div>
+          <div class="d-field"><label>地域</label><span>${fmt(d.region)}</span></div>
+          <div class="d-field"><label>変更種別</label><span>${fmt(d.change_type)}</span></div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Notes -->
+      <div class="review-tab-pane">
+        <div class="d-field" style="margin-bottom:10px;"><label>備考</label><span>${fmt(d.notes)}</span></div>
+        <div class="d-field" style="margin-bottom:10px;"><label>レビューコメント</label>
+          <textarea class="form-control" id="reviewCommentInput" rows="3" placeholder="審査コメントを入力してください">${escHtml(d.review_comment||'')}</textarea>
+        </div>
+        <div class="d-field" style="margin-bottom:10px;"><label>承認コメント</label><span>${fmt(d.approval_comment)}</span></div>
+        <div class="d-field"><label>差戻し理由</label><span>${fmt(d.reject_reason)}</span></div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+          ${d.stage === 'submitted' ? `<button class="btn btn-primary" onclick="startScreening('${d.demand_id}')">🔍 審査開始</button>` : ''}
+          ${d.stage === 'screening' ? `<button class="btn btn-primary" onclick="loadTaskPage('${d.demand_id}')">✅ タスク管理へ</button>` : ''}
+          ${d.stage === 'qualified' || d.stage === 'screening' ? `<button class="btn btn-success" onclick="loadTaskPage('${d.demand_id}')">🎯 承認画面へ</button>` : ''}
+          <button class="btn btn-secondary" onclick="saveReviewComment('${d.demand_id}')">💾 コメント保存</button>
+          <button class="btn btn-danger btn-sm" onclick="openRejectModal()">❌ 差戻し</button>
+        </div>
+      </div>
+
+      <!-- Tab 5: Preferences -->
+      <div class="review-tab-pane">
+        <div class="demand-detail-grid">
+          <div class="d-field"><label>会社</label><span>${fmt(d.company)}</span></div>
+          <div class="d-field"><label>ビジネスユニット</label><span>${fmt(d.business_unit)}</span></div>
+          <div class="d-field"><label>ドメイン</label><span>${fmt(d.domain)}</span></div>
+          <div class="d-field"><label>IT分類</label><span>${fmt(d.it_class)}</span></div>
+          <div class="d-field"><label>プログラム</label><span>${fmt(d.program)}</span></div>
+        </div>
       </div>
     </div>
   `;

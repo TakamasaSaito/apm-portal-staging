@@ -74,11 +74,15 @@ async def list_demands(
                u2.user_name AS manager_name,
                dep.department_name,
                (SELECT COUNT(*) FROM demand_application da WHERE da.demand_id = d.demand_id) AS related_app_count,
-               (SELECT GROUP_CONCAT(da.application_id) FROM demand_application da WHERE da.demand_id = d.demand_id) AS related_app_ids
+               (SELECT GROUP_CONCAT(da.application_id) FROM demand_application da WHERE da.demand_id = d.demand_id) AS related_app_ids,
+               p.project_id AS linked_project_id,
+               p.status     AS linked_project_status,
+               p.title      AS linked_project_title
         FROM demand d
-        LEFT JOIN user u1 ON d.submitter_user_id = u1.user_id
-        LEFT JOIN user u2 ON d.manager_user_id = u2.user_id
+        LEFT JOIN user u1  ON d.submitter_user_id = u1.user_id
+        LEFT JOIN user u2  ON d.manager_user_id   = u2.user_id
         LEFT JOIN department dep ON d.department_id = dep.department_id
+        LEFT JOIN project p ON p.demand_id = d.demand_id
         WHERE 1=1
     """
     params = []
