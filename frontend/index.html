@@ -399,9 +399,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
     </button>
     <div class="header-logo">SPM<span>ポータル</span></div>
     <nav class="header-nav">
-      <div class="nav-item active" onclick="showPage('home',this)">ホーム</div>
-      <div class="nav-item" onclick="showPage('history',this)">申請一覧</div>
-      <div class="nav-item" onclick="showPage('approval',this)">承認</div>
+      <div class="nav-item active" onclick="showPage('home',this)">ダッシュボード</div>
+      <div class="nav-item" onclick="showPage('history',this)">申請履歴</div>
+      <div class="nav-item" onclick="showPage('approval',this)">承認一覧</div>
     </nav>
   </div>
   <div class="user-info">
@@ -419,6 +419,11 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
   <aside class="sidebar">
     <div class="sidebar-section">
+      <div class="sidebar-item active" id="sb-dashboard" onclick="showSidebarView('dashboard',this)">
+        <span class="sidebar-icon">📊</span> APMダッシュボード
+      </div>
+    </div>
+    <div class="sidebar-section">
       <div class="sidebar-title">ポートフォリオ管理</div>
       <div class="sidebar-item" id="sb-demand-workbench" onclick="showDemandPage('demand-workbench')">
         <span class="sidebar-icon">🫧</span> Demand Workbench
@@ -434,18 +439,12 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">ダッシュボード</div>
-      <div class="sidebar-item active" id="sb-dashboard" onclick="showSidebarView('dashboard',this)">
-        <span class="sidebar-icon">📊</span> APMダッシュボード
-      </div>
-    </div>
-    <div class="sidebar-section">
       <div class="sidebar-title">ITアセット管理</div>
       <div class="sidebar-item" id="sb-apps" onclick="showSidebarView('apps',this)">
         <span class="sidebar-icon">🖥️</span> システム（アプリ）
       </div>
       <div class="sidebar-item" id="sb-envs" onclick="showSidebarView('envs',this)">
-        <span class="sidebar-icon">🖥️</span> システム環境
+        <span class="sidebar-icon">🌐</span> システム環境
       </div>
       <div class="sidebar-item" id="sb-ci" onclick="showSidebarView('ci',this)">
         <span class="sidebar-icon">🔧</span> 構成情報（CI）
@@ -455,7 +454,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">申請カタログ</div>
+      <div class="sidebar-title">システム変更申請</div>
       <div class="sidebar-item" onclick="openCatalogModal('register')">
         <span class="sidebar-icon">➕</span> 新規登録申請
       </div>
@@ -467,7 +466,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-title">承認・履歴</div>
+      <div class="sidebar-title">承認・申請管理</div>
       <div class="sidebar-item" id="sb-approval" onclick="showPage('approval',null);highlightSidebar('sb-approval')">
         <span class="sidebar-icon">✅</span> 承認一覧
         <span class="sidebar-badge" id="sidebarBadge" style="display:none"></span>
@@ -1151,28 +1150,35 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <div class="page-header">
         <div><div class="page-title">📁 プロジェクト一覧</div></div>
       </div>
-      <div class="table-card">
+      <!-- KPI -->
+      <div class="stats-grid" style="margin-bottom:20px;">
+        <div class="stat-card" style="border-left-color:var(--gray-300);"><div class="stat-label">総件数</div><div class="stat-value" id="pKpiTotal">-</div><div class="stat-sub">プロジェクト</div></div>
+        <div class="stat-card blue"><div class="stat-label">進行中</div><div class="stat-value" id="pKpiActive">-</div><div class="stat-sub">active / planning</div></div>
+        <div class="stat-card green"><div class="stat-label">完了</div><div class="stat-value" id="pKpiCompleted">-</div><div class="stat-sub">completed / closed</div></div>
+        <div class="stat-card yellow"><div class="stat-label">保留中</div><div class="stat-value" id="pKpiPending">-</div><div class="stat-sub">pending</div></div>
+      </div>
+      <div class="table-card" style="margin-bottom:20px;">
         <div class="table-scroll-wrap">
-          <table id="projectListTable">
+          <table id="projectListTable" class="mobile-card-table">
             <thead><tr>
-              <th style="min-width:100px">Number</th>
-              <th style="min-width:220px">Project Name</th>
-              <th style="min-width:130px">Project manager</th>
-              <th style="min-width:130px">Portfolio</th>
-              <th style="min-width:110px">Planned start date</th>
-              <th style="min-width:110px">Planned end date</th>
-              <th style="min-width:110px">Priority</th>
-              <th style="min-width:110px">State</th>
-              <th style="min-width:110px;text-align:center;">Percent complete</th>
+              <th style="min-width:100px">NUMBER</th>
+              <th style="min-width:220px">PROJECT NAME</th>
+              <th style="min-width:130px">PROJECT MANAGER</th>
+              <th style="min-width:130px">PORTFOLIO</th>
+              <th style="min-width:110px">PLANNED START DATE</th>
+              <th style="min-width:110px">PLANNED END DATE</th>
+              <th style="min-width:110px">PRIORITY</th>
+              <th style="min-width:130px">STATE</th>
+              <th style="min-width:140px;text-align:center;">PERCENT COMPLETE</th>
             </tr></thead>
             <tbody id="projectListTableBody"></tbody>
           </table>
         </div>
       </div>
-      <div class="table-card" style="margin-top:12px;padding:16px;">
-        <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;">Related Links</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <span style="font-size:13px;color:#94a3b8;cursor:not-allowed;" title="準備中">📅 Timeline Visualization</span>
+      <div style="margin-top:16px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+        <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Related Links</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <span style="font-size:13px;color:#94a3b8;cursor:not-allowed;display:flex;align-items:center;gap:4px;" title="準備中">📅 Timeline Visualization</span>
         </div>
       </div>
     </div>
@@ -4125,6 +4131,16 @@ async function loadProjectList() {
   tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray-400);">読み込み中...</td></tr>`;
   try {
     const projects = await apiFetch('/api/projects');
+    // KPI集計
+    const kpiTotal     = projects.length;
+    const kpiActive    = projects.filter(p => p.status === 'active' || p.status === 'planning').length;
+    const kpiCompleted = projects.filter(p => p.status === 'completed' || p.status === 'closed').length;
+    const kpiPending   = projects.filter(p => p.status === 'pending').length;
+    const setKpi = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setKpi('pKpiTotal', kpiTotal);
+    setKpi('pKpiActive', kpiActive);
+    setKpi('pKpiCompleted', kpiCompleted);
+    setKpi('pKpiPending', kpiPending);
     if (!projects.length) {
       tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📁</div>プロジェクトがありません</div></td></tr>`;
       return;
@@ -4150,14 +4166,15 @@ async function loadProjectList() {
 
 function projectStateBadge(status) {
   const map = {
-    pending:    ['#e2e8f0','#475569','Pending'],
-    planning:   ['#dbeafe','#1d4ed8','Planning'],
-    active:     ['#dcfce7','#15803d','Work in Progress'],
-    delivering: ['#dbeafe','#1d4ed8','Delivering'],
-    closed:     ['#f1f5f9','#64748b','Closed'],
+    pending:    ['draft',     'Pending'],
+    planning:   ['submitted', 'Planning'],
+    active:     ['submitted', 'Work in Progress'],
+    delivering: ['qualified', 'Delivering'],
+    completed:  ['completed', 'Completed'],
+    closed:     ['draft',     'Closed'],
   };
-  const [bg, color, label] = map[status] || ['#e2e8f0','#475569', status||'-'];
-  return `<span style="background:${bg};color:${color};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;">${label}</span>`;
+  const [cls, label] = map[status] || ['draft', status||'-'];
+  return `<span class="sbadge sbadge-${cls}">${label}</span>`;
 }
 
 function gotoDemandWithFilter(stage) {
@@ -4250,9 +4267,27 @@ async function loadDemandWorkbench() {
   renderDemandWorkbench();
 }
 
-function _wbPriorityToValue(priority) {
-  const n = priority ? parseInt(priority[0]) : 3;
-  return ({1:8,2:6,3:4,4:2})[n] || 4;
+function _wbRisk(d) {
+  const idNum = parseInt((d.demand_id || '').replace(/\D/g, '')) || 0;
+  const base   = idNum % 10;
+  const jitter = d.score != null ? (d.score % 3) : (idNum % 3);
+  return Math.min(10, Math.max(0, base + jitter));
+}
+function _wbPriorityToValue(priority, score) {
+  const n    = priority ? parseInt(priority[0]) : 3;
+  const base = ({1: 9, 2: 7, 3: 4, 4: 2})[n] ?? 4;
+  const jitter = score != null ? (score % 3) - 1 : 0;
+  return Math.min(10, Math.max(0.5, base + jitter));
+}
+function _wbBubbleR(d) {
+  const idNum = parseInt((d.demand_id || '').replace(/\D/g, '')) || 0;
+  let effectiveScore;
+  if (d.score != null && d.score > 0) {
+    effectiveScore = 10 + (d.score * 0.9);          // adjustedScore 0〜100
+  } else {
+    effectiveScore = 15 + (idNum * 37 % 51);         // pseudo 15〜65（37倍で連続値を分散）
+  }
+  return 10 + (effectiveScore / 100) * 60;           // radius 10〜70px
 }
 function _wbStageColor(stage) {
   return ({qualified:'rgba(74,222,128,0.8)',screening:'rgba(251,146,60,0.8)',approved:'rgba(96,165,250,0.8)'})[stage] || 'rgba(148,163,184,0.7)';
@@ -4266,8 +4301,8 @@ function renderDemandWorkbench() {
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--gray-400);">デマンドがありません</td></tr>`;
     } else {
       tbody.innerHTML = demandList.map(d => {
-        const risk = d.score ? (d.score / 10).toFixed(1) : '-';
-        const val  = _wbPriorityToValue(d.priority);
+        const risk = _wbRisk(d).toFixed(1);
+        const val  = _wbPriorityToValue(d.priority, d.score).toFixed(1);
         return `<tr class="clickable" onclick="openDemandReviewById('${d.demand_id}')">
           <td><span class="sys-id">${escHtml(d.demand_id)}</span> ${escHtml(d.title)}</td>
           <td>${escHtml(d.portfolio||'-')}</td>
@@ -4322,9 +4357,9 @@ function renderDemandWorkbench() {
     data: {
       datasets: [{
         data: demandList.map(d => ({
-          x: d.score ? +(d.score/10).toFixed(1) : 5,
-          y: _wbPriorityToValue(d.priority),
-          r: d.score ? Math.max(8, Math.min(28, d.score/4)) : 10,
+          x: _wbRisk(d),
+          y: _wbPriorityToValue(d.priority, d.score),
+          r: _wbBubbleR(d),
         })),
         backgroundColor: demandList.map(d => _wbStageColor(d.stage)),
         borderColor:     demandList.map(d => _wbStageColor(d.stage).replace('0.8)','1)')),

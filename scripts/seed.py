@@ -1426,19 +1426,65 @@ CREATE TABLE configuration_item (
         )
 
     # ---------- プロジェクト（5件） ----------
+    # (project_id, demand_id, title, status, created_date, manager_user_id, portfolio, description)
     projects = [
-        ("PROJ00001", "DMND1001001", "営業支援CRM導入（国内営業部門）",      "completed", "2025-11-01"),
-        ("PROJ00002", "DMND1001002", "経費精算システム刷新",                 "completed", "2025-04-01"),
-        ("PROJ00003", "DMND1001003", "勤怠管理システム刷新（クラウド移行）", "completed", "2024-10-01"),
-        ("PROJ00004", "DMND1001004", "グローバルERP統合推進",                "active",    "2026-05-01"),
-        ("PROJ00005", "DMND1001005", "品質管理システム刷新",                 "active",    "2026-03-01"),
+        ("PROJ00001", "DMND1001001", "営業支援CRM導入（国内営業部門）",      "completed", "2025-11-01",
+         u["山田 太郎"], "営業IT",         "Salesforceを活用した国内営業CRM導入プロジェクト。商談・顧客情報の一元管理と営業活動の可視化を実現。"),
+        ("PROJ00002", "DMND1001002", "経費精算システム刷新",                 "completed", "2025-04-01",
+         u["山田 太郎"], "コーポレートIT", "老朽化した経費精算システムをクラウドSaaSへ移行。承認フロー完全デジタル化と月次締め処理2日短縮を達成。"),
+        ("PROJ00003", "DMND1001003", "勤怠管理システム刷新（クラウド移行）", "completed", "2024-10-01",
+         u["山田 太郎"], "コーポレートIT", "オンプレ勤怠管理システムをクラウドSaaSへ移行。在宅勤務・フレックス対応を強化し管理工数を月10時間削減。"),
+        ("PROJ00004", "DMND1001004", "グローバルERP統合推進",                "active",    "2026-05-01",
+         u["中村 五郎"], "グローバルERP",  "12拠点で乱立するERPをSAP S/4HANAに統合するグローバルプロジェクト。年間運用コスト約1億円削減を目指す。"),
+        ("PROJ00005", "DMND1001005", "品質管理システム刷新",                 "active",    "2026-03-01",
+         u["山田 太郎"], "製造IT",         "紙ベース品質管理をシステム化し不良品トレーサビリティとリアルタイム分析を実現。不良品検出を3日→1時間に短縮。"),
     ]
-    for (pid, did, title, status, created) in projects:
+    for (pid, did, title, status, created, mgr_id, portfolio, description) in projects:
         cur.execute(
-            """INSERT INTO project (project_id, demand_id, title, status, created_date)
-               VALUES (?,?,?,?,?)""",
-            [pid, did, title, status, created],
+            """INSERT INTO project (project_id, demand_id, title, status, created_date, manager_user_id, portfolio, description)
+               VALUES (?,?,?,?,?,?,?,?)""",
+            [pid, did, title, status, created, mgr_id, portfolio, description],
         )
+
+    # ---------- デマンドスコア・財務フィールド更新 ----------
+    # (demand_id, score, investment_class, capital_expense, operating_expense, financial_benefit, roi_percent, npv)
+    demand_financials = [
+        # completed (3件)
+        ("DMND1001001", 72,  "Run",        2_000_000, 5_000_000, 8_000_000,  150.0, 12_000_000),
+        ("DMND1001002", 68,  "Run",        1_500_000, 3_000_000, 6_000_000,  120.0,  9_000_000),
+        ("DMND1001003", 88,  "Run",        1_000_000, 2_000_000, 7_000_000,  200.0, 10_000_000),
+        # approved (3件)
+        ("DMND1001004", 91,  "Transform", 150_000_000, 50_000_000, 300_000_000, 50.0, 80_000_000),
+        ("DMND1001005", 76,  "Grow",       10_000_000,  8_000_000,  30_000_000, 100.0, 15_000_000),
+        ("DMND1001006", 71,  "Run",         3_000_000,  2_000_000,   5_000_000, 100.0,  3_000_000),
+        # qualified (3件)
+        ("DMND1001007", 64,  "Run",         5_000_000,  4_000_000,  12_000_000,  80.0,  6_000_000),
+        ("DMND1001008", 85,  "Transform",  20_000_000, 10_000_000,  40_000_000,  50.0, 10_000_000),
+        ("DMND1001009", 62,  "Grow",        5_000_000,  3_000_000,  10_000_000,  80.0,  4_000_000),
+        # screening (3件)
+        ("DMND1001010", 55,  "Run",         8_000_000,  4_000_000,  12_000_000,  50.0,  3_000_000),
+        ("DMND1001011", 51,  "Grow",        5_000_000,  5_000_000,  10_000_000,  50.0,  2_000_000),
+        ("DMND1001012", 43,  "Run",         4_000_000,  3_000_000,   5_000_000,  25.0,    500_000),
+        # submitted (3件)
+        ("DMND1001013", 78,  "Transform", 100_000_000, 50_000_000, 200_000_000,  33.0, 30_000_000),
+        ("DMND1001014", 60,  "Transform",  35_000_000, 15_000_000,  60_000_000,  33.0, 10_000_000),
+        ("DMND1001015", 38,  "Run",         3_000_000,  3_000_000,   5_000_000,  33.0,    500_000),
+        # draft (3件)
+        ("DMND1001016", 35,  "Run",         2_000_000,  2_000_000,   3_000_000,  25.0,    100_000),
+        ("DMND1001017", 32,  "Run",         4_000_000,  4_000_000,   6_000_000,  25.0,    500_000),
+        ("DMND1001018", 45,  "Run",         3_000_000,  4_000_000,   8_000_000,  60.0,  2_000_000),
+        # rejected (2件)
+        ("DMND1001019", 18,  "Transform",  60_000_000, 20_000_000,  30_000_000, -25.0, -5_000_000),
+        ("DMND1001020", 22,  "Grow",       15_000_000, 10_000_000,  20_000_000,   0.0,    100_000),
+    ]
+    for (did, score, inv_class, capex, opex, fin_ben, roi, npv) in demand_financials:
+        cur.execute(
+            """UPDATE demand SET score=?, investment_class=?,
+               capital_expense=?, operating_expense=?, financial_benefit=?, roi_percent=?, npv=?
+               WHERE demand_id=?""",
+            [score, inv_class, capex, opex, fin_ben, roi, npv, did],
+        )
+
     conn.commit()
     conn.close()
     print("✓ シードデータを投入しました")
@@ -1446,7 +1492,7 @@ CREATE TABLE configuration_item (
     print(f"  アプリケーション: {len(apps)}件 (インフラ含む), 環境: {len(envs)}件")
     print(f"  CI: {len(ci_data)}件, 依存関係: {len(deps)}件, 申請: {len(requests)}件")
     print(f"  デマンド: {len(demands)}件, タスク: {len(demand_tasks)}件, 関連アプリ: {len(demand_apps)}件")
-    print(f"  コスト計画: {len(cost_plans)}件, プロジェクト: {len(projects)}件")
+    print(f"  コスト計画: {len(cost_plans)}件, プロジェクト: {len(projects)}件, 財務更新: {len(demand_financials)}件")
 
 
 if __name__ == "__main__":
