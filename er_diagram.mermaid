@@ -1,35 +1,76 @@
 erDiagram
+
+    %% ─── 組織 / ユーザー ────────────────────────────────────────
     DEPARTMENT {
-        int department_id PK
+        int    department_id   PK
         string department_name
     }
 
     USER {
-        int user_id PK
+        int    user_id       PK
         string user_name
-        int department_id FK
+        int    department_id FK
         string role
+        string login_id
+        string password_hash
     }
 
+    %% ─── APM コア ────────────────────────────────────────────────
     APPLICATION {
-        int application_id PK
+        string application_id      PK
         string application_name
-        int owner_department_id FK
+        int    owner_department_id FK
         string status
         string vendor
         string business_owner
         string system_owner
         string ops_manager
         string dev_manager
-        date start_plan
-        date start_actual
-        date end_plan
-        date end_actual
+        string start_plan
+        string start_actual
+        string end_plan
+        string end_actual
+        string app_category
+        int    portfolio_area
+        string migration_target_id FK
+        int    annual_cost_million
+        int    is_infrastructure
     }
 
+    APPLICATION_DEPENDENCY {
+        int    dependency_id      PK
+        string app_id             FK
+        string depends_on_app_id  FK
+        string dependency_type
+        string note
+        string migration_status
+        date   migration_due_date
+        string migration_note
+    }
+
+    APM_REQUEST {
+        string   request_id        PK
+        string   type
+        string   application_id    FK
+        int      applicant_user_id FK
+        datetime applied_at
+        string   status
+        int      approver_user_id  FK
+        datetime approved_at
+        string   reason
+        string   changes
+        string   app_name
+        string   dept
+        string   biz_owner
+        string   new_status
+        string   start_plan
+        string   end_plan
+        string   app_category
+    }
+
+    %% ─── CMDB ───────────────────────────────────────────────────
     ENVIRONMENT {
-        int environment_id PK
-        int application_id FK
+        int    environment_id PK
         string env_type
         string location
         string ip
@@ -40,25 +81,172 @@ erDiagram
         string storage
     }
 
-    APM_REQUEST {
-        string request_id PK
-        string type
-        int application_id FK
-        int applicant_user_id FK
-        datetime applied_at
+    CONFIGURATION_ITEM {
+        int    ci_id      PK
+        string ci_name
+        string ci_type
+        string hostname
+        string ip_address
+        string bmc_ip
+        string os
+        string os_version
+        string cpu
+        string memory
+        string storage
+        string vendor
+        string model
         string status
-        int approver_user_id FK
-        datetime approved_at
-        string reason
-        string changes
+        string note
     }
 
-    %% Relationships
-    DEPARTMENT ||--o{ USER : "所属"
-    DEPARTMENT ||--o{ APPLICATION : "所管"
+    RELATION_TYPE {
+        int    relation_type_id PK
+        string type_name
+        string parent_label
+        string child_label
+    }
 
-    APPLICATION ||--o{ ENVIRONMENT : "環境を持つ"
-    APPLICATION ||--o{ APM_REQUEST : "対象"
+    CMDB_REL_CI {
+        int      rel_id          PK
+        string   parent_table
+        string   parent_id
+        string   child_table
+        string   child_id
+        int      relation_type_id FK
+        string   note
+        datetime created_at
+    }
 
-    USER ||--o{ APM_REQUEST : "申請者"
-    USER ||--o{ APM_REQUEST : "承認者"
+    %% ─── デマンド管理 ────────────────────────────────────────────
+    DEMAND {
+        string   demand_id            PK
+        string   title
+        string   it_class
+        string   category
+        string   domain
+        string   type
+        date     start_date
+        date     due_date
+        int      submitter_user_id    FK
+        int      department_id        FK
+        int      manager_user_id      FK
+        int      system_owner_user_id FK
+        int      pm_user_id           FK
+        string   description
+        string   portfolio
+        string   program
+        string   change_type
+        string   purpose
+        string   feasibility
+        string   priority
+        string   region
+        string   company
+        string   business_unit
+        string   business_case
+        string   expected_benefit
+        date     target_date
+        int      estimated_cost
+        int      requested_budget
+        string   cost_note
+        string   notes
+        string   stage
+        string   reject_reason
+        string   review_comment
+        string   approval_comment
+        datetime created_at
+        datetime updated_at
+        int      score
+        string   investment_class
+        int      capital_expense
+        int      operating_expense
+        int      financial_benefit
+        float    roi_percent
+        int      npv
+        float    irr
+        int      capital_budget
+        int      operating_budget
+        float    discount_rate
+        int      demand_actual_cost
+    }
+
+    DEMAND_APPLICATION {
+        int    id             PK
+        string demand_id      FK
+        string application_id FK
+        string relation_note
+    }
+
+    DEMAND_TASK {
+        string   task_id          PK
+        string   demand_id        FK
+        string   name
+        date     due_date
+        int      assignee_user_id FK
+        string   priority
+        string   state
+        string   comment
+        int      ai_generated
+        string   rationale
+        datetime created_at
+    }
+
+    COST_PLAN {
+        int      cost_plan_id PK
+        string   demand_id    FK
+        int      fiscal_year
+        string   fiscal_period
+        string   cost_type
+        int      unit_cost
+        int      quantity
+        int      planned_cost
+        int      actual_cost
+        string   note
+        datetime created_at
+    }
+
+    %% ─── プロジェクト ────────────────────────────────────────────
+    PROJECT {
+        string   project_id     PK
+        string   demand_id      FK
+        string   title
+        string   status
+        date     created_date
+        datetime created_at
+        int      manager_user_id FK
+        string   portfolio
+        string   description
+    }
+
+    %% ─── リレーション ────────────────────────────────────────────
+
+    %% 組織
+    DEPARTMENT ||--o{ USER              : "所属"
+    DEPARTMENT ||--o{ APPLICATION       : "所管"
+    DEPARTMENT ||--o{ DEMAND            : "申請部門"
+
+    %% ユーザー
+    USER ||--o{ APM_REQUEST  : "申請者"
+    USER ||--o{ APM_REQUEST  : "承認者"
+    USER ||--o{ DEMAND       : "申請者(submitter)"
+    USER ||--o{ DEMAND       : "審査責任者(manager)"
+    USER ||--o{ DEMAND       : "システムオーナー"
+    USER ||--o{ DEMAND       : "PM"
+    USER ||--o{ DEMAND_TASK  : "担当者"
+    USER ||--o{ PROJECT      : "PM(manager)"
+
+    %% APM コア
+    APPLICATION ||--o{ APPLICATION_DEPENDENCY : "依存元(app_id)"
+    APPLICATION ||--o{ APPLICATION_DEPENDENCY : "依存先(depends_on)"
+    APPLICATION  o|--o| APPLICATION           : "移行先(self-ref)"
+    APPLICATION ||--o{ APM_REQUEST            : "対象アプリ"
+    APPLICATION ||--o{ DEMAND_APPLICATION     : "関連アプリ"
+
+    %% CMDB (cmdb_rel_ci はポリモーフィック関連 — FKなし)
+    RELATION_TYPE ||--o{ CMDB_REL_CI : "種別"
+    %% CMDB_REL_CI.parent/child は application / environment / configuration_item を文字列で参照
+
+    %% デマンド管理
+    DEMAND ||--o{ DEMAND_APPLICATION : "関連アプリ"
+    DEMAND ||--o{ DEMAND_TASK        : "タスク"
+    DEMAND ||--o{ COST_PLAN          : "コスト計画"
+    DEMAND ||--o| PROJECT            : "プロジェクト化"
