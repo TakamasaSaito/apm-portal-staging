@@ -419,6 +419,11 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
   <aside class="sidebar">
     <div class="sidebar-section">
+      <div class="sidebar-item" id="sb-demand-workbench" onclick="showDemandPage('demand-workbench')">
+        <span class="sidebar-icon">🫧</span> Demand Workbench
+      </div>
+    </div>
+    <div class="sidebar-section">
       <div class="sidebar-item active" id="sb-dashboard" onclick="showSidebarView('dashboard',this)">
         <span class="sidebar-icon">📊</span> APMダッシュボード
       </div>
@@ -457,9 +462,6 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
       <div class="sidebar-item" id="sb-demand-form" onclick="showDemandPage('demand-form')">
         <span class="sidebar-icon">➕</span> 新規デマンド起票
-      </div>
-      <div class="sidebar-item" id="sb-demand-workbench" onclick="showDemandPage('demand-workbench')">
-        <span class="sidebar-icon">🫧</span> Demand Workbench
       </div>
     </div>
     <div class="sidebar-section">
