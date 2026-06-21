@@ -251,6 +251,9 @@ CREATE TABLE IF NOT EXISTS apm_request (
             "ALTER TABLE demand ADD COLUMN operating_budget INTEGER",
             "ALTER TABLE demand ADD COLUMN discount_rate REAL",
             "ALTER TABLE demand ADD COLUMN demand_actual_cost INTEGER",
+            "ALTER TABLE project ADD COLUMN manager_user_id INTEGER",
+            "ALTER TABLE project ADD COLUMN portfolio TEXT",
+            "ALTER TABLE project ADD COLUMN description TEXT",
         ):
             try:
                 await db.execute(stmt)

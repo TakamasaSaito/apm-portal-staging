@@ -259,6 +259,16 @@ class CostPlanUpdate(BaseModel):
     note: Optional[str] = None
 
 
+class ProjectCreate(BaseModel):
+    demand_id: Optional[str] = None
+    title: str
+    status: Optional[str] = "pending"
+    manager_user_id: Optional[int] = None
+    portfolio: Optional[str] = None
+    description: Optional[str] = None
+    created_date: Optional[str] = None
+
+
 class CmdbRelCreate(BaseModel):
     parent_table: str
     parent_id: str

@@ -4,7 +4,8 @@ from datetime import date
 from ..database import get_db
 from ..models import (DemandCreate, DemandUpdate, DemandStageUpdate,
                       DemandTaskCreate, DemandTaskUpdate,
-                      DemandApplicationCreate, CostPlanCreate, CostPlanUpdate)
+                      DemandApplicationCreate, CostPlanCreate, CostPlanUpdate,
+                      ProjectCreate)
 from .auth import get_current_user
 
 router = APIRouter(prefix="/api")
@@ -436,9 +437,35 @@ async def list_projects(
     _: dict = Depends(get_current_user),
 ):
     async with db.execute(
-        "SELECT p.*, d.title AS demand_title, d.priority, d.stage AS demand_stage FROM project p LEFT JOIN demand d ON p.demand_id=d.demand_id ORDER BY p.created_at DESC"
+        """SELECT p.*, d.priority, d.stage AS demand_stage,
+                  u.user_name AS manager_name
+           FROM project p
+           LEFT JOIN demand d ON p.demand_id = d.demand_id
+           LEFT JOIN user u ON p.manager_user_id = u.user_id
+           ORDER BY p.created_at DESC"""
     ) as cur:
         return [dict(r) for r in await cur.fetchall()]
+
+
+@router.post("/projects", status_code=201)
+async def create_project(
+    body: ProjectCreate,
+    db: aiosqlite.Connection = Depends(get_db),
+    _: dict = Depends(get_current_user),
+):
+    async with db.execute("SELECT project_id FROM project ORDER BY project_id DESC LIMIT 1") as cur:
+        row = await cur.fetchone()
+    num = int(row["project_id"].replace("PROJ", "")) + 1 if row else 1
+    project_id = f"PROJ{num:05d}"
+    created_date = body.created_date or date.today().isoformat()
+    await db.execute(
+        """INSERT INTO project (project_id, demand_id, title, status, manager_user_id, portfolio, description, created_date)
+           VALUES (?,?,?,?,?,?,?,?)""",
+        [project_id, body.demand_id, body.title, body.status or "pending",
+         body.manager_user_id, body.portfolio, body.description, created_date],
+    )
+    await db.commit()
+    return {"project_id": project_id}
 
 
 # ── プロジェクト詳細 ──────────────────────────────────────────
@@ -449,7 +476,10 @@ async def get_project(
     _: dict = Depends(get_current_user),
 ):
     async with db.execute(
-        "SELECT p.*, d.title AS demand_title FROM project p LEFT JOIN demand d ON p.demand_id=d.demand_id WHERE p.project_id=?",
+        """SELECT p.*, u.user_name AS manager_name
+           FROM project p
+           LEFT JOIN user u ON p.manager_user_id = u.user_id
+           WHERE p.project_id=?""",
         [project_id],
     ) as cur:
         row = await cur.fetchone()
