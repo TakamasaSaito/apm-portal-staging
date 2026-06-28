@@ -411,6 +411,7 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <button class="user-btn" id="btnAdmin">事務局</button>
     </div>
     <span class="user-name-disp" id="loginUserName"></span>
+    <button onclick="openScenarioModal()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent);color:var(--white);border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">📘 シナリオ</button>
     <button class="logout-btn" onclick="doLogout()">ログアウト</button>
   </div>
 </header>
@@ -1522,17 +1523,17 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
     </div>
     <div class="login-error" id="loginError"></div>
     <button class="btn btn-primary" style="width:100%;padding:10px;" onclick="doLogin()">ログイン</button>
-    <div class="demo-accounts">
-      <div class="demo-accounts-title">― デモアカウント ―</div>
-      <div class="demo-account-row">
-        <span class="demo-role">事務局ユーザー</span>
-        <span class="demo-creds">ID: <code>admin</code> &nbsp; PW: <code>admin</code></span>
-      </div>
-      <div class="demo-account-row">
-        <span class="demo-role">申請者ユーザー</span>
-        <span class="demo-creds">ID: <code>user</code> &nbsp;&nbsp; PW: <code>user</code></span>
-      </div>
-    </div>
+        <div class="demo-accounts">
+          <div class="demo-title">— クイックログイン —</div>
+          <button onclick="quickLogin('admin','admin')" style="width:100%;padding:10px;margin-bottom:8px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:13px;transition:background .15s;" onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#f0f4ff'">
+            <span style="font-weight:700;color:var(--navy);">事務局ユーザー</span>
+            <span style="color:var(--gray-500);margin-left:8px;font-size:11px;">ID: admin / PW: admin</span>
+          </button>
+          <button onclick="quickLogin('user','user')" style="width:100%;padding:10px;background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:13px;transition:background .15s;" onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#f0f4ff'">
+            <span style="font-weight:700;color:var(--navy);">申請者ユーザー</span>
+            <span style="color:var(--gray-500);margin-left:8px;font-size:11px;">ID: user / PW: user</span>
+          </button>
+        </div>
   </div>
 </div>
 
@@ -5336,6 +5337,266 @@ function showBubbleDetail(appId) {
     ${depsBy.length?`<div><div class="ed-field-label" style="margin-bottom:4px;">被依存（利用されるシステム）</div>${fmtDeps(depsBy,'app_id')}</div>`:''}
   `;
 }
+function quickLogin(id, pw) {
+  document.getElementById('loginId').value = id;
+  document.getElementById('loginPassword').value = pw;
+  doLogin();
+}
+
+// ===== Scenario Navigator =====
+var SCENARIOS = [
+  {
+    id:'s01', phase:1, icon:'🗺️', title:'Scenario 01｜CSDMを理解する',
+    time:'10分', output:'CSDMの階層構造の理解',
+    steps:[
+      { title:'Step 1｜ツリー表示を開く', question:null, criteria:null, reason:null,
+        todo:'左メニュー「システム（アプリ）」→ 人事管理システム（APM-001）を開き、「全体像」タブのツリー表示を確認する。' },
+      { title:'Step 2｜3層構造を読む', question:null, criteria:null, reason:null,
+        todo:'Application → 環境 → CI の関係を確認する。依存先・関連デマンドも合わせて確認する。' },
+      { title:'Step 3｜自社に当てはめる', question:null, criteria:null, reason:null,
+        todo:'「SAPならFI / MM / SDがそれぞれここに入る」をイメージして、次のScenario 02へ進む。' }
+    ]
+  },
+  {
+    id:'s02', phase:1, icon:'🗂️', title:'Scenario 02｜システム一覧を作る',
+    time:'30分', output:'Application一覧 / Owner一覧',
+    steps:[
+      { title:'Step 1｜粒度の原則を決める',
+        question:'SAPのオーナーは田中さん1人です。モジュールで分ける意味はありますか？',
+        criteria:'プロダクト単位で登録する。SAPはFI / MM / SDをそれぞれ個別に登録する。',
+        reason:'予算・ライフサイクル・業務オーナーは今は同じでも将来変わる。ITシンプル化の判断や組織変更はモジュール単位で起きる。1本で登録していると後から分割できない。',
+        todo:'左メニュー「新規登録申請」から SAP FI / MM / SD を3件登録する。' },
+      { title:'Step 2｜対象範囲を決める',
+        question:'子会社・グループ会社のシステムはどこまで含めますか？',
+        criteria:'自社株比率50%以上の会社を対象とする。',
+        reason:'IT管理の責任範囲と一致するから。',
+        todo:'グループ会社のシステムを追加登録する。' },
+      { title:'Step 3｜完成確認', question:null, criteria:null, reason:null,
+        todo:'左メニュー「システム（アプリ）」を開いて登録内容を確認する。\nApplication一覧とOwner一覧が完成した状態を確認しよう。' }
+    ]
+  },
+  {
+    id:'s03', phase:1, icon:'👤', title:'Scenario 03｜オーナーを決める',
+    time:'20分', output:'ビジネスオーナー・ITオーナー登録済み一覧',
+    steps:[
+      { title:'Step 1｜オーナーの定義を理解する', question:null,
+        criteria:'オーナーの役割：予算の承認 / 廃止・継続の意思決定 / ライフサイクルの管理責任 / 年次レビューへの参加',
+        reason:null, todo:'オーナーに何が求められるかを確認してから次へ進む。' },
+      { title:'Step 2｜ITオーナーとビジネスオーナーの違い', question:null,
+        criteria:'ビジネスオーナー：業務責任者（そのシステムを使う部門長）\nITオーナー：技術責任者（情報システム部門）',
+        reason:null, todo:'2種類のオーナーの違いを確認する。' },
+      { title:'Step 3｜複数オーナーの判断基準',
+        question:'1つのシステムに複数の業務部門が関わっています。オーナーは何人にすべきですか？',
+        criteria:'主オーナーは1人に絞る。',
+        reason:'意思決定が分散すると廃止判断ができなくなるから。',
+        todo:'複数オーナーが存在するシステムを確認し、主オーナーを1人に絞る方針を決める。' },
+      { title:'Step 4｜Demo Appで登録する', question:null, criteria:null, reason:null,
+        todo:'左メニュー「更新申請」からビジネスオーナー・ITオーナーをそれぞれ登録する。' }
+    ]
+  },
+  {
+    id:'s04', phase:1, icon:'🔄', title:'Scenario 04｜ライフサイクルを管理する',
+    time:'20分', output:'ステータス設定済みApplication一覧',
+    steps:[
+      { title:'Step 1｜ステータスの種類を決める', question:null,
+        criteria:'推奨5種類：企画 / 開発中 / 本番稼働中 / サービス廃止済み / 廃止済み',
+        reason:'多すぎると運用できない、少なすぎると判断できない。',
+        todo:'5種類のステータス定義を確認する。' },
+      { title:'Step 2｜廃止の境界を理解する',
+        question:'「サービス廃止済み」と「廃止済み」は何が違いますか？',
+        criteria:'サービス廃止済み：ユーザーからの利用は停止。ただしサーバはまだ存在。\n廃止済み：サーバ廃却完了。コストがゼロになった瞬間。',
+        reason:'この2段階の間もコストが発生し続ける。この期間を短くすることがITコスト削減の核心。',
+        todo:'廃止予定システムのステータスをダッシュボードで確認する。' },
+      { title:'Step 3｜変更権限を決める', question:null,
+        criteria:'ステータス変更はビジネスオーナーの承認が必要。IT部門単独では変更しない。',
+        reason:'業務影響があるから。',
+        todo:'ステータス変更の権限フローを確認する。' },
+      { title:'Step 4｜Demo Appで登録する', question:null, criteria:null, reason:null,
+        todo:'左メニュー「更新申請」から廃止予定システムのステータスを更新する。' }
+    ]
+  },
+  {
+    id:'s05', phase:1, icon:'🔗', title:'Scenario 05｜依存関係を整理する',
+    time:'30分', output:'依存関係登録済みApplication一覧',
+    steps:[
+      { title:'Step 1｜共通サービス基盤を把握する', question:null,
+        criteria:'まず3種類を洗い出す：\n① インフラ基盤（例：国内DC・AWS・Azure）\n② 認証基盤（例：AD・Entra ID・独自認証）\n③ データ連携基盤（例：API Gateway・ETLツール）',
+        reason:null, todo:'自社の共通サービス基盤を「CIリレーション一覧」で確認する。' },
+      { title:'Step 2｜記録粒度を決める',
+        question:'認証基盤は全システム共通と思っていましたが、一部は独自認証でした。どう記録しますか？',
+        criteria:'インフラ基盤：システムごとに記載。\n認証基盤：システムごとに確認して記載（不明は「不明」で記録）。\nデータ連携：実際に使っているか確認してから記載。',
+        reason:null, todo:'記録粒度の方針を確認してから次へ進む。' },
+      { title:'Step 3｜収集方法を決める', question:null,
+        criteria:'インフラ：インフラ担当に確認\n認証：セキュリティ担当・システム担当に確認\nデータ連携：業務担当・ベンダーに確認（双方向で記載）',
+        reason:null, todo:'収集方法を確認する。' },
+      { title:'Step 4｜Demo Appで登録する', question:null, criteria:null, reason:null,
+        todo:'左メニュー「CIリレーション一覧」から人事管理システムの依存関係を国内認証基盤・国内データセンター基盤と紐付ける。' }
+    ]
+  },
+  {
+    id:'s06', phase:1, icon:'💰', title:'Scenario 06｜コスト可視化をする',
+    time:'30分', output:'システム別コスト一覧',
+    steps:[
+      { title:'Step 1｜コストタイプを標準定義する', question:null,
+        criteria:'4種類に統一：\n人件費（社内工数・工数実績で按分）\n外注費（ベンダー・SI・契約をシステムに紐付け）\n知財費（ライセンス・サブスク・システム単位で特定）\n設備費（サーバ・ネットワーク・利用量で按分）',
+        reason:'部門ごとの独自費目を4つの標準タイプに寄せることで比較可能にする。',
+        todo:'コストタイプの定義を確認する。' },
+      { title:'Step 2｜集計単位を明確にする',
+        question:'人事部が「人事システムのコスト」と言うとき、何を含めていますか？',
+        criteria:'サービス単位（例：人事サービス＝人事管理・給与・勤怠・人材開発の4システム）を先に明確にする。',
+        reason:'集計単位が曖昧だとコストが二重計上・漏れになる。',
+        todo:'自社のサービス単位を整理して集計単位を決める。' },
+      { title:'Step 3｜按分ロジックを適用する', question:null,
+        criteria:'サービス単位の費用をシステム×コストタイプで分割する。費用の絶対値は変えない。',
+        reason:null, todo:'按分ロジックを確認する。' },
+      { title:'Step 4｜Demo Appで登録する', question:null, criteria:null, reason:null,
+        todo:'左メニュー「更新申請」からシステムごとにコストを入力し、ダッシュボードでコスト可視化を確認する。' }
+    ]
+  },
+  {
+    id:'s07', phase:2, icon:'🗓️', title:'Scenario 07｜Roadmapを作る',
+    time:'30分', output:'3年ITRoadmap',
+    steps:[
+      { title:'Step 1｜Roadmapに載せるものを決める', question:null,
+        criteria:'3種類を載せる：\n① 本番稼働中のシステム\n② 廃止予定のシステム\n③ 後継システムのプロジェクト',
+        reason:null, todo:'ダッシュボードの廃止予定システム一覧を確認する。' },
+      { title:'Step 2｜廃止予定の引き方を理解する',
+        question:'廃止予定日はいつ決めますか？業務部門の合意を待つべきですか？',
+        criteria:'IT側が先に引く。合意を待たない。\n後継システムの本番稼働予定を確認し、本番稼働の6〜12ヶ月後を廃止目安として記載する。',
+        reason:'「予定」として載せて業務部門に確認を促す。6〜12ヶ月後でない場合は後継システムとは言えない。',
+        todo:'廃止予定システムの後継プロジェクトを「プロジェクト一覧」で確認する。' },
+      { title:'Step 3｜時間軸を設定する', question:null,
+        criteria:'3年ロードマップを推奨。\n1年目：確定情報のみ\n2〜3年目：予定・計画ベース',
+        reason:null, todo:'時間軸の設定方針を確認する。' },
+      { title:'Step 4｜Demo Appで登録する', question:null, criteria:null, reason:null,
+        todo:'左メニュー「更新申請」から廃止予定日を入力し、ダッシュボードの「依存関係・移行マップ」でRoadmapを確認する。' }
+    ]
+  },
+  {
+    id:'s08', phase:2, icon:'📊', title:'Scenario 08｜経営レビューを実施する',
+    time:'30分', output:'経営レビュー用ダッシュボード',
+    steps:[
+      { title:'Step 1｜システム総数を伝える', question:null,
+        criteria:'3つを確認：\n① 本番稼働中：何システムあるか\n② 廃止予定：いつ何が消えるか\n③ 開発中：何が増えるか',
+        reason:null, todo:'APMダッシュボードのKPIカードで本番稼働中・企画開発中の件数を確認する。' },
+      { title:'Step 2｜コストが大きい領域を伝える', question:null,
+        criteria:'サービス別・部門別のコスト上位を見せる。「ここが一番お金がかかっている」を明確にする。',
+        reason:null, todo:'ダッシュボードの部署別アプリ数グラフでコスト集中領域を確認する。' },
+      { title:'Step 3｜依存関係を伝える', question:null,
+        criteria:'廃止予定システムに依存しているシステムを見せる。「これを消すとここが止まる」を明確にする。',
+        reason:null, todo:'ダッシュボードの廃止リスクKPIと廃止予定システム一覧で依存関係を確認する。' },
+      { title:'Step 4｜経営目線で確認する', question:null, criteria:null, reason:null,
+        todo:'ダッシュボードで3つの事実（総数・コスト・依存関係）を経営目線で通しで確認する。' }
+    ]
+  }
+];
+
+var _currentScenario = null;
+var _currentStep = 0;
+
+function openScenarioModal() {
+  ['scenarioListPhase1','scenarioListPhase2'].forEach(function(id, idx) {
+    var phase = idx + 1;
+    document.getElementById(id).innerHTML = SCENARIOS.filter(function(s){ return s.phase === phase; }).map(function(s) {
+      return '<div onclick="startScenario(\'' + s.id + '\')" style="display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid var(--gray-200);border-radius:8px;cursor:pointer;margin-bottom:8px;" onmouseover="this.style.borderColor=\'var(--accent)\';this.style.background=\'#EFF6FF\'" onmouseout="this.style.borderColor=\'var(--gray-200)\';this.style.background=\'#fff\'">'
+        + '<div style="font-size:20px;margin-top:2px;">' + s.icon + '</div>'
+        + '<div><div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px;">' + s.title + '</div>'
+        + '<div style="font-size:11px;color:var(--gray-500);">⏱ ' + s.time + '&nbsp;&nbsp;📄 ' + s.output + '</div></div>'
+        + '</div>';
+    }).join('');
+  });
+  var overlay = document.getElementById('scenarioModalOverlay');
+  overlay.style.display = 'flex';
+}
+
+function closeScenarioModal() {
+  document.getElementById('scenarioModalOverlay').style.display = 'none';
+}
+
+function startScenario(id) {
+  _currentScenario = SCENARIOS.find(function(s){ return s.id === id; });
+  _currentStep = 0;
+  closeScenarioModal();
+  document.getElementById('scenarioPanel').style.display = 'flex';
+  renderScenarioPanel();
+}
+
+function closeScenarioPanel() {
+  document.getElementById('scenarioPanel').style.display = 'none';
+}
+
+function scenarioStep(dir) {
+  if (!_currentScenario) return;
+  var next = _currentStep + dir;
+  if (next < 0 || next > _currentScenario.steps.length) return;
+  _currentStep = next;
+  renderScenarioPanel();
+}
+
+function renderScenarioPanel() {
+  if (!_currentScenario) return;
+  var s = _currentScenario;
+  var total = s.steps.length;
+  var isComplete = _currentStep >= total;
+  document.getElementById('spTitle').textContent = s.title;
+  document.getElementById('spSubtitle').textContent = isComplete ? '完了' : 'ステップ ' + (_currentStep+1) + ' / ' + total;
+  document.getElementById('spStepLabel').textContent = isComplete ? '✅ 完了' : 'ステップ ' + (_currentStep+1) + ' / ' + total;
+  document.getElementById('spProgressFill').style.width = (isComplete ? 100 : Math.round(_currentStep/total*100)) + '%';
+  var prevBtn = document.getElementById('spPrevBtn');
+  var nextBtn = document.getElementById('spNextBtn');
+  var body = document.getElementById('spBody');
+  if (isComplete) {
+    body.innerHTML = '<div style="text-align:center;padding:24px 0;"><div style="font-size:40px;margin-bottom:12px;">🎉</div><div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px;">シナリオ完了！</div><div style="font-size:12px;color:var(--gray-500);line-height:1.6;">成果物：' + s.output + '</div></div>';
+    prevBtn.disabled = false;
+    nextBtn.disabled = true;
+  } else {
+    var step = s.steps[_currentStep];
+    var html = '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;">' + step.title + '</div>';
+    if (step.question) html += '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;margin-bottom:5px;">❓ 問い</div><div style="background:#EFF6FF;border-left:3px solid var(--accent);border-radius:0 6px 6px 0;padding:10px 12px;font-size:13px;line-height:1.6;color:var(--navy);">' + step.question + '</div></div>';
+    if (step.criteria) html += '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;margin-bottom:5px;">💡 判断基準</div><div style="background:#F0FDF4;border-left:3px solid #22c55e;border-radius:0 6px 6px 0;padding:10px 12px;font-size:13px;line-height:1.6;color:#166534;">' + step.criteria.replace(/\n/g,'<br>') + '</div></div>';
+    if (step.reason) html += '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;margin-bottom:5px;">📌 理由</div><div style="background:var(--gray-50);border-left:3px solid var(--gray-300);border-radius:0 6px 6px 0;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--gray-600);">' + step.reason + '</div></div>';
+    if (step.todo) html += '<div style="margin-bottom:14px;"><div style="font-size:10px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;margin-bottom:5px;">✅ やること</div><div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.7;color:#92400E;">' + step.todo.replace(/\n/g,'<br>') + '</div></div>';
+    body.innerHTML = html;
+    prevBtn.disabled = _currentStep === 0;
+    nextBtn.disabled = false;
+    nextBtn.textContent = _currentStep === total-1 ? '完了へ →' : '次へ →';
+  }
+}
 </script>
+
+<!-- Scenario Modal -->
+<div id="scenarioModalOverlay" onclick="if(event.target===this)closeScenarioModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:12px;padding:28px;width:400px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+    <div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px;">📘 EA Journey シナリオ</div>
+    <div style="font-size:12px;color:var(--gray-500);margin-bottom:16px;">シナリオを選んでサイドパネルを開く</div>
+    <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;margin-bottom:8px;">フェーズ1：一覧作成・把握</div>
+    <div id="scenarioListPhase1"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--gray-400);letter-spacing:.1em;margin:14px 0 8px;">フェーズ2：一覧活用</div>
+    <div id="scenarioListPhase2"></div>
+    <button onclick="closeScenarioModal()" style="margin-top:16px;width:100%;padding:8px;background:var(--gray-100);border:none;border-radius:6px;font-size:13px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">閉じる</button>
+  </div>
+</div>
+
+<!-- Scenario Side Panel -->
+<div id="scenarioPanel" style="display:none;position:fixed;top:56px;right:0;width:300px;height:calc(100vh - 56px);background:#fff;border-left:1px solid var(--gray-200);box-shadow:-4px 0 20px rgba(0,0,0,.1);z-index:200;flex-direction:column;">
+  <div style="padding:16px;border-bottom:1px solid var(--gray-200);display:flex;align-items:flex-start;justify-content:space-between;">
+    <div>
+      <div id="spTitle" style="font-size:14px;font-weight:700;color:var(--navy);"></div>
+      <div id="spSubtitle" style="font-size:11px;color:var(--gray-500);margin-top:2px;"></div>
+    </div>
+    <button onclick="closeScenarioPanel()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--gray-400);">✕</button>
+  </div>
+  <div style="padding:8px 16px;background:var(--gray-50);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:8px;">
+    <span id="spStepLabel" style="font-size:11px;color:var(--gray-500);white-space:nowrap;"></span>
+    <div style="flex:1;height:4px;background:var(--gray-200);border-radius:2px;overflow:hidden;">
+      <div id="spProgressFill" style="height:100%;background:var(--accent);border-radius:2px;transition:width .3s;width:0%;"></div>
+    </div>
+  </div>
+  <div id="spBody" style="flex:1;overflow-y:auto;padding:16px;"></div>
+  <div style="padding:12px 16px;border-top:1px solid var(--gray-200);display:flex;gap:8px;">
+    <button id="spPrevBtn" onclick="scenarioStep(-1)" style="flex:1;padding:9px;border:1px solid var(--gray-300);background:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">← 戻る</button>
+    <button id="spNextBtn" onclick="scenarioStep(1)" style="flex:1;padding:9px;border:none;background:var(--accent);color:#fff;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans JP',sans-serif;">次へ →</button>
+  </div>
+</div>
 </body>
 </html>
