@@ -5564,7 +5564,9 @@ function renderScenarioPanel() {
   if (isComplete) {
     body.innerHTML = '<div style="text-align:center;padding:24px 0;"><div style="font-size:40px;margin-bottom:12px;">🎉</div><div style="font-size:15px;font-weight:700;color:var(--navy);margin-bottom:6px;">シナリオ完了！</div><div style="font-size:12px;color:var(--gray-500);line-height:1.6;">成果物：' + s.output + '</div></div>';
     prevBtn.disabled = false;
-    nextBtn.disabled = true;
+    nextBtn.disabled = false;
+    nextBtn.textContent = '閉じる';
+    nextBtn.onclick = function() { closeScenarioPanel(); };
   } else {
     var step = s.steps[_currentStep];
     var html = '<div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px;">' + step.title + '</div>';
