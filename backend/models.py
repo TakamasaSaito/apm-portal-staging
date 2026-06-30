@@ -269,6 +269,23 @@ class ProjectCreate(BaseModel):
     created_date: Optional[str] = None
 
 
+class CapabilityCreate(BaseModel):
+    capability_id: str
+    capability_name: str
+    parent_id: Optional[str] = None
+    level: int
+    scope: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class CapabilityUpdate(BaseModel):
+    capability_name: Optional[str] = None
+    parent_id: Optional[str] = None
+    level: Optional[int] = None
+    scope: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
 class CmdbRelCreate(BaseModel):
     parent_table: str
     parent_id: str

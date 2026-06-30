@@ -58,7 +58,9 @@ async def list_cmdb_relations(
     db: aiosqlite.Connection = Depends(get_db),
     _: dict = Depends(get_current_user),
 ):
-    async with db.execute(_REL_SELECT + " ORDER BY r.rel_id") as cur:
+    async with db.execute(
+        _REL_SELECT + " WHERE (rt.type_name IS NULL OR rt.type_name != 'realizes') ORDER BY r.rel_id"
+    ) as cur:
         rows = [dict(r) for r in await cur.fetchall()]
     return [await _enrich(db, r) for r in rows]
 

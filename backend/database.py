@@ -24,6 +24,15 @@ CREATE TABLE IF NOT EXISTS relation_type (
   child_label      TEXT
 );
 
+CREATE TABLE IF NOT EXISTS business_capability (
+    capability_id    TEXT PRIMARY KEY,
+    capability_name  TEXT NOT NULL,
+    parent_id        TEXT REFERENCES business_capability(capability_id),
+    level            INTEGER NOT NULL,
+    scope            TEXT,
+    sort_order       INTEGER
+);
+
 CREATE TABLE IF NOT EXISTS cmdb_rel_ci (
   rel_id           INTEGER PRIMARY KEY AUTOINCREMENT,
   parent_table     TEXT NOT NULL,
@@ -216,6 +225,7 @@ CREATE TABLE IF NOT EXISTS apm_request (
         for row in (
             ("has_environment", "環境を持つ", "環境である"),
             ("has_ci",          "構成情報を持つ", "構成情報である"),
+            ("realizes",        "ケイパビリティ", "実現システム"),
         ):
             try:
                 await db.execute(
