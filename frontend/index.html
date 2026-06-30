@@ -388,6 +388,63 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
   .approval-modal{width:calc(100vw - 24px);}
   .retiring-section{padding:0 12px 16px;}
 }
+/* ─── Business Portfolio ─── */
+.bp-summary-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:var(--white);border:1px solid var(--gray-200);border-radius:10px;margin-bottom:16px;box-shadow:var(--shadow);}
+.bp-summary-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;}
+.bp-chip-dup{background:#FEF3C7;color:#D97706;border:1px solid #FCD34D;}
+.bp-chip-ok{background:var(--green-light);color:var(--green);border:1px solid #6EE7B7;}
+.bp-chip-none{background:var(--gray-100);color:var(--gray-400);border:1px solid var(--gray-200);}
+.bp-group-card{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow);}
+.bp-group-header{padding:10px 16px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-mid) 100%);color:var(--white);display:flex;align-items:center;gap:10px;}
+.bp-group-name{font-size:14px;font-weight:700;}
+.bp-group-count{font-size:11px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.12);padding:2px 8px;border-radius:10px;}
+.bp-table{width:100%;border-collapse:collapse;}
+.bp-table th{padding:8px 14px;background:var(--gray-50);font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--gray-200);text-align:left;white-space:nowrap;}
+.bp-table td{padding:10px 14px;border-bottom:1px solid var(--gray-100);font-size:13px;color:var(--gray-800);vertical-align:middle;}
+.bp-table tr:last-child td{border-bottom:none;}
+.bp-table tr.bp-dup td{background:#FFFBEB;}
+.bp-table tr.bp-none td{background:var(--gray-50);color:var(--gray-400);}
+.bp-count-badge{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.bp-count-0{background:var(--gray-100);color:var(--gray-400);}
+.bp-count-1{background:var(--green-light);color:var(--green);}
+.bp-count-multi{background:#FEF3C7;color:#D97706;}
+.bp-count-high{background:#FEE2E2;color:var(--red);}
+.bp-sys-tags{display:flex;flex-wrap:wrap;gap:4px;}
+.bp-sys-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:#EFF6FF;color:var(--accent);border:1px solid #BFDBFE;cursor:pointer;transition:background .15s;}
+.bp-sys-tag:hover{background:#DBEAFE;}
+.bp-sys-tag.retire{background:var(--gray-100);color:var(--gray-400);border-color:var(--gray-200);}
+.bp-scope-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.03em;}
+.bp-scope-global{background:#EFF6FF;color:var(--accent);}
+.bp-scope-local{background:#ECFDF5;color:var(--green);}
+.bp-warn-icon{font-size:14px;margin-right:2px;}
+.bp-admin-layout{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;}
+.bp-l1-list{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);}
+.bp-l1-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--gray-100);transition:background .15s;font-size:13px;color:var(--gray-700);}
+.bp-l1-item:last-child{border-bottom:none;}
+.bp-l1-item:hover{background:var(--gray-50);}
+.bp-l1-item.selected{background:#EFF6FF;color:var(--accent);font-weight:600;}
+.bp-l1-item-name{flex:1;}
+.bp-l1-item-cnt{font-size:11px;color:var(--gray-400);background:var(--gray-100);padding:1px 6px;border-radius:8px;}
+.bp-l2-panel{background:var(--white);border:1px solid var(--gray-200);border-radius:10px;box-shadow:var(--shadow);}
+.bp-l2-header{padding:14px 16px;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between;}
+.bp-l2-list{padding:8px;}
+.bp-l2-card{border:1px solid var(--gray-200);border-radius:8px;margin-bottom:8px;overflow:hidden;}
+.bp-l2-card-header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--gray-50);border-bottom:1px solid var(--gray-100);}
+.bp-l2-card-name{flex:1;font-size:13px;font-weight:600;color:var(--navy);}
+.bp-l2-card-apps{padding:10px 14px;}
+.bp-link-app-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--gray-100);}
+.bp-link-app-row:last-child{border-bottom:none;}
+.bp-modal{width:640px;}
+.bp-app-select-list{max-height:260px;overflow-y:auto;border:1px solid var(--gray-200);border-radius:8px;}
+.bp-app-select-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s;font-size:13px;}
+.bp-app-select-item:last-child{border-bottom:none;}
+.bp-app-select-item:hover{background:var(--gray-50);}
+.bp-app-select-item input{flex-shrink:0;}
+@media(max-width:768px){
+  .bp-admin-layout{grid-template-columns:1fr;}
+  .bp-table{font-size:12px;}
+  .bp-group-header{padding:8px 12px;}
+}
 </style>
 </head>
 <body>
@@ -437,6 +494,15 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
       <div class="sidebar-item" id="sb-project-list" onclick="showProjectList()">
         <span class="sidebar-icon">📁</span> プロジェクト一覧
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Business Portfolio</div>
+      <div class="sidebar-item" id="sb-bp-matrix" onclick="showBpPage('bp-matrix')">
+        <span class="sidebar-icon">🏢</span> Business Portfolio
+      </div>
+      <div class="sidebar-item" id="sb-bp-admin" onclick="showBpPage('bp-admin')">
+        <span class="sidebar-icon">➕</span> ケイパビリティ登録
       </div>
     </div>
     <div class="sidebar-section">
@@ -1194,6 +1260,49 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       </div>
     </div>
 
+    <!-- ===================== Business Portfolio マトリクス ===================== -->
+    <div id="page-bp-matrix" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🏢 Business Portfolio</div>
+          <div class="page-subtitle">ビジネスケイパビリティとシステムのカバレッジ一覧</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadCapabilityMatrix()">🔄 再読込</button>
+      </div>
+      <div id="bpSummaryBar" class="bp-summary-bar" style="display:none;"></div>
+      <div id="bpMatrixContent">
+        <div class="empty-state"><div class="empty-state-icon">⏳</div><div>読み込み中...</div></div>
+      </div>
+    </div>
+
+    <!-- ===================== ケイパビリティ登録 ===================== -->
+    <div id="page-bp-admin" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">➕ ケイパビリティ登録</div>
+          <div class="page-subtitle">ビジネスケイパビリティの追加・編集・システム紐付け</div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="btnAddL1" onclick="openCapabilityModal(null,'l1')" style="display:none;">＋ レベル1追加</button>
+      </div>
+      <div class="bp-admin-layout">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">レベル1（大分類）</div>
+          <div class="bp-l1-list" id="bpL1List">
+            <div style="padding:20px;text-align:center;color:var(--gray-400);">読み込み中...</div>
+          </div>
+        </div>
+        <div class="bp-l2-panel" id="bpL2Panel">
+          <div class="bp-l2-header">
+            <div id="bpL2PanelTitle" style="font-size:14px;font-weight:700;color:var(--navy);">レベル1を選択してください</div>
+            <button class="btn btn-primary btn-sm" id="btnAddL2" onclick="openCapabilityModal(null,'l2')" style="display:none;">＋ レベル2追加</button>
+          </div>
+          <div class="bp-l2-list" id="bpL2List">
+            <div style="padding:32px;text-align:center;color:var(--gray-400);">← レベル1を選択</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1796,7 +1905,7 @@ function closeSidebar() {
 }
 
 // ========== ページ切り替え ==========
-const ALL_PAGES = ['home','history','approval','demand-list','demand-form','demand-review','demand-tasks','demand-approve','demand-complete','demand-workbench','project-list','project-detail'];
+const ALL_PAGES = ['home','history','approval','demand-list','demand-form','demand-review','demand-tasks','demand-approve','demand-complete','demand-workbench','project-list','project-detail','bp-matrix','bp-admin'];
 function showPage(page, navEl) {
   if (window.innerWidth <= 768) closeSidebar();
   currentPage = page;
@@ -5580,7 +5689,482 @@ function renderScenarioPanel() {
     nextBtn.textContent = _currentStep === total-1 ? '完了へ →' : '次へ →';
   }
 }
+
+// ═══════════════════════════════════════════════════════
+// Business Portfolio
+// ═══════════════════════════════════════════════════════
+let _bpSelectedL1 = null;
+let _bpCapabilities = [];
+let _bpAllApps = [];
+
+function showBpPage(page) {
+  if (window.innerWidth <= 768) closeSidebar();
+  showPage(page, null);
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('sb-' + page)?.classList.add('active');
+  if (page === 'bp-matrix') loadCapabilityMatrix();
+  if (page === 'bp-admin') loadCapabilityAdmin();
+}
+
+// ─── マトリクス画面 ───────────────────────────────────
+async function loadCapabilityMatrix() {
+  const content = document.getElementById('bpMatrixContent');
+  const summaryBar = document.getElementById('bpSummaryBar');
+  if (!content) return;
+  content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏳</div><div>読み込み中...</div></div>`;
+  summaryBar.style.display = 'none';
+  try {
+    const data = await apiFetch('/api/capabilities/matrix');
+    if (!data) return;
+    _renderBpMatrix(data);
+  } catch(e) {
+    content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div>読み込みエラー: ${e.message}</div></div>`;
+  }
+}
+
+function _renderBpMatrix(rows) {
+  const content = document.getElementById('bpMatrixContent');
+  const summaryBar = document.getElementById('bpSummaryBar');
+
+  // L1グループに振り分け
+  const l1map = new Map();
+  rows.filter(r => r.level === 1).forEach(r => l1map.set(r.capability_id, {...r, children: []}));
+  rows.filter(r => r.level === 2).forEach(r => {
+    const parent = l1map.get(r.parent_id);
+    if (parent) parent.children.push(r);
+  });
+
+  // サマリー集計
+  const l2rows = rows.filter(r => r.level === 2);
+  const dupCount  = l2rows.filter(r => r.app_count >= 2).length;
+  const okCount   = l2rows.filter(r => r.app_count === 1).length;
+  const noneCount = l2rows.filter(r => r.app_count === 0).length;
+
+  // サマリーバー
+  summaryBar.style.display = 'flex';
+  summaryBar.innerHTML = `
+    <span style="font-size:12px;font-weight:700;color:var(--gray-500);">ケイパビリティカバレッジ</span>
+    ${dupCount > 0 ? `<span class="bp-summary-chip bp-chip-dup">⚠ 重複候補: ${dupCount}件</span>` : ''}
+    <span class="bp-summary-chip bp-chip-ok">✓ 正常: ${okCount}件</span>
+    <span class="bp-summary-chip bp-chip-none">○ 未対応: ${noneCount}件</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--gray-400);">合計 ${l2rows.length} ケイパビリティ</span>
+  `;
+
+  // グループカード描画
+  let html = '';
+  for (const [, l1] of l1map) {
+    const childDups = l1.children.filter(c => c.app_count >= 2).length;
+    html += `
+    <div class="bp-group-card">
+      <div class="bp-group-header">
+        <span class="bp-group-name">${_esc(l1.capability_name)}</span>
+        ${childDups > 0 ? `<span style="background:rgba(252,211,77,.25);color:#FCD34D;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:600;">⚠ 重複 ${childDups}件</span>` : ''}
+        <span class="bp-group-count">${l1.children.length} ケイパビリティ</span>
+      </div>
+      <table class="bp-table">
+        <thead><tr>
+          <th style="width:220px;">ケイパビリティ（中分類）</th>
+          <th style="width:60px;text-align:center;">件数</th>
+          <th style="width:80px;">スコープ</th>
+          <th>紐づくシステム</th>
+        </tr></thead>
+        <tbody>
+    `;
+    if (!l1.children.length) {
+      html += `<tr><td colspan="4" style="text-align:center;color:var(--gray-400);padding:20px;">ケイパビリティなし</td></tr>`;
+    } else {
+      l1.children.forEach(cap => {
+        const cnt = cap.app_count || 0;
+        let rowClass = '';
+        if (cnt === 0) rowClass = 'bp-none';
+        else if (cnt >= 2) rowClass = 'bp-dup';
+        const badgeClass = cnt === 0 ? 'bp-count-0' : cnt === 1 ? 'bp-count-1' : cnt <= 3 ? 'bp-count-multi' : 'bp-count-high';
+        const scopeHtml = cap.scope
+          ? `<span class="bp-scope-badge ${cap.scope === 'global' ? 'bp-scope-global' : 'bp-scope-local'}">${cap.scope}</span>`
+          : '<span style="color:var(--gray-300);">-</span>';
+        const tagsHtml = (cap.app_names || []).map(name => {
+          const isRetire = name.includes('旧') || name.includes('レガシー');
+          return `<span class="bp-sys-tag${isRetire ? ' retire' : ''}" title="${_esc(name)}">${_esc(name)}</span>`;
+        }).join('') || `<span style="color:var(--gray-300);font-size:11px;">未対応</span>`;
+        const warnIcon = cnt >= 2 ? `<span class="bp-warn-icon" title="複数システムが同一ケイパビリティに紐付き">⚠</span>` : '';
+        html += `
+          <tr class="${rowClass}">
+            <td><span style="font-weight:500;">${warnIcon}${_esc(cap.capability_name)}</span></td>
+            <td style="text-align:center;"><span class="bp-count-badge ${badgeClass}">${cnt}</span></td>
+            <td>${scopeHtml}</td>
+            <td><div class="bp-sys-tags">${tagsHtml}</div></td>
+          </tr>
+        `;
+      });
+    }
+    html += `</tbody></table></div>`;
+  }
+  if (!html) html = `<div class="empty-state"><div class="empty-state-icon">📭</div><div>データがありません</div></div>`;
+  content.innerHTML = html;
+}
+
+// ─── 管理画面 ─────────────────────────────────────────
+async function loadCapabilityAdmin() {
+  const addL1Btn = document.getElementById('btnAddL1');
+  if (addL1Btn) addL1Btn.style.display = currentUser === 'admin' ? 'inline-flex' : 'none';
+
+  try {
+    const [tree, allApps] = await Promise.all([
+      apiFetch('/api/capabilities'),
+      apiFetch('/api/applications'),
+    ]);
+    if (!tree || !allApps) return;
+    _bpCapabilities = tree;
+    _bpAllApps = (allApps || []).filter(a => !a.is_infrastructure);
+    _renderBpL1List(tree);
+    if (_bpSelectedL1) {
+      const found = tree.find(t => t.capability_id === _bpSelectedL1);
+      if (found) _renderBpL2Panel(found);
+    }
+  } catch(e) {
+    showToast('読み込みエラー: ' + e.message, 'error');
+  }
+}
+
+function _renderBpL1List(tree) {
+  const list = document.getElementById('bpL1List');
+  if (!list) return;
+  if (!tree.length) {
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray-400);">データなし</div>`;
+    return;
+  }
+  list.innerHTML = tree.map(l1 => `
+    <div class="bp-l1-item${_bpSelectedL1 === l1.capability_id ? ' selected' : ''}"
+         onclick="_selectBpL1(${JSON.stringify(l1)})">
+      <span class="bp-l1-item-name">${_esc(l1.capability_name)}</span>
+      <span class="bp-l1-item-cnt">${(l1.children||[]).length}</span>
+      ${currentUser === 'admin' ? `
+        <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 7px;margin-left:4px;"
+          onclick="event.stopPropagation();openCapabilityModal(${JSON.stringify(l1)},'l1')">編集</button>
+        <button class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px;"
+          onclick="event.stopPropagation();deleteCapability('${_esc(l1.capability_id)}')">削除</button>
+      ` : ''}
+    </div>
+  `).join('');
+}
+
+function _selectBpL1(l1) {
+  _bpSelectedL1 = l1.capability_id;
+  document.querySelectorAll('.bp-l1-item').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  _renderBpL2Panel(l1);
+}
+
+function _renderBpL2Panel(l1) {
+  const title = document.getElementById('bpL2PanelTitle');
+  const addBtn = document.getElementById('btnAddL2');
+  const list = document.getElementById('bpL2List');
+  if (!title || !list) return;
+  title.textContent = l1.capability_name + ' ― レベル2ケイパビリティ';
+  if (addBtn) addBtn.style.display = currentUser === 'admin' ? 'inline-flex' : 'none';
+
+  const children = l1.children || [];
+  if (!children.length) {
+    list.innerHTML = `<div style="padding:32px;text-align:center;color:var(--gray-400);">まだレベル2がありません。<br>「＋ レベル2追加」から追加してください。</div>`;
+    return;
+  }
+  list.innerHTML = children.map(cap => `
+    <div class="bp-l2-card">
+      <div class="bp-l2-card-header">
+        <span class="bp-l2-card-name">${_esc(cap.capability_name)}</span>
+        ${cap.scope ? `<span class="bp-scope-badge ${cap.scope === 'global' ? 'bp-scope-global' : 'bp-scope-local'}">${cap.scope}</span>` : ''}
+        ${currentUser === 'admin' ? `
+          <button class="btn btn-primary btn-sm" style="font-size:10px;padding:2px 8px;"
+            onclick="openLinkAppModal('${_esc(cap.capability_id)}','${_esc(cap.capability_name)}')">＋ システム紐付け</button>
+          <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 7px;"
+            onclick="openCapabilityModal(${JSON.stringify(cap)},'l2')">編集</button>
+          <button class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 7px;"
+            onclick="deleteCapability('${_esc(cap.capability_id)}')">削除</button>
+        ` : ''}
+      </div>
+      <div class="bp-l2-card-apps" id="capApps_${_esc(cap.capability_id)}">
+        <div style="color:var(--gray-400);font-size:12px;">読み込み中...</div>
+      </div>
+    </div>
+  `).join('');
+
+  // 各L2の紐付きシステムを非同期読み込み
+  children.forEach(cap => _loadCapApps(cap.capability_id));
+}
+
+async function _loadCapApps(capId) {
+  const container = document.getElementById('capApps_' + capId);
+  if (!container) return;
+  try {
+    const apps = await apiFetch(`/api/capabilities/${encodeURIComponent(capId)}/applications`);
+    if (!apps) return;
+    if (!apps.length) {
+      container.innerHTML = `<span style="color:var(--gray-400);font-size:12px;">システム未紐付け</span>`;
+      return;
+    }
+    container.innerHTML = apps.map(a => `
+      <div class="bp-link-app-row">
+        <span class="sys-id">${_esc(a.application_id)}</span>
+        <span style="flex:1;font-size:13px;">${_esc(a.application_name)}</span>
+        <span class="badge badge-${a.status}">${_statusLabel(a.status)}</span>
+        ${currentUser === 'admin' ? `
+          <button class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 8px;"
+            onclick="unlinkApp('${_esc(capId)}','${_esc(a.application_id)}')">解除</button>
+        ` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    container.innerHTML = `<span style="color:var(--red);font-size:12px;">読み込みエラー</span>`;
+  }
+}
+
+// ─── ケイパビリティ追加・編集モーダル ─────────────────
+let _bpEditCap = null;
+let _bpEditLevel = 'l1';
+
+function openCapabilityModal(cap, level) {
+  _bpEditCap = cap;
+  _bpEditLevel = level || 'l1';
+  const isEdit = !!cap;
+  const title = isEdit
+    ? (level === 'l1' ? 'レベル1 編集' : 'レベル2 編集')
+    : (level === 'l1' ? 'レベル1 新規作成' : 'レベル2 新規作成');
+
+  const parentOptions = _bpCapabilities
+    .map(l1 => `<option value="${_esc(l1.capability_id)}" ${cap && cap.parent_id === l1.capability_id ? 'selected' : ''}>${_esc(l1.capability_name)}</option>`)
+    .join('');
+
+  const defaultParent = _bpSelectedL1 || (_bpCapabilities[0]?.capability_id || '');
+
+  document.getElementById('bpCapModalTitle').textContent = title;
+  document.getElementById('bpCapId').value = isEdit ? cap.capability_id : '';
+  document.getElementById('bpCapId').readOnly = isEdit;
+  document.getElementById('bpCapName').value = isEdit ? cap.capability_name : '';
+  document.getElementById('bpCapScope').value = isEdit ? (cap.scope || '') : '';
+  document.getElementById('bpCapSortOrder').value = isEdit ? (cap.sort_order || '') : '';
+
+  const parentRow = document.getElementById('bpCapParentRow');
+  const parentSel = document.getElementById('bpCapParentId');
+  if (level === 'l2') {
+    parentRow.style.display = 'block';
+    parentSel.innerHTML = `<option value="">── 選択 ──</option>` + parentOptions;
+    if (!isEdit) parentSel.value = defaultParent;
+  } else {
+    parentRow.style.display = 'none';
+    parentSel.value = '';
+  }
+
+  document.getElementById('bpCapModal').classList.add('open');
+}
+
+async function saveBpCapability() {
+  const capId = document.getElementById('bpCapId').value.trim();
+  const capName = document.getElementById('bpCapName').value.trim();
+  const scope = document.getElementById('bpCapScope').value;
+  const sortOrder = document.getElementById('bpCapSortOrder').value;
+  const parentId = _bpEditLevel === 'l2' ? document.getElementById('bpCapParentId').value : null;
+
+  if (!capId) { showToast('ケイパビリティIDを入力してください', 'error'); return; }
+  if (!capName) { showToast('ケイパビリティ名を入力してください', 'error'); return; }
+  if (_bpEditLevel === 'l2' && !parentId) { showToast('親ケイパビリティを選択してください', 'error'); return; }
+
+  const level = _bpEditLevel === 'l1' ? 1 : 2;
+  const body = { capability_id: capId, capability_name: capName, level, scope: scope || null,
+    sort_order: sortOrder ? parseInt(sortOrder) : null, parent_id: parentId || null };
+
+  try {
+    if (_bpEditCap) {
+      await apiFetch(`/api/capabilities/${encodeURIComponent(capId)}`, { method: 'PUT', body });
+    } else {
+      await apiFetch('/api/capabilities', { method: 'POST', body });
+    }
+    closeBpCapModal();
+    showToast(_bpEditCap ? '更新しました' : '作成しました', 'success');
+    await loadCapabilityAdmin();
+  } catch(e) {
+    showToast('保存エラー: ' + e.message, 'error');
+  }
+}
+
+function closeBpCapModal() {
+  document.getElementById('bpCapModal').classList.remove('open');
+}
+
+async function deleteCapability(capId) {
+  if (!confirm(`「${capId}」を削除しますか？\n配下のケイパビリティとシステム紐付けも削除されます。`)) return;
+  try {
+    await apiFetch(`/api/capabilities/${encodeURIComponent(capId)}`, { method: 'DELETE' });
+    showToast('削除しました', 'success');
+    if (_bpSelectedL1 === capId) _bpSelectedL1 = null;
+    await loadCapabilityAdmin();
+  } catch(e) {
+    showToast('削除エラー: ' + e.message, 'error');
+  }
+}
+
+// ─── システム紐付けモーダル ────────────────────────────
+let _bpLinkCapId = null;
+
+async function openLinkAppModal(capId, capName) {
+  _bpLinkCapId = capId;
+  document.getElementById('bpLinkModalTitle').textContent = `システム紐付け ― ${capName}`;
+  document.getElementById('bpLinkAppList').innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray-400);">読み込み中...</div>`;
+  document.getElementById('bpLinkModal').classList.add('open');
+
+  try {
+    const linked = await apiFetch(`/api/capabilities/${encodeURIComponent(capId)}/applications`);
+    const linkedIds = new Set((linked || []).map(a => a.application_id));
+    const allApps = _bpAllApps.length ? _bpAllApps : await apiFetch('/api/applications');
+
+    const q = (document.getElementById('bpLinkSearch')?.value || '').toLowerCase();
+    _renderLinkAppList(allApps || [], linkedIds, q);
+  } catch(e) {
+    document.getElementById('bpLinkAppList').innerHTML = `<div style="padding:20px;color:var(--red);">読み込みエラー</div>`;
+  }
+}
+
+function _renderLinkAppList(apps, linkedIds, q) {
+  const filtered = q ? apps.filter(a =>
+    a.application_name?.toLowerCase().includes(q) || a.application_id?.toLowerCase().includes(q)
+  ) : apps;
+  const list = document.getElementById('bpLinkAppList');
+  if (!filtered.length) { list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray-400);">該当なし</div>`; return; }
+  list.innerHTML = filtered.map(a => {
+    const linked = linkedIds.has(a.application_id);
+    return `
+      <div class="bp-app-select-item">
+        <input type="checkbox" id="chk_${_esc(a.application_id)}" value="${_esc(a.application_id)}"
+          ${linked ? 'checked' : ''} onchange="toggleAppLink('${_esc(a.application_id)}',this.checked,'${_esc(a.application_name)}')">
+        <label for="chk_${_esc(a.application_id)}" style="flex:1;cursor:pointer;">
+          <span class="sys-id">${_esc(a.application_id)}</span>
+          <span style="margin-left:6px;">${_esc(a.application_name)}</span>
+        </label>
+        <span class="badge badge-${a.status}" style="flex-shrink:0;">${_statusLabel(a.status)}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function toggleAppLink(appId, checked, appName) {
+  if (!_bpLinkCapId) return;
+  try {
+    if (checked) {
+      await apiFetch(`/api/capabilities/${encodeURIComponent(_bpLinkCapId)}/applications`, {
+        method: 'POST', body: { application_id: appId }
+      });
+      showToast(`${appName} を紐付けました`, 'success');
+    } else {
+      await apiFetch(`/api/capabilities/${encodeURIComponent(_bpLinkCapId)}/applications/${encodeURIComponent(appId)}`, {
+        method: 'DELETE'
+      });
+      showToast(`${appName} の紐付けを解除しました`, 'success');
+    }
+    // L2パネルの当該行を更新
+    _loadCapApps(_bpLinkCapId);
+  } catch(e) {
+    showToast('エラー: ' + e.message, 'error');
+    // チェックを元に戻す
+    const chk = document.getElementById('chk_' + appId);
+    if (chk) chk.checked = !checked;
+  }
+}
+
+async function unlinkApp(capId, appId) {
+  if (!confirm('紐付けを解除しますか？')) return;
+  try {
+    await apiFetch(`/api/capabilities/${encodeURIComponent(capId)}/applications/${encodeURIComponent(appId)}`, { method: 'DELETE' });
+    showToast('紐付けを解除しました', 'success');
+    _loadCapApps(capId);
+  } catch(e) {
+    showToast('エラー: ' + e.message, 'error');
+  }
+}
+
+function closeBpLinkModal() {
+  document.getElementById('bpLinkModal').classList.remove('open');
+  if (_bpSelectedL1) {
+    const l1 = _bpCapabilities.find(l => l.capability_id === _bpSelectedL1);
+    if (l1) _renderBpL2Panel(l1);
+  }
+}
+
+function _statusLabel(s) {
+  return {running:'稼働中',plan:'計画中',dev:'開発中',order:'発注中',retire:'廃止'}[s] || s || '-';
+}
+
+function _esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 </script>
+
+<!-- ─── Business Portfolio: ケイパビリティ作成・編集モーダル ─── -->
+<div class="modal-overlay" id="bpCapModal">
+  <div class="modal bp-modal">
+    <div class="modal-header">
+      <div class="modal-title" id="bpCapModalTitle">ケイパビリティ作成</div>
+      <button class="close-btn" onclick="closeBpCapModal()" style="background:var(--gray-100);color:var(--gray-600);font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>ケイパビリティID <span class="required">*</span></label>
+        <input id="bpCapId" class="form-control" placeholder="例: HRM-01 / SAL-02">
+        <div style="font-size:11px;color:var(--gray-400);margin-top:4px;">英数字・ハイフンのみ。作成後は変更不可。</div>
+      </div>
+      <div class="form-group">
+        <label>ケイパビリティ名 <span class="required">*</span></label>
+        <input id="bpCapName" class="form-control" placeholder="例: 勤怠管理">
+      </div>
+      <div class="form-group" id="bpCapParentRow" style="display:none;">
+        <label>親ケイパビリティ（レベル1） <span class="required">*</span></label>
+        <select id="bpCapParentId" class="form-control">
+          <option value="">── 選択 ──</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>スコープ</label>
+          <select id="bpCapScope" class="form-control">
+            <option value="">── 未設定 ──</option>
+            <option value="global">global（グローバル標準）</option>
+            <option value="local">local（ローカル独自）</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>表示順</label>
+          <input id="bpCapSortOrder" class="form-control" type="number" placeholder="例: 10">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeBpCapModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveBpCapability()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Business Portfolio: システム紐付けモーダル ─── -->
+<div class="modal-overlay" id="bpLinkModal">
+  <div class="modal bp-modal">
+    <div class="modal-header">
+      <div class="modal-title" id="bpLinkModalTitle">システム紐付け</div>
+      <button class="close-btn" onclick="closeBpLinkModal()" style="background:var(--gray-100);color:var(--gray-600);font-size:18px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:10px;">
+        <input class="form-control" id="bpLinkSearch" placeholder="🔍 システム名・IDで絞り込み"
+          oninput="(async()=>{const apps=_bpAllApps.length?_bpAllApps:await apiFetch('/api/applications');const linked=await apiFetch('/api/capabilities/'+encodeURIComponent(_bpLinkCapId)+'/applications');_renderLinkAppList(apps||[],new Set((linked||[]).map(a=>a.application_id)),this.value.toLowerCase())})()">
+      </div>
+      <div class="bp-app-select-list" id="bpLinkAppList">
+        <div style="padding:20px;text-align:center;color:var(--gray-400);">読み込み中...</div>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--gray-400);">チェックをON/OFFすることで即座に紐付け・解除されます。</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeBpLinkModal()">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- Scenario Modal -->
 <div id="scenarioModalOverlay" onclick="if(event.target===this)closeScenarioModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;">
