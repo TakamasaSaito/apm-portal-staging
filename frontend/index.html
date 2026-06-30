@@ -445,6 +445,10 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
   .bp-table{font-size:12px;}
   .bp-group-header{padding:8px 12px;}
 }
+.bp-admin-l1-row td{background:var(--gray-50);font-weight:600;}
+.bp-table-row-selected td{background:#EFF6FF!important;box-shadow:inset 3px 0 0 var(--accent);}
+.bp-l2-card.bp-highlight-flash{animation:bp-flash 2s ease-out;}
+@keyframes bp-flash{0%{background:#FEF9C3;border-color:#FCD34D;}60%{background:#FEF9C3;border-color:#FCD34D;}100%{background:var(--white);border-color:var(--gray-200);}}
 </style>
 </head>
 <body>
@@ -1299,6 +1303,39 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
           <div class="bp-l2-list" id="bpL2List">
             <div style="padding:32px;text-align:center;color:var(--gray-400);">← レベル1を選択</div>
           </div>
+        </div>
+      </div>
+
+      <!-- 全ケイパビリティ一覧テーブル -->
+      <div class="table-card" style="margin-top:20px;" id="bpAdminTableSection">
+        <div class="table-header">
+          <div class="table-header-title">📋 全ケイパビリティ一覧</div>
+          <div class="table-search-wrap" style="gap:8px;flex-wrap:wrap;">
+            <div class="table-search">
+              <span>🔍</span>
+              <input type="text" id="bpAdminTableSearch" placeholder="ケイパビリティ名で検索"
+                oninput="_renderBpAdminTable()" style="width:180px;">
+            </div>
+            <div style="display:flex;gap:4px;" id="bpAdminScopeFilters">
+              <button class="bubble-filter-btn active" onclick="_setBpAdminScope(this,'')">ALL</button>
+              <button class="bubble-filter-btn" onclick="_setBpAdminScope(this,'global')">global</button>
+              <button class="bubble-filter-btn" onclick="_setBpAdminScope(this,'local')">local</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-scroll-wrap">
+          <table id="bpAdminTable">
+            <thead><tr>
+              <th style="min-width:150px;">レベル1（大分類）</th>
+              <th style="min-width:160px;">レベル2（中分類）</th>
+              <th style="min-width:80px;">スコープ</th>
+              <th style="min-width:70px;text-align:center;">システム件数</th>
+              <th style="min-width:240px;">紐づくシステム</th>
+            </tr></thead>
+            <tbody id="bpAdminTableBody">
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray-400);">読み込み中...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -5696,6 +5733,8 @@ function renderScenarioPanel() {
 let _bpSelectedL1 = null;
 let _bpCapabilities = [];
 let _bpAllApps = [];
+let _bpMatrixData = [];
+let _bpAdminScopeFilter = '';
 
 function showBpPage(page) {
   if (window.innerWidth <= 768) closeSidebar();
@@ -5809,18 +5848,21 @@ async function loadCapabilityAdmin() {
   if (addL1Btn) addL1Btn.style.display = currentUser === 'admin' ? 'inline-flex' : 'none';
 
   try {
-    const [tree, allApps] = await Promise.all([
+    const [tree, allApps, matrix] = await Promise.all([
       apiFetch('/api/capabilities'),
       apiFetch('/api/applications'),
+      apiFetch('/api/capabilities/matrix'),
     ]);
     if (!tree || !allApps) return;
     _bpCapabilities = tree;
     _bpAllApps = (allApps || []).filter(a => !a.is_infrastructure);
+    _bpMatrixData = matrix || [];
     _renderBpL1List(tree);
     if (_bpSelectedL1) {
       const found = tree.find(t => t.capability_id === _bpSelectedL1);
       if (found) _renderBpL2Panel(found);
     }
+    _renderBpAdminTable();
   } catch(e) {
     showToast('読み込みエラー: ' + e.message, 'error');
   }
@@ -5869,7 +5911,7 @@ function _renderBpL2Panel(l1) {
     return;
   }
   list.innerHTML = children.map(cap => `
-    <div class="bp-l2-card">
+    <div class="bp-l2-card" id="bpL2Card_${_esc(cap.capability_id)}">
       <div class="bp-l2-card-header">
         <span class="bp-l2-card-name">${_esc(cap.capability_name)}</span>
         ${cap.scope ? `<span class="bp-scope-badge ${cap.scope === 'global' ? 'bp-scope-global' : 'bp-scope-local'}">${cap.scope}</span>` : ''}
@@ -6085,6 +6127,105 @@ function closeBpLinkModal() {
   if (_bpSelectedL1) {
     const l1 = _bpCapabilities.find(l => l.capability_id === _bpSelectedL1);
     if (l1) _renderBpL2Panel(l1);
+  }
+}
+
+// ─── 全ケイパビリティ一覧テーブル ────────────────────────
+function _renderBpAdminTable() {
+  const tbody = document.getElementById('bpAdminTableBody');
+  if (!tbody) return;
+  if (!_bpMatrixData.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray-400);">データなし</td></tr>`;
+    return;
+  }
+
+  const q = (document.getElementById('bpAdminTableSearch')?.value || '').toLowerCase();
+  const scope = _bpAdminScopeFilter;
+
+  // L1 name lookup
+  const l1Names = {};
+  _bpMatrixData.filter(r => r.level === 1).forEach(r => { l1Names[r.capability_id] = r.capability_name; });
+
+  const rows = _bpMatrixData.filter(r => {
+    const matchQ = !q || r.capability_name.toLowerCase().includes(q)
+      || (r.parent_id && (l1Names[r.parent_id] || '').toLowerCase().includes(q));
+    const matchScope = !scope || r.scope === scope;
+    return matchQ && matchScope;
+  });
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--gray-400);">該当なし</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const isL1 = r.level === 1;
+    const l1Name = isL1 ? r.capability_name : (l1Names[r.parent_id] || '-');
+    const l2Name = isL1
+      ? `<span style="color:var(--gray-300);">大分類</span>`
+      : _esc(r.capability_name);
+    const cnt = r.app_count || 0;
+    const badgeClass = cnt === 0 ? 'bp-count-0' : cnt === 1 ? 'bp-count-1' : 'bp-count-multi';
+    const scopeHtml = r.scope
+      ? `<span class="bp-scope-badge ${r.scope === 'global' ? 'bp-scope-global' : 'bp-scope-local'}">${r.scope}</span>`
+      : `<span style="color:var(--gray-300);">-</span>`;
+    const names = r.app_names || [];
+    const tagsHtml = names.slice(0, 3).map(n =>
+      `<span class="bp-sys-tag" style="font-size:10px;">${_esc(n)}</span>`
+    ).join('') + (names.length > 3
+      ? `<span style="font-size:10px;color:var(--gray-400);margin-left:2px;">+${names.length - 3}</span>` : '');
+    const parentId = r.parent_id || '';
+    return `
+      <tr id="bpAdminRow_${_esc(r.capability_id)}"
+          class="clickable${isL1 ? ' bp-admin-l1-row' : ''}"
+          onclick="_bpJumpToCapability('${_esc(r.capability_id)}',${r.level},'${_esc(parentId)}')">
+        <td>${_esc(l1Name)}</td>
+        <td>${l2Name}</td>
+        <td>${scopeHtml}</td>
+        <td style="text-align:center;"><span class="bp-count-badge ${badgeClass}">${cnt}</span></td>
+        <td><div class="bp-sys-tags">${tagsHtml || `<span style="color:var(--gray-300);font-size:11px;">-</span>`}</div></td>
+      </tr>`;
+  }).join('');
+}
+
+function _setBpAdminScope(el, scope) {
+  _bpAdminScopeFilter = scope;
+  document.querySelectorAll('#bpAdminScopeFilters button').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  _renderBpAdminTable();
+}
+
+function _bpJumpToCapability(capId, level, parentId) {
+  // L1 IDを特定
+  const l1Id = level === 1 ? capId : parentId;
+  const l1 = _bpCapabilities.find(l => l.capability_id === l1Id);
+  if (!l1) return;
+
+  // L1を選択・L2パネルを再描画
+  _bpSelectedL1 = l1Id;
+  _renderBpL1List(_bpCapabilities);
+  _renderBpL2Panel(l1);
+
+  // テーブル行のハイライト更新
+  document.querySelectorAll('#bpAdminTableBody tr').forEach(tr => tr.classList.remove('bp-table-row-selected'));
+  const selRow = document.getElementById('bpAdminRow_' + capId);
+  if (selRow) selRow.classList.add('bp-table-row-selected');
+
+  // 編集パネルへスクロール
+  const layoutEl = document.querySelector('.bp-admin-layout');
+  if (layoutEl) layoutEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // L2の場合はカードにも遅延スクロール＋ハイライト
+  if (level === 2) {
+    setTimeout(() => {
+      const card = document.getElementById('bpL2Card_' + capId);
+      if (!card) return;
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      card.classList.remove('bp-highlight-flash');
+      void card.offsetWidth; // reflow to restart animation
+      card.classList.add('bp-highlight-flash');
+      setTimeout(() => card.classList.remove('bp-highlight-flash'), 2100);
+    }, 150);
   }
 }
 
