@@ -6150,6 +6150,7 @@ function _renderBpAdminTable() {
   _bpMatrixData.filter(r => r.level === 1).forEach(r => { l1Names[r.capability_id] = r.capability_name; });
 
   const rows = _bpMatrixData.filter(r => {
+    if (r.level !== 2) return false;
     const matchQ = !q || r.capability_name.toLowerCase().includes(q)
       || (r.parent_id && (l1Names[r.parent_id] || '').toLowerCase().includes(q));
     const matchScope = !scope || r.scope === scope;
