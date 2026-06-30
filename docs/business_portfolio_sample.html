@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APM Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+:root{
+  --bg:#07090f;--s1:#0d1120;--s2:#141926;--s3:#1e2538;
+  --bd:#1e2640;--text:#e4eaf8;--muted:#58688a;--dim:#2e3a52;
+  --g:#4f8ef7;--l:#f7c44f;--leg:#ff4d5e;--rev:#b47ff7;
+  --ok:#22d3a0;--warn:#ffb020;--gap:#ff4d5e;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+/* typography */
+.f-syne{font-family:'Syne',sans-serif}
+.f-mono{font-family:'JetBrains Mono',monospace}
+/* layout */
+.hdr{padding:16px 24px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--s1)}
+.hdr-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.02em}
+.hdr-title em{color:var(--g);font-style:normal}
+.hdr-sub{font-size:10px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace}
+.hdr-badge{font-size:9px;padding:4px 10px;border:1px solid var(--bd);border-radius:3px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+/* main tabs */
+.nav{display:flex;background:var(--s1);border-bottom:1px solid var(--bd);padding:0 24px}
+.ntab{padding:10px 20px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;white-space:nowrap;transition:color .15s}
+.ntab:hover{color:var(--text)}
+.ntab.on{color:var(--text);border-bottom-color:var(--g)}
+/* pages */
+.pg{display:none;padding:20px 24px}.pg.on{display:block}
+/* cards */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:16px}
+.card-ttl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+/* pills */
+.pill{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600}
+.p-g{background:rgba(79,142,247,.15);color:var(--g)}
+.p-l{background:rgba(247,196,79,.15);color:var(--l)}
+.p-leg{background:rgba(255,77,94,.15);color:var(--leg)}
+.p-rev{background:rgba(180,127,247,.15);color:var(--rev)}
+.p-ok{background:rgba(34,211,160,.15);color:var(--ok)}
+.p-ng{background:rgba(255,77,94,.15);color:var(--gap)}
+.p-warn{background:rgba(255,176,32,.15);color:var(--warn)}
+/* filter bar */
+.fbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.flabel{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.fb{padding:4px 12px;border-radius:20px;border:1px solid var(--bd);background:var(--s2);color:var(--muted);cursor:pointer;font-size:10px;transition:all .15s;white-space:nowrap}
+.fb:hover,.fb.on{border-color:var(--g);color:var(--text);background:rgba(79,142,247,.1)}
+/* ── OVERVIEW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+.kpi{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:14px 16px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.kpi:hover{border-color:var(--g)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.kt::before{background:var(--muted)}.kpi.kg::before{background:var(--g)}.kpi.kl::before{background:var(--l)}.kpi.kleg::before{background:var(--leg)}.kpi.kr::before{background:var(--rev)}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.kpi-val{font-size:26px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1}
+.kpi.kt .kpi-val{color:var(--text)}.kpi.kg .kpi-val{color:var(--g)}.kpi.kl .kpi-val{color:var(--l)}.kpi.kleg .kpi-val{color:var(--leg)}.kpi.kr .kpi-val{color:var(--rev)}
+.kpi-hint{font-size:8px;color:var(--g);margin-top:4px;font-family:'JetBrains Mono',monospace}
+.chart-row{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:12px;margin-bottom:18px}
+.dom-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dc{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.dc:hover{border-color:var(--g);transform:translateY(-1px)}
+.dc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.dc-name{font-size:12px;font-weight:700;margin-bottom:8px}
+.dc-stats{display:flex;gap:6px;flex-wrap:wrap}
+.dc-hint{font-size:8px;color:var(--g);margin-top:6px;font-family:'JetBrains Mono',monospace}
+.gap-bar{background:rgba(255,77,94,.06);border:1px solid rgba(255,77,94,.2);border-radius:8px;padding:12px 16px;margin-bottom:16px}
+.gap-bar-ttl{font-size:9px;font-weight:700;color:var(--gap);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+.gap-chips{display:flex;flex-wrap:wrap;gap:6px}
+.gc{padding:3px 10px;background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.2);border-radius:3px;font-size:10px;cursor:pointer}
+.gc:hover{background:rgba(255,77,94,.2)}
+.gc strong{color:var(--gap)}
+/* ── MATRIX ── */
+.dtabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px}
+.dtab{padding:5px 13px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--muted);cursor:pointer;font-size:10px;transition:all .15s}
+.dtab:hover,.dtab.on{background:rgba(79,142,247,.1);border-color:var(--g);color:var(--text);font-weight:700}
+.vsw-row{display:flex;gap:4px;margin-left:auto}
+.vsw{padding:4px 12px;border-radius:5px;border:1px solid var(--bd);background:var(--s2);color:var(--muted);cursor:pointer;font-size:9px;font-family:'JetBrains Mono',monospace;transition:all .15s}
+.vsw:hover,.vsw.on{background:rgba(34,211,160,.1);border-color:var(--ok);color:var(--ok)}
+.mx-layout{display:grid;grid-template-columns:1fr 270px;gap:14px;align-items:start}
+.mx-card{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:18px;overflow-x:auto}
+.rp{display:flex;flex-direction:column;gap:10px}
+.mxtbl{width:100%;border-collapse:separate;border-spacing:0;min-width:500px}
+.mxtbl th{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:7px 8px;text-align:center;background:var(--s2);border-bottom:1px solid var(--bd);white-space:nowrap}
+.mxtbl th.cth{text-align:left;min-width:170px}
+.mxtbl th.gth{color:var(--g)}.mxtbl th.lth{color:var(--l)}.mxtbl th.legth{color:var(--leg)}.mxtbl th.rth{color:var(--rev)}
+.mxtbl td{padding:8px 6px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.mxtbl tr:last-child td{border-bottom:none}
+.mxtbl tr:hover td{background:rgba(255,255,255,.015)}
+.biz{display:inline-block;padding:1px 6px;border-radius:2px;font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:600;margin-bottom:2px}
+.biz-g{background:rgba(79,142,247,.15);color:var(--g)}.biz-l{background:rgba(247,196,79,.15);color:var(--l)}
+.cap-l{font-size:11px;font-weight:700}.cap-s{font-size:10px;color:var(--muted)}
+.cc{text-align:center;cursor:pointer;border-radius:4px;transition:background .15s;vertical-align:middle}
+.cc:hover{background:rgba(79,142,247,.1)}
+.cc.zero{cursor:default}.cc.zero:hover{background:none}
+.cc-n{font-size:19px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1;display:block}
+.cc-n.z{color:var(--dim);font-size:13px}
+.cc-h{font-size:7px;color:var(--muted);font-family:'JetBrains Mono',monospace;display:block}
+.vd{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.vd-ok{background:rgba(34,211,160,.1);color:var(--ok);border:1px solid rgba(34,211,160,.2)}
+.vd-gap{background:rgba(255,77,94,.1);color:var(--gap);border:1px solid rgba(255,77,94,.2)}
+.vd-warn{background:rgba(255,176,32,.1);color:var(--warn);border:1px solid rgba(255,176,32,.2)}
+.vd-info{background:rgba(79,142,247,.1);color:var(--g);border:1px solid rgba(79,142,247,.2)}
+.leg-block{display:flex;flex-direction:column;gap:6px}
+.leg-row{display:flex;align-items:flex-start;gap:8px}
+.leg-txt{font-size:10px;line-height:1.4;color:var(--muted)}
+.leg-txt strong{color:var(--text)}
+.gi{padding:8px 10px;border-radius:5px;border-left:3px solid var(--gap);background:rgba(255,77,94,.06)}
+.gi-cap{font-size:11px;font-weight:700;margin-bottom:2px}
+.gi-msg{font-size:10px;color:var(--muted)}
+/* list view */
+.ltbl{width:100%;border-collapse:collapse;font-size:10px}
+.ltbl th{text-align:left;padding:6px 7px;background:var(--s2);color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd);white-space:nowrap;font-family:'JetBrains Mono',monospace}
+.ltbl td{padding:6px 7px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.ltbl tr:last-child td{border-bottom:none}
+.ltbl tr:hover td{background:var(--s2)}
+/* ── COVERAGE SUB TABS ── */
+.stabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:18px;gap:0}
+.stab{padding:8px 18px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;border:none;background:none;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;letter-spacing:.04em;white-space:nowrap;transition:color .15s}
+.stab:hover{color:var(--text)}
+.stab.on{color:var(--text);border-bottom-color:var(--ok)}
+.spg{display:none}.spg.on{display:block}
+.pg-desc{font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:16px;max-width:700px}
+/* coverage map */
+.cov-block{background:var(--s1);border:1px solid var(--bd);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.cov-dhdr{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--bd)}
+.cov-dname{font-family:'Syne',sans-serif;font-size:12px;font-weight:700}
+.cov-dcnt{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-left:auto}
+.cov-row{display:grid;grid-template-columns:155px 1fr 80px;align-items:center;border-bottom:1px solid var(--bd)}
+.cov-row:last-child{border-bottom:none}
+.cov-cap{padding:8px 12px;background:var(--s2);border-right:1px solid var(--bd);height:100%;display:flex;flex-direction:column;justify-content:center}
+.cov-bl{font-size:10px;font-weight:700}.cov-bs{font-size:9px;color:var(--muted)}
+.cov-sys{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;flex:1}
+.sys-tag{display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer;border:1px solid;transition:opacity .15s}
+.sys-tag:hover{opacity:.75}
+.st-g{background:rgba(79,142,247,.08);border-color:rgba(79,142,247,.25);color:var(--text)}
+.st-l{background:rgba(247,196,79,.08);border-color:rgba(247,196,79,.25);color:var(--text)}
+.st-leg{background:rgba(255,77,94,.08);border-color:rgba(255,77,94,.25);color:var(--text)}
+.st-rev{background:rgba(180,127,247,.08);border-color:rgba(180,127,247,.25);color:var(--text)}
+.sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.st-g .sdot{background:var(--g)}.st-l .sdot{background:var(--l)}.st-leg .sdot{background:var(--leg)}.st-rev .sdot{background:var(--rev)}
+.sn{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.cov-vd{padding:8px 12px;display:flex;align-items:center;justify-content:center}
+/* timeline */
+.tl-wrap{overflow-x:auto}
+.tltbl{border-collapse:separate;border-spacing:0;min-width:900px;width:100%}
+.tltbl th{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted);padding:7px 4px;text-align:center;background:var(--s2);border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);white-space:nowrap}
+.tltbl th.scol{text-align:left;min-width:200px;position:sticky;left:0;z-index:2;background:var(--s2)}
+.tltbl td{border-bottom:1px solid var(--bd);border-right:1px solid var(--bd);vertical-align:middle}
+.tltbl td.scol{background:var(--s1);position:sticky;left:0;z-index:1;padding:6px 10px}
+.sname{font-size:10px;font-weight:600}
+.scaps{font-size:8px;color:var(--muted);line-height:1.4;margin-top:2px}
+.ycell{min-width:50px;height:42px;position:relative}
+.ynow{background:rgba(34,211,160,.05);border-left:2px solid rgba(34,211,160,.3)}
+.ybar{position:absolute;top:9px;height:24px;left:3px;right:3px;border-radius:3px;display:flex;align-items:center;padding:0 5px;font-size:8px;font-weight:700;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:opacity .15s;overflow:hidden;white-space:nowrap}
+.ybar:hover{opacity:.75}
+.yb-g{background:rgba(79,142,247,.2);border:1px solid rgba(79,142,247,.4);color:var(--g)}
+.yb-l{background:rgba(247,196,79,.15);border:1px solid rgba(247,196,79,.35);color:var(--l)}
+.yb-leg{background:rgba(255,77,94,.18);border:1px solid rgba(255,77,94,.4);color:var(--leg)}
+.yb-rev{background:rgba(180,127,247,.15);border:1px solid rgba(180,127,247,.35);color:var(--rev)}
+/* local reason */
+.lr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.lr-card{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:14px;position:relative;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.lr-card:hover{border-color:var(--g)}
+.lr-card::before{content:'';position:absolute;top:0;left:0;width:3px;bottom:0}
+.lr-card.law::before{background:#e879f9}.lr-card.grp::before{background:var(--warn)}
+.lr-card.cst::before{background:#34d399}.lr-card.oth::before{background:var(--muted)}
+.lr-name{font-size:11px;font-weight:700;margin-bottom:4px;padding-left:8px}
+.lr-dom{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:8px;padding-left:8px}
+.lr-rtag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;margin-left:8px;margin-bottom:8px}
+.law .lr-rtag{background:rgba(232,121,249,.12);color:#e879f9}
+.grp .lr-rtag{background:rgba(255,176,32,.12);color:var(--warn)}
+.cst .lr-rtag{background:rgba(52,211,153,.12);color:#34d399}
+.oth .lr-rtag{background:rgba(90,100,128,.12);color:var(--muted)}
+.lr-caps{display:flex;flex-wrap:wrap;gap:4px;padding:0 8px;margin-bottom:8px}
+.lr-cap{font-size:8px;padding:2px 6px;border-radius:2px;background:var(--s3);color:var(--muted)}
+.lr-act{font-size:9px;color:var(--muted);padding:8px 8px 0;border-top:1px solid var(--bd);line-height:1.5}
+.lr-act strong{color:var(--warn)}
+/* chord */
+.chord-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+.chord-cv{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:18px}
+.chord-leg{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:16px}
+.chord-ttl{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;margin-bottom:12px}
+.cl-item{display:flex;align-items:flex-start;gap:8px;padding:7px;border-radius:5px;cursor:pointer;transition:background .15s;border:1px solid transparent;margin-bottom:4px}
+.cl-item:hover{background:var(--s2);border-color:var(--bd)}
+.cl-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;margin-top:2px}
+.cl-txt{font-size:10px;line-height:1.4}
+.cl-name{font-weight:700;margin-bottom:1px}
+.cl-caps{font-size:8px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+/* modal */
+.movo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;align-items:center;justify-content:center}
+.movo.on{display:flex}
+.mbox{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:22px;width:700px;max-width:95vw;max-height:82vh;overflow-y:auto;position:relative}
+.mclose{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:17px}
+.mclose:hover{color:var(--text)}
+.mttl{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:3px}
+.msub{font-size:10px;color:var(--muted);margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+.mkpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.mdtbl{width:100%;border-collapse:collapse;font-size:10px}
+.mdtbl th{text-align:left;padding:5px 7px;background:var(--s2);color:var(--muted);font-size:8px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--bd);white-space:nowrap;font-family:'JetBrains Mono',monospace}
+.mdtbl td{padding:6px 7px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.mdtbl tr:last-child td{border-bottom:none}
+.mdtbl tr:hover td{background:var(--s2)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">APM <em>Dashboard</em></div>
+    <div class="hdr-sub">Application Portfolio Management — 全体概要 · ドメイン診断 · カバレッジ分析</div>
+  </div>
+  <div class="hdr-badge">v9 · 2026-06</div>
+</div>
+
+<div class="nav">
+  <button class="ntab on"  onclick="showMain('ov',this)">🏠 全体概要</button>
+  <button class="ntab"     onclick="showMain('mx',this)">🔍 ドメイン診断</button>
+  <button class="ntab"     onclick="showMain('cv',this)">📐 カバレッジ分析</button>
+</div>
+
+<!-- ══ 全体概要 ══ -->
+<div id="pg-ov" class="pg on">
+  <div class="kpi-row">
+    <div class="kpi kt" style="cursor:pointer" onclick="goSysList()"><div class="kpi-lbl">Total Systems</div><div class="kpi-val" id="kv-t">-</div><div class="kpi-hint">▶ 一覧へ</div></div>
+    <div class="kpi kg" onclick="goMatrix(null)"><div class="kpi-lbl">グローバル標準</div><div class="kpi-val" id="kv-g">-</div><div class="kpi-hint">▶ 診断へ</div></div>
+    <div class="kpi kl" onclick="goMatrix(null)"><div class="kpi-lbl">ローカル</div><div class="kpi-val" id="kv-l">-</div><div class="kpi-hint">▶ 診断へ</div></div>
+    <div class="kpi kleg" onclick="goMatrix(null)"><div class="kpi-lbl">レガシー</div><div class="kpi-val" id="kv-leg">-</div><div class="kpi-hint">▶ 診断へ</div></div>
+    <div class="kpi kr" onclick="goMatrix(null)"><div class="kpi-lbl">要見直し</div><div class="kpi-val" id="kv-r">-</div><div class="kpi-hint">▶ 診断へ</div></div>
+  </div>
+  <div class="gap-bar" id="gapBar" style="display:none">
+    <div class="gap-bar-ttl">⚠ 検出ギャップ</div>
+    <div class="gap-chips" id="gapChips"></div>
+  </div>
+  <div class="chart-row">
+    <div class="card"><div class="card-ttl">GL / ローカル / レガシー 比率</div><canvas id="cht-gl" height="200"></canvas></div>
+    <div class="card"><div class="card-ttl">ドメイン別 システム数</div><canvas id="cht-dom" height="200"></canvas></div>
+    <div class="card"><div class="card-ttl">ベンダー本社国</div><canvas id="cht-cty" height="200"></canvas></div>
+  </div>
+  <div class="card-ttl" style="margin-bottom:10px">ドメイン別サマリ — クリックで診断へ</div>
+  <div class="dom-grid" id="domGrid"></div>
+</div>
+
+<!-- ══ ドメイン診断 ══ -->
+<div id="pg-mx" class="pg">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <div class="dtabs" id="dtabs"></div>
+    <div class="vsw-row">
+      <button class="vsw on" id="vsw-m" onclick="showMxView('m',this)">📊 マトリクス</button>
+      <button class="vsw"    id="vsw-l" onclick="showMxView('l',this)">📋 一覧</button>
+    </div>
+  </div>
+  <!-- matrix -->
+  <div id="sv-m">
+    <div class="mx-layout">
+      <div class="mx-card">
+        <div class="card-ttl" id="mx-ttl"></div>
+        <table class="mxtbl">
+          <thead><tr>
+            <th class="cth">ケイパビリティ（大 › 小）</th>
+            <th class="gth">グローバル標準</th>
+            <th class="lth">ローカル</th>
+            <th class="legth">レガシー</th>
+            <th class="rth">要見直し</th>
+            <th>判定</th>
+          </tr></thead>
+          <tbody id="mxBody"></tbody>
+        </table>
+      </div>
+      <div class="rp">
+        <div class="card">
+          <div class="card-ttl">判定凡例</div>
+          <div class="leg-block">
+            <div class="leg-row"><span class="vd vd-ok">✓ 適合</span><div class="leg-txt"><strong>あるべき姿と一致</strong></div></div>
+            <div class="leg-row"><span class="vd vd-gap">✗ ギャップ</span><div class="leg-txt"><strong>G業務にGシステムなし</strong></div></div>
+            <div class="leg-row"><span class="vd vd-warn">△ 過剰</span><div class="leg-txt"><strong>L業務にGシステム混在</strong></div></div>
+            <div class="leg-row"><span class="vd vd-info">→ 移行中</span><div class="leg-txt"><strong>レガシーのみ</strong></div></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-ttl" id="gap-ttl">検出ギャップ</div><div id="gapList" style="display:flex;flex-direction:column;gap:6px"></div></div>
+        <div class="card"><div class="card-ttl">区分別システム数</div><canvas id="cht-bar" height="170"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <!-- list -->
+  <div id="sv-l" style="display:none">
+    <div class="card">
+      <div class="card-ttl" id="lst-ttl"></div>
+      <div class="fbar">
+        <button class="fb on" onclick="filterLst('ALL',this)">ALL</button>
+        <button class="fb" onclick="filterLst('グローバル標準',this)">グローバル標準</button>
+        <button class="fb" onclick="filterLst('ローカル',this)">ローカル</button>
+        <button class="fb" onclick="filterLst('レガシー（移行対象）',this)">レガシー</button>
+        <button class="fb" onclick="filterLst('要見直し',this)">要見直し</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="ltbl">
+          <thead><tr><th>#</th><th>ドメイン</th><th>Cap大</th><th>Cap小</th><th>システム名</th><th>種別</th><th>ベンダー</th><th>本社国</th><th>GL区分</th><th>Bizオーナー</th><th>ITオーナー</th><th>開始日</th><th>廃止予定日</th><th>ステータス</th></tr></thead>
+          <tbody id="lstBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ カバレッジ分析 ══ -->
+<div id="pg-cv" class="pg">
+  <div class="stabs">
+    <button class="stab on" onclick="showSub('ca',this)">A. カバレッジマップ</button>
+    <button class="stab"    onclick="showSub('cb',this)">B. 廃止タイムライン</button>
+    <button class="stab"    onclick="showSub('cc',this)">C. ローカル理由</button>
+    <button class="stab"    onclick="showSub('cd',this)">D. Gシステム カバレッジ</button>
+    <button class="stab"    id="stab-ce" onclick="showSub('ce',this)">E. システム一覧</button>
+  </div>
+  <!-- A -->
+  <div id="sp-ca" class="spg on">
+    <p class="pg-desc">1システムが複数ケイパビリティを担う実態を可視化。タグの <code style="font-family:'JetBrains Mono',monospace;font-size:9px;background:var(--s2);padding:1px 4px;border-radius:2px">×N機能</code> はシステムの横断カバレッジ数です。クリックで詳細表示。</p>
+    <div class="fbar" id="covFbar"><span class="flabel">Domain</span><button class="fb on" onclick="setCovDom('ALL',this)">ALL</button></div>
+    <div id="covWrap"></div>
+  </div>
+  <!-- B -->
+  <div id="sp-cb" class="spg">
+    <p class="pg-desc">システムの稼働期間と廃止予定を時系列で表示。後継グローバルシステムが未整備の「移行の穴」を発見できます。</p>
+    <div class="fbar" id="tlFbar">
+      <span class="flabel">Filter</span>
+      <button class="fb on" onclick="setTlF('ALL',this)">全て</button>
+      <button class="fb" onclick="setTlF('leg',this)">レガシーのみ</button>
+      <button class="fb" onclick="setTlF('ret',this)">廃止予定のみ</button>
+    </div>
+    <div class="tl-wrap"><table class="tltbl" id="tlTbl"></table></div>
+  </div>
+  <!-- C -->
+  <div id="sp-cc" class="spg">
+    <p class="pg-desc">ローカルシステムの存在理由を分類。理由によって対処方針が変わります。</p>
+    <div class="fbar" id="lrFbar">
+      <span class="flabel">Filter</span>
+      <button class="fb on" onclick="setLrF('ALL',this)">全て</button>
+      <button class="fb" onclick="setLrF('law',this)">⚖ 法規制</button>
+      <button class="fb" onclick="setLrF('grp',this)">🏢 グループ会社</button>
+      <button class="fb" onclick="setLrF('cst',this)">🔧 業務固有</button>
+    </div>
+    <div class="lr-grid" id="lrGrid"></div>
+  </div>
+  <!-- D -->
+  <div id="sp-cd" class="spg">
+    <p class="pg-desc">グローバル標準システムが何ケイパビリティをカバーしているかを棒グラフで比較。統合度・重複度の評価に使えます。クリックで詳細表示。</p>
+    <div class="chord-layout">
+      <div class="chord-cv"><canvas id="cht-chord" height="340" style="max-width:100%"></canvas></div>
+      <div class="chord-leg"><div class="chord-ttl">システム別カバレッジ</div><div id="chordLeg"></div></div>
+    </div>
+  </div>
+
+  <!-- E -->
+  <div id="sp-ce" class="spg">
+    <p class="pg-desc">全システムの一覧。ドメイン・GL区分・ステータスで絞り込みができます。システム名をクリックすると担当ケイパビリティの詳細を表示します。</p>
+    <div class="fbar" style="flex-wrap:wrap;row-gap:6px">
+      <span class="flabel">Domain</span>
+      <button class="fb on" id="sle-dom-all" onclick="setSleF('dom','ALL',this)">ALL</button>
+      <div id="sle-dom-btns" style="display:contents"></div>
+      <span class="flabel" style="margin-left:8px">GL区分</span>
+      <button class="fb on" id="sle-gl-all" onclick="setSleF('gl','ALL',this)">ALL</button>
+      <button class="fb" onclick="setSleF('gl','グローバル標準',this)">グローバル標準</button>
+      <button class="fb" onclick="setSleF('gl','ローカル',this)">ローカル</button>
+      <button class="fb" onclick="setSleF('gl','レガシー（移行対象）',this)">レガシー</button>
+      <button class="fb" onclick="setSleF('gl','要見直し',this)">要見直し</button>
+      <span class="flabel" style="margin-left:8px">ステータス</span>
+      <button class="fb on" id="sle-st-all" onclick="setSleF('st','ALL',this)">ALL</button>
+      <button class="fb" onclick="setSleF('st','稼働中',this)">稼働中</button>
+      <button class="fb" onclick="setSleF('st','廃止予定',this)">廃止予定</button>
+      <button class="fb" onclick="setSleF('st','保守切れ予定',this)">保守切れ予定</button>
+      <button class="fb" onclick="setSleF('st','要見直し',this)">要見直し</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin:8px 0 12px" id="sle-count"></div>
+    <div style="overflow-x:auto">
+      <table class="ltbl">
+        <thead><tr>
+          <th>システム名</th><th>ドメイン</th><th>担当Cap（大）</th><th>担当Cap（小）</th>
+          <th>種別</th><th>ベンダー</th><th>本社国</th><th>GL区分</th>
+          <th>Bizオーナー</th><th>ITオーナー</th><th>開始日</th><th>廃止予定日</th><th>ステータス</th>
+        </tr></thead>
+        <tbody id="sleBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- E システム一覧 -->
+  <div id="sp-ce" class="spg">
+    <p class="pg-desc">全システムの一覧。ドメイン・GL区分・ステータスで絞り込みができます。行をクリックすると担当ケイパビリティの詳細を表示します。</p>
+    <div class="fbar">
+      <span class="flabel">Domain</span>
+      <button class="fb on" id="sle-dom-all" onclick="setSleF('dom','ALL',this)">ALL</button>
+      <div id="sle-dom-btns" style="display:contents"></div>
+      <span class="flabel" style="margin-left:8px">GL区分</span>
+      <button class="fb on" id="sle-gl-all" onclick="setSleF('gl','ALL',this)">ALL</button>
+      <button class="fb" onclick="setSleF('gl','グローバル標準',this)">グローバル標準</button>
+      <button class="fb" onclick="setSleF('gl','ローカル',this)">ローカル</button>
+      <button class="fb" onclick="setSleF('gl','レガシー（移行対象）',this)">レガシー</button>
+      <button class="fb" onclick="setSleF('gl','要見直し',this)">要見直し</button>
+      <span class="flabel" style="margin-left:8px">ステータス</span>
+      <button class="fb on" id="sle-st-all" onclick="setSleF('st','ALL',this)">ALL</button>
+      <button class="fb" onclick="setSleF('st','稼働中',this)">稼働中</button>
+      <button class="fb" onclick="setSleF('st','廃止予定',this)">廃止予定</button>
+      <button class="fb" onclick="setSleF('st','保守切れ予定',this)">保守切れ予定</button>
+      <button class="fb" onclick="setSleF('st','要見直し',this)">要見直し</button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin:8px 0 12px" id="sle-count"></div>
+    <div style="overflow-x:auto">
+      <table class="ltbl">
+        <thead><tr>
+          <th>システム名</th><th>ドメイン</th><th>Cap大</th><th>Cap小</th>
+          <th>種別</th><th>ベンダー</th><th>本社国</th><th>GL区分</th>
+          <th>Bizオーナー</th><th>ITオーナー</th><th>開始日</th><th>廃止予定日</th><th>ステータス</th>
+        </tr></thead>
+        <tbody id="sleBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- modal -->
+<div class="movo" id="modal">
+  <div class="mbox">
+    <button class="mclose" onclick="closeM()">✕</button>
+    <div class="mttl" id="m-ttl"></div>
+    <div class="msub" id="m-sub"></div>
+    <div class="mkpis" id="m-kpis"></div>
+    <table class="mdtbl">
+      <thead><tr><th>システム名</th><th>Cap大</th><th>Cap小</th><th>GL区分</th><th>ステータス</th><th>廃止予定日</th><th>Bizオーナー</th></tr></thead>
+      <tbody id="m-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+//  DATA  (index: 0=No,1=Dom,2=CapL,3=CapS,4=Sys,5=Kind,6=Vendor,7=Country,8=GL,9=BizOwner,10=ITOwner,11=Start,12=End,13=Status,14=LocalReason)
+// ═══════════════════════════════════════
+var D = [
+  [1,"人事","人事管理","組織管理","Workday HCM","SaaS","Workday","米国","グローバル標準","CHRO 田中","IT部 山田","2024-04-01","","稼働中",""],
+  [2,"人事","人事管理","タレントマネジメント","Workday HCM","SaaS","Workday","米国","グローバル標準","CHRO 田中","IT部 山田","2024-04-01","","稼働中",""],
+  [3,"人事","給与管理","給与計算","Workday Payroll","SaaS","Workday","米国","グローバル標準","CHRO 田中","IT部 山田","2024-04-01","","稼働中",""],
+  [4,"人事","就業管理","勤怠管理","Workday Time Tracking","SaaS","Workday","米国","グローバル標準","CHRO 田中","IT部 山田","2024-04-01","","稼働中",""],
+  [5,"人事","人事管理","採用管理","SAP SuccessFactors Recruiting","SaaS","SAP","ドイツ","グローバル標準","人事部長 田中","IT部 山田","2019-04-01","","稼働中",""],
+  [6,"人事","人事管理","人材育成・研修","SAP SuccessFactors Learning","SaaS","SAP","ドイツ","グローバル標準","人事部長 田中","IT部 山田","2019-04-01","","稼働中",""],
+  [7,"人事","給与管理","給与計算","奉行クラウド給与","SaaS","OBC","日本","ローカル","給与担当 鈴木","IT部 佐藤","2016-01-01","2027-03-31","廃止予定","law"],
+  [8,"人事","給与管理","賞与計算","奉行クラウド給与","SaaS","OBC","日本","ローカル","給与担当 鈴木","IT部 佐藤","2016-01-01","2027-03-31","廃止予定","law"],
+  [9,"人事","給与管理","給与計算","ADP Globalview","SaaS","ADP","米国","ローカル","APAC HR","IT部 山田","2017-04-01","","稼働中","law"],
+  [10,"人事","給与管理","給与計算","SAP HCM Payroll","オンプレ","SAP","ドイツ","レガシー（移行対象）","EMEA HR","IT部 中村","2006-04-01","2027-03-31","保守切れ予定",""],
+  [11,"人事","就業管理","勤怠管理","KING OF TIME","SaaS","ヒューマンテクノロジーズ","日本","ローカル","総務部 高橋","IT部 佐藤","2018-07-01","","稼働中","law"],
+  [12,"人事","就業管理","勤怠管理","Kronos Workforce","オンプレ","UKG","米国","ローカル","Americas HR","IT部 佐藤","2011-04-01","2026-12-31","廃止予定","law"],
+  [13,"人事","就業管理","勤怠管理","COMPANY 勤怠","オンプレ","自社開発","日本","レガシー（移行対象）","グループA社","IT部 佐藤","2004-04-01","2026-06-30","廃止予定",""],
+  [14,"人事","人事管理","採用管理","Workday Recruiting","SaaS","Workday","米国","ローカル","北米法人 HR","IT部 山田","2020-04-01","","稼働中","grp"],
+  [15,"人事","人事管理","採用管理","HireVue","SaaS","HireVue","米国","ローカル","グループB社","IT部 山田","2022-01-01","","要見直し","grp"],
+  [20,"経理・財務","会計管理","仕訳・総勘定元帳","SAP ECC 6.0","オンプレ","SAP","ドイツ","レガシー（移行対象）","CFO 伊藤","IT部 中村","2005-04-01","2027-12-31","保守切れ予定",""],
+  [21,"経理・財務","会計管理","固定資産管理","SAP ECC 6.0","オンプレ","SAP","ドイツ","レガシー（移行対象）","CFO 伊藤","IT部 中村","2005-04-01","2027-12-31","保守切れ予定",""],
+  [22,"経理・財務","会計管理","原価管理","SAP ECC 6.0","オンプレ","SAP","ドイツ","レガシー（移行対象）","CFO 伊藤","IT部 中村","2005-04-01","2027-12-31","保守切れ予定",""],
+  [23,"経理・財務","会計管理","仕訳・総勘定元帳","Oracle Cloud ERP","SaaS","Oracle","米国","グローバル標準","APAC CFO","IT部 中村","2023-04-01","","稼働中",""],
+  [24,"経理・財務","会計管理","固定資産管理","Oracle Cloud ERP","SaaS","Oracle","米国","グローバル標準","APAC CFO","IT部 中村","2023-04-01","","稼働中",""],
+  [25,"経理・財務","会計管理","仕訳・総勘定元帳","弥生会計","オンプレ","弥生","日本","ローカル","グループC社","IT部 佐藤","2009-04-01","2026-12-31","廃止予定","grp"],
+  [26,"経理・財務","会計管理","仕訳・総勘定元帳","勘定奉行","オンプレ","OBC","日本","ローカル","グループD社","IT部 佐藤","2012-04-01","","要見直し","grp"],
+  [27,"経理・財務","連結決算","グループ連結","HFM (Oracle Hyperion)","オンプレ","Oracle","米国","レガシー（移行対象）","CFO 伊藤","IT部 中村","2008-04-01","2028-03-31","保守切れ予定",""],
+  [28,"経理・財務","経費管理","経費精算","Concur Expense","SaaS","SAP","ドイツ","グローバル標準","CFO 伊藤","IT部 中村","2021-04-01","","稼働中",""],
+  [29,"経理・財務","経費管理","交通費申請","Concur Expense","SaaS","SAP","ドイツ","グローバル標準","CFO 伊藤","IT部 中村","2021-04-01","","稼働中",""],
+  [30,"経理・財務","経費管理","経費精算","楽楽精算","SaaS","ラクス","日本","ローカル","グループE社","IT部 佐藤","2019-04-01","","稼働中","grp"],
+  [31,"経理・財務","経費管理","経費精算","マネーフォワード経費","SaaS","マネーフォワード","日本","ローカル","グループF社","IT部 佐藤","2021-04-01","","稼働中","grp"],
+  [32,"経理・財務","予算管理","予算編成","Apptio Cloudability","SaaS","IBM","米国","要見直し","CFO 伊藤","IT部 中村","2020-10-01","","要見直し",""],
+  [33,"経理・財務","予算管理","実績対比分析","Apptio Cloudability","SaaS","IBM","米国","要見直し","CFO 伊藤","IT部 中村","2020-10-01","","要見直し",""],
+  [34,"経理・財務","予算管理","予算編成","Anaplan","SaaS","Anaplan","米国","グローバル標準","グローバル CFO","IT部 中村","2024-01-01","","稼働中",""],
+  [40,"営業・CRM","顧客管理","顧客情報管理","Salesforce Sales Cloud","SaaS","Salesforce","米国","グローバル標準","営業本部長 渡辺","IT部 小林","2017-06-01","","稼働中",""],
+  [41,"営業・CRM","顧客管理","商談管理","Salesforce Sales Cloud","SaaS","Salesforce","米国","グローバル標準","営業本部長 渡辺","IT部 小林","2017-06-01","","稼働中",""],
+  [42,"営業・CRM","顧客管理","問い合わせ管理","Salesforce Service Cloud","SaaS","Salesforce","米国","グローバル標準","営業本部長 渡辺","IT部 小林","2019-01-01","","稼働中",""],
+  [43,"営業・CRM","マーケティング","キャンペーン管理","Salesforce Marketing Cloud","SaaS","Salesforce","米国","グローバル標準","マーケ部長 加藤","IT部 小林","2022-04-01","","稼働中",""],
+  [44,"営業・CRM","マーケティング","マーケ分析","Google Analytics 4","SaaS","Google","米国","グローバル標準","マーケ部長 加藤","IT部 小林","2023-01-01","","稼働中",""],
+  [45,"営業・CRM","顧客管理","顧客情報管理","Microsoft Dynamics 365","SaaS","Microsoft","米国","ローカル","グループG社","IT部 小林","2020-07-01","","要見直し","grp"],
+  [46,"営業・CRM","顧客管理","顧客情報管理","HubSpot CRM","SaaS","HubSpot","米国","ローカル","グループH社","IT部 小林","2021-04-01","","稼働中","grp"],
+  [47,"営業・CRM","顧客管理","顧客情報管理","自社CRM","オンプレ","自社開発","日本","レガシー（移行対象）","グループI社","IT部 小林","2007-04-01","2026-12-31","廃止予定",""],
+  [50,"サプライチェーン","調達管理","購買発注","SAP Ariba","SaaS","SAP","ドイツ","グローバル標準","SCM部長 山口","IT部 中村","2022-07-01","","稼働中",""],
+  [51,"サプライチェーン","調達管理","サプライヤー管理","SAP Ariba","SaaS","SAP","ドイツ","グローバル標準","SCM部長 山口","IT部 中村","2022-07-01","","稼働中",""],
+  [52,"サプライチェーン","在庫管理","在庫最適化","SAP ECC 6.0 MM","オンプレ","SAP","ドイツ","レガシー（移行対象）","SCM部長 山口","IT部 中村","2005-04-01","2027-12-31","保守切れ予定",""],
+  [53,"サプライチェーン","在庫管理","倉庫管理","Oracle WMS","オンプレ","Oracle","米国","レガシー（移行対象）","SCM部長 山口","IT部 中村","2010-04-01","2026-12-31","廃止予定",""],
+  [54,"サプライチェーン","在庫管理","倉庫管理","自社WMS","オンプレ","自社開発","日本","レガシー（移行対象）","日本物流部","IT部 中村","2006-04-01","2026-12-31","廃止予定",""],
+  [55,"サプライチェーン","需要予測","需要計画","o9 Solutions","SaaS","o9 Solutions","米国","グローバル標準","SCM部長 山口","IT部 中村","2023-10-01","","稼働中",""],
+  [56,"サプライチェーン","物流管理","輸送管理","SAP TM","SaaS","SAP","ドイツ","グローバル標準","SCM部長 山口","IT部 中村","2023-04-01","","稼働中",""],
+  [60,"製造・設計","製品設計","CAD/3Dモデリング","Siemens NX","オンプレ","Siemens","ドイツ","ローカル","開発部長 佐々木","IT部 山田","2015-04-01","","稼働中","cst"],
+  [61,"製造・設計","製品設計","PLM","Teamcenter","オンプレ","Siemens","ドイツ","グローバル標準","開発部長 佐々木","IT部 山田","2018-04-01","","稼働中",""],
+  [62,"製造・設計","製品設計","図面管理","Teamcenter","オンプレ","Siemens","ドイツ","グローバル標準","開発部長 佐々木","IT部 山田","2018-04-01","","稼働中",""],
+  [63,"製造・設計","生産管理","生産計画","SAP PP (ECC)","オンプレ","SAP","ドイツ","レガシー（移行対象）","製造部長 今村","IT部 中村","2005-04-01","2027-12-31","保守切れ予定",""],
+  [64,"製造・設計","品質管理","品質トレーサビリティ","SAP QM (ECC)","オンプレ","SAP","ドイツ","レガシー（移行対象）","製造部長 今村","IT部 中村","2005-04-01","2027-12-31","保守切れ予定",""],
+  [65,"製造・設計","品質管理","不具合管理","Salesforce Field Service","SaaS","Salesforce","米国","グローバル標準","製造部長 今村","IT部 小林","2023-04-01","","稼働中",""],
+  [70,"総務・施設","施設管理","入退室管理","ASSA ABLOY","オンプレ","ASSA ABLOY","スウェーデン","ローカル","総務部長 高橋","IT部 佐藤","2014-04-01","2026-12-31","廃止予定","law"],
+  [71,"総務・施設","施設管理","会議室予約","Microsoft Bookings","SaaS","Microsoft","米国","グローバル標準","総務部長 高橋","IT部 木村","2022-01-01","","稼働中",""],
+  [72,"総務・施設","文書管理","契約書管理","Adobe Acrobat Sign","SaaS","Adobe","米国","グローバル標準","総務部長 高橋","IT部 木村","2022-10-01","","稼働中",""],
+  [73,"総務・施設","文書管理","社内規程管理","旧イントラ文書管理","オンプレ","自社開発","日本","レガシー（移行対象）","総務部長 高橋","IT部 佐藤","2003-04-01","2026-06-30","廃止予定",""],
+  [74,"総務・施設","文書管理","社内規程管理","Confluence","SaaS","Atlassian","オーストラリア","ローカル","グループP社","IT部 木村","2020-04-01","","稼働中","grp"],
+  [80,"IT基盤","ネットワーク管理","ネットワーク監視","SolarWinds NPM","オンプレ","SolarWinds","米国","ローカル","IT基盤部 松本","IT部 松本","2012-04-01","2026-12-31","廃止予定",""],
+  [81,"IT基盤","ネットワーク管理","SD-WAN","Cisco Meraki","SaaS","Cisco","米国","グローバル標準","IT基盤部 松本","IT部 松本","2023-04-01","","稼働中",""],
+  [82,"IT基盤","ネットワーク管理","ネットワーク監視","PRTG Network Monitor","オンプレ","Paessler","ドイツ","ローカル","EMEA IT基盤","IT部 松本","2014-04-01","2027-03-31","廃止予定",""],
+  [83,"IT基盤","セキュリティ管理","エンドポイント保護","Microsoft Defender","SaaS","Microsoft","米国","グローバル標準","CISO 井上","IT部 木村","2021-07-01","","稼働中",""],
+  [84,"IT基盤","セキュリティ管理","ID・アクセス管理","Microsoft Entra ID","SaaS","Microsoft","米国","グローバル標準","CISO 井上","IT部 木村","2020-04-01","","稼働中",""],
+  [85,"IT基盤","セキュリティ管理","SIEM・脅威検知","Microsoft Sentinel","SaaS","Microsoft","米国","グローバル標準","CISO 井上","IT部 木村","2022-07-01","","稼働中",""],
+  [86,"IT基盤","セキュリティ管理","エンドポイント保護","Symantec Endpoint","オンプレ","Broadcom","米国","レガシー（移行対象）","APAC IT","IT部 木村","2010-04-01","2026-03-31","廃止予定",""],
+  [87,"IT基盤","サービスデスク","インシデント管理","ServiceNow ITSM","SaaS","ServiceNow","米国","グローバル標準","IT部長 清水","IT部 清水","2020-10-01","","稼働中",""],
+  [88,"IT基盤","サービスデスク","変更管理","ServiceNow ITSM","SaaS","ServiceNow","米国","グローバル標準","IT部長 清水","IT部 清水","2020-10-01","","稼働中",""],
+  [89,"IT基盤","サービスデスク","資産管理","ServiceNow ITAM","SaaS","ServiceNow","米国","グローバル標準","IT部長 清水","IT部 清水","2021-04-01","","稼働中",""],
+  [90,"IT基盤","サービスデスク","インシデント管理","Jira Service Management","SaaS","Atlassian","オーストラリア","ローカル","APAC IT","IT部 松本","2019-04-01","","要見直し","grp"],
+  [91,"IT基盤","サービスデスク","インシデント管理","Zendesk","SaaS","Zendesk","米国","ローカル","グループJ社","IT部 松本","2018-07-01","","要見直し","grp"],
+  [92,"IT基盤","デバイス管理","PC管理・MDM","Microsoft Intune","SaaS","Microsoft","米国","グローバル標準","IT基盤部 松本","IT部 木村","2021-10-01","","稼働中",""],
+  [93,"IT基盤","デバイス管理","モバイル管理","VMware Workspace ONE","SaaS","Broadcom","米国","グローバル標準","IT基盤部 松本","IT部 木村","2020-04-01","","要見直し",""],
+  [94,"IT基盤","デバイス管理","PC管理・MDM","Jamf Pro","SaaS","Jamf","米国","ローカル","グループK社","IT部 木村","2021-04-01","","稼働中","grp"],
+  [95,"IT基盤","データセンター","クラウド基盤","Microsoft Azure","SaaS","Microsoft","米国","グローバル標準","IT基盤部 松本","IT部 松本","2020-04-01","","稼働中",""],
+  [96,"IT基盤","データセンター","サーバー仮想化","VMware vSphere","オンプレ","Broadcom","米国","ローカル","IT基盤部 松本","IT部 松本","2013-04-01","2027-03-31","廃止予定",""],
+  [97,"IT基盤","データセンター","バックアップ","Veeam Backup","オンプレ","Veeam","米国","ローカル","IT基盤部 松本","IT部 松本","2018-04-01","","稼働中",""],
+  [100,"コラボレーション","コミュニケーション","メール・チャット","Microsoft 365","SaaS","Microsoft","米国","グローバル標準","IT部長 清水","IT部 木村","2019-04-01","","稼働中",""],
+  [101,"コラボレーション","コミュニケーション","ビデオ会議","Microsoft Teams","SaaS","Microsoft","米国","グローバル標準","IT部長 清水","IT部 木村","2020-04-01","","稼働中",""],
+  [102,"コラボレーション","コンテンツ管理","ファイル共有","Microsoft SharePoint","SaaS","Microsoft","米国","グローバル標準","IT部長 清水","IT部 木村","2019-04-01","","稼働中",""],
+  [103,"コラボレーション","コンテンツ管理","社内ポータル","Microsoft Viva Connections","SaaS","Microsoft","米国","グローバル標準","広報部 森","IT部 木村","2023-04-01","","稼働中",""],
+  [104,"コラボレーション","プロジェクト管理","タスク管理","Microsoft Project","SaaS","Microsoft","米国","グローバル標準","PMO 西田","IT部 木村","2021-04-01","","稼働中",""],
+  [105,"コラボレーション","コミュニケーション","メール・チャット","Google Workspace","SaaS","Google","米国","ローカル","グループM社","IT部 木村","2018-04-01","","要見直し","grp"],
+  [106,"コラボレーション","コミュニケーション","ビデオ会議","Zoom","SaaS","Zoom","米国","ローカル","グループN社","IT部 木村","2020-04-01","","要見直し","grp"],
+  [107,"コラボレーション","コンテンツ管理","ファイル共有","Box","SaaS","Box","米国","ローカル","APAC法人","IT部 木村","2019-04-01","","要見直し","grp"],
+  [108,"コラボレーション","コンテンツ管理","ファイル共有","Dropbox Business","SaaS","Dropbox","米国","ローカル","グループO社","IT部 木村","2017-04-01","","廃止予定","grp"],
+  [110,"データ・AI基盤","データ連携","ETL・データ統合","Azure Data Factory","SaaS","Microsoft","米国","グローバル標準","CDO 藤田","IT部 山田","2022-04-01","","稼働中",""],
+  [111,"データ・AI基盤","データ連携","APIゲートウェイ","MuleSoft Anypoint","SaaS","Salesforce","米国","グローバル標準","CDO 藤田","IT部 山田","2022-10-01","","稼働中",""],
+  [112,"データ・AI基盤","データ連携","レガシーEAI","HULFT","オンプレ","セゾンテクノロジー","日本","レガシー（移行対象）","CDO 藤田","IT部 山田","2008-04-01","2027-03-31","廃止予定",""],
+  [113,"データ・AI基盤","データ連携","ETL・データ統合","Informatica PowerCenter","オンプレ","Informatica","米国","レガシー（移行対象）","グローバルIT","IT部 山田","2009-04-01","2027-03-31","保守切れ予定",""],
+  [114,"データ・AI基盤","分析・BI","BIレポーティング","Power BI","SaaS","Microsoft","米国","グローバル標準","CDO 藤田","IT部 山田","2021-04-01","","稼働中",""],
+  [115,"データ・AI基盤","分析・BI","データウェアハウス","Snowflake","SaaS","Snowflake","米国","グローバル標準","CDO 藤田","IT部 山田","2023-04-01","","稼働中",""],
+  [116,"データ・AI基盤","分析・BI","BIレポーティング","Tableau","SaaS","Salesforce","米国","ローカル","APAC データ部","IT部 山田","2018-04-01","","要見直し","grp"],
+  [117,"データ・AI基盤","AI・自動化","AIエージェント基盤","Microsoft Copilot Studio","SaaS","Microsoft","米国","グローバル標準","CDO 藤田","IT部 山田","2024-04-01","","稼働中",""],
+  [118,"データ・AI基盤","AI・自動化","RPA","UiPath","SaaS","UiPath","米国","グローバル標準","CDO 藤田","IT部 山田","2021-07-01","","稼働中",""],
+  [120,"BPM・プロセス管理","プロセス設計","プロセスマイニング","Signavio Process Manager","SaaS","SAP","ドイツ","グローバル標準","IT部長 清水","IT部 山田","2023-07-01","","稼働中",""],
+  [121,"BPM・プロセス管理","プロセス設計","BPM可視化","Signavio Process Intelligence","SaaS","SAP","ドイツ","グローバル標準","IT部長 清水","IT部 山田","2023-07-01","","稼働中",""],
+  [122,"BPM・プロセス管理","ワークフロー管理","稟議・承認","ServiceNow WSD","SaaS","ServiceNow","米国","グローバル標準","IT部長 清水","IT部 清水","2022-04-01","","稼働中",""],
+  [123,"BPM・プロセス管理","ワークフロー管理","旧稟議システム","自社開発ワークフロー","オンプレ","自社開発","日本","レガシー（移行対象）","IT部長 清水","IT部 清水","2004-04-01","2026-12-31","廃止予定",""],
+  [130,"ワークプレイス","オフィス環境","デジタルサイネージ","Appspace","SaaS","Appspace","米国","グローバル標準","総務部長 高橋","IT部 木村","2023-01-01","","稼働中",""],
+  [131,"ワークプレイス","オフィス環境","座席・スペース管理","Condeco","SaaS","Eptura","米国","グローバル標準","総務部長 高橋","IT部 木村","2023-04-01","","稼働中",""],
+  [132,"ワークプレイス","従業員体験","従業員サーベイ","Microsoft Viva Insights","SaaS","Microsoft","米国","グローバル標準","人事部長 田中","IT部 木村","2023-07-01","","稼働中",""],
+  [133,"ワークプレイス","従業員体験","福利厚生管理","SmartHR","SaaS","SmartHR","日本","ローカル","人事部長 田中","IT部 佐藤","2022-04-01","","稼働中","law"]
+];
+
+// ═══════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════
+var BIZ = {
+  "人事管理":"G","給与管理":"L","就業管理":"L",
+  "会計管理":"G","予算管理":"G","経費管理":"G","連結決算":"G",
+  "顧客管理":"G","マーケティング":"G",
+  "調達管理":"G","在庫管理":"G","需要予測":"G","物流管理":"G",
+  "製品設計":"G","生産管理":"G","品質管理":"G",
+  "施設管理":"L","文書管理":"L",
+  "ネットワーク管理":"L","セキュリティ管理":"G","サービスデスク":"G",
+  "デバイス管理":"G","データセンター":"L",
+  "コミュニケーション":"G","コンテンツ管理":"G","プロジェクト管理":"G",
+  "データ連携":"G","分析・BI":"G","AI・自動化":"G",
+  "プロセス設計":"G","ワークフロー管理":"G",
+  "オフィス環境":"L","従業員体験":"G"
+};
+var DOMS = ["人事","経理・財務","営業・CRM","サプライチェーン","製造・設計","総務・施設","IT基盤","コラボレーション","データ・AI基盤","BPM・プロセス管理","ワークプレイス"];
+var DOM_CSS = {"人事":"dc-hr","経理・財務":"dc-fin","営業・CRM":"dc-crm","サプライチェーン":"dc-sc","製造・設計":"dc-mfg","総務・施設":"dc-ga","IT基盤":"dc-it","コラボレーション":"dc-collab","データ・AI基盤":"dc-data","BPM・プロセス管理":"dc-bpm","ワークプレイス":"dc-wp"};
+var DOM_COL = {"人事":"#4f8ef7","経理・財務":"#ffb020","営業・CRM":"#22d3a0","サプライチェーン":"#e879f9","製造・設計":"#34d399","総務・施設":"#fb923c","IT基盤":"#b47ff7","コラボレーション":"#60a5fa","データ・AI基盤":"#a78bfa","BPM・プロセス管理":"#f472b6","ワークプレイス":"#4ade80"};
+var GL_KEYS = ["グローバル標準","ローカル","レガシー（移行対象）","要見直し"];
+var GL_CLS  = {"グローバル標準":"p-g","ローカル":"p-l","レガシー（移行対象）":"p-leg","要見直し":"p-rev"};
+var ST_CLS  = {"稼働中":"p-ok","廃止予定":"p-ng","保守切れ予定":"p-ng","要見直し":"p-warn"};
+var GL_COL  = {"グローバル標準":"var(--g)","ローカル":"var(--l)","レガシー（移行対象）":"var(--leg)","要見直し":"var(--rev)"};
+var GL_TCLS = {"グローバル標準":"st-g","ローカル":"st-l","レガシー（移行対象）":"st-leg","要見直し":"st-rev"};
+var LR_INFO = {
+  "law": {cls:"law", icon:"⚖", label:"法規制・労務法", act:"グローバルシステムのローカライズ対応モジュール確認が必要。長期的にはG標準化を目指す。"},
+  "grp": {cls:"grp", icon:"🏢", label:"グループ会社独自", act:"M&A後の統合ロードマップを策定。段階的にG標準システムへ移行。"},
+  "cst": {cls:"cst", icon:"🔧", label:"業務固有要件", act:"要件の汎用化が可能か検討。困難な場合はG標準の例外として管理。"},
+  "":    {cls:"oth", icon:"📌", label:"未分類", act:"ローカル理由を調査・分類し対処方針を決定。"}
+};
+
+// ═══════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════
+function uniq(arr){ var s={}; arr.forEach(function(x){s[x]=1;}); return Object.keys(s); }
+function getSys(rows,gl){ return uniq(rows.filter(function(r){return r[8]===gl;}).map(function(r){return r[4];})); }
+function buildCapMap(rows){
+  var m={};
+  rows.forEach(function(r){
+    if(!m[r[2]])m[r[2]]={};
+    if(!m[r[2]][r[3]])m[r[2]][r[3]]=[];
+    m[r[2]][r[3]].push(r);
+  });
+  return m;
+}
+function verdict(capL,gl,lo,leg){
+  var biz=BIZ[capL]||"G";
+  var hG=gl.length>0,hL=lo.length>0,hLeg=leg.length>0;
+  if(!hG&&!hL&&!hLeg) return {cls:"gap",v:"vd-gap",lbl:"✗ ギャップ",msg:"システム未整備"};
+  if(biz==="G"){
+    if(hG)   return {cls:"ok",  v:"vd-ok",  lbl:"✓ 適合",  msg:"G業務にGシステムあり"};
+    if(hLeg) return {cls:"info",v:"vd-info",lbl:"→ 移行中",msg:"レガシーのみ。G化が必要"};
+    return         {cls:"gap", v:"vd-gap", lbl:"✗ ギャップ",msg:"G業務にGシステムなし"};
+  } else {
+    if(hL&&!hG) return {cls:"ok",  v:"vd-ok",  lbl:"✓ 適合", msg:"L業務にLシステムのみ"};
+    if(hG)      return {cls:"warn",v:"vd-warn",lbl:"△ 過剰",  msg:"L業務にGシステム混在"};
+    if(hLeg)    return {cls:"info",v:"vd-info",lbl:"→ 移行中",msg:"レガシーのみ"};
+    return           {cls:"ok",  v:"vd-ok",  lbl:"✓ 適合", msg:"L業務 — Lシステム"};
+  }
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+// ═══════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════
+function openM(title,sub,rows,extra){
+  document.getElementById("m-ttl").textContent=title;
+  document.getElementById("m-sub").textContent=sub||"";
+  document.getElementById("m-kpis").innerHTML=extra||"";
+  document.getElementById("m-body").innerHTML=rows.map(function(r){
+    return "<tr><td style='font-weight:600'>"+esc(r[4])+"</td><td>"+esc(r[2])+"</td><td>"+esc(r[3])+"</td>"+
+      "<td><span class='pill "+GL_CLS[r[8]]+"'>"+esc(r[8])+"</span></td>"+
+      "<td><span class='pill "+(ST_CLS[r[13]]||"")+"'>"+esc(r[13])+"</span></td>"+
+      "<td style='font-size:9px;color:"+(r[12]?"var(--gap)":"var(--muted)")+"'>"+esc(r[12]||"—")+"</td>"+
+      "<td style='font-size:9px;color:var(--muted)'>"+esc(r[9])+"</td></tr>";
+  }).join("");
+  document.getElementById("modal").classList.add("on");
+}
+function closeM(){ document.getElementById("modal").classList.remove("on"); }
+document.getElementById("modal").addEventListener("click",function(e){ if(e.target===e.currentTarget)closeM(); });
+
+// ═══════════════════════════════════════
+//  PAGE / TAB SWITCHES
+// ═══════════════════════════════════════
+var _ovInited=false, _cvInited=false, _mxDom=DOMS[0], _mxView="m", _lstFilter="ALL";
+var _covDom="ALL", _tlFilter="ALL", _lrFilter="ALL";
+var _barChart=null, _chordChart=null;
+
+function showMain(id,btn){
+  document.querySelectorAll(".pg").forEach(function(el){el.classList.remove("on");});
+  document.querySelectorAll(".ntab").forEach(function(b){b.classList.remove("on");});
+  document.getElementById("pg-"+id).classList.add("on");
+  btn.classList.add("on");
+  if(id==="ov"&&!_ovInited){ initOverview(); _ovInited=true; }
+  if(id==="mx"){ initDomTabs(); renderMatrix(_mxDom); }
+  if(id==="cv"&&!_cvInited){ initCovFilters(); renderCov(); renderTl(); renderLr(); renderChord(); _cvInited=true; }
+}
+function showSub(id,btn){
+  document.querySelectorAll(".spg").forEach(function(el){el.classList.remove("on");});
+  document.querySelectorAll(".stab").forEach(function(b){b.classList.remove("on");});
+  document.getElementById("sp-"+id).classList.add("on");
+  btn.classList.add("on");
+  if(id==="ce") renderSle();
+}
+function showMxView(v,btn){
+  _mxView=v;
+  document.getElementById("sv-m").style.display=v==="m"?"block":"none";
+  document.getElementById("sv-l").style.display=v==="l"?"block":"none";
+  document.querySelectorAll(".vsw").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  if(v==="l") renderList();
+}
+function goMatrix(dom){
+  if(dom) _mxDom=dom;
+  document.querySelectorAll(".ntab").forEach(function(b){b.classList.remove("on");});
+  document.querySelectorAll(".ntab")[1].classList.add("on");
+  document.querySelectorAll(".pg").forEach(function(el){el.classList.remove("on");});
+  document.getElementById("pg-mx").classList.add("on");
+  initDomTabs();
+  renderMatrix(_mxDom);
+}
+
+// ═══════════════════════════════════════
+//  OVERVIEW
+// ═══════════════════════════════════════
+function initOverview(){
+  var allSys=uniq(D.map(function(r){return r[4];}));
+  var gSys=uniq(D.filter(function(r){return r[8]==="グローバル標準";}).map(function(r){return r[4];}));
+  var lSys=uniq(D.filter(function(r){return r[8]==="ローカル";}).map(function(r){return r[4];}));
+  var legSys=uniq(D.filter(function(r){return r[8]==="レガシー（移行対象）";}).map(function(r){return r[4];}));
+  var rSys=uniq(D.filter(function(r){return r[8]==="要見直し";}).map(function(r){return r[4];}));
+  document.getElementById("kv-t").textContent=allSys.length;
+  document.getElementById("kv-g").textContent=gSys.length;
+  document.getElementById("kv-l").textContent=lSys.length;
+  document.getElementById("kv-leg").textContent=legSys.length;
+  document.getElementById("kv-r").textContent=rSys.length;
+
+  // gap strip
+  var gaps=[];
+  DOMS.forEach(function(dom){
+    var capMap=buildCapMap(D.filter(function(r){return r[1]===dom;}));
+    Object.keys(capMap).forEach(function(capL){
+      Object.keys(capMap[capL]).forEach(function(capS){
+        var rows=capMap[capL][capS];
+        var gl=getSys(rows,"グローバル標準"),lo=getSys(rows,"ローカル"),leg=getSys(rows,"レガシー（移行対象）");
+        var vd=verdict(capL,gl,lo,leg);
+        if(vd.cls==="gap") gaps.push({dom:dom,capL:capL,capS:capS});
+      });
+    });
+  });
+  if(gaps.length>0){
+    document.getElementById("gapBar").style.display="block";
+    document.getElementById("gapChips").innerHTML=gaps.map(function(g){
+      return "<span class='gc' onclick='goMatrix(\""+esc(g.dom)+"\")'><strong>"+esc(g.dom)+"</strong> "+esc(g.capL)+" › "+esc(g.capS)+"</span>";
+    }).join("");
+  }
+
+  // charts — defer to ensure canvas is rendered
+  var glData=[gSys.length,lSys.length,legSys.length,rSys.length];
+  setTimeout(function(){
+  if(typeof Chart==="undefined") return;
+  new Chart(document.getElementById("cht-gl"),{type:"doughnut",data:{
+    labels:["グローバル標準","ローカル","レガシー","要見直し"],
+    datasets:[{data:glData,backgroundColor:["#4f8ef7","#f7c44f","#ff4d5e","#b47ff7"],borderWidth:0,hoverOffset:5}]
+  },options:{plugins:{legend:{labels:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9}}}},cutout:"60%"}});
+
+  var domCounts={}; D.forEach(function(r){if(!domCounts[r[1]])domCounts[r[1]]={}; domCounts[r[1]][r[4]]=1;});
+  var dLabels=DOMS.filter(function(d){return domCounts[d];});
+  new Chart(document.getElementById("cht-dom"),{type:"bar",data:{
+    labels:dLabels.map(function(d){return d.length>6?d.slice(0,6)+"…":d;}),
+    datasets:[{data:dLabels.map(function(d){return Object.keys(domCounts[d]).length;}),backgroundColor:dLabels.map(function(d){return DOM_COL[d]||"#4f8ef7";}),borderRadius:4,borderWidth:0}]
+  },options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:8}},grid:{color:"#1e2640"}},y:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9},stepSize:2},grid:{color:"#1e2640"}}}}});
+
+  var ctMap={}; D.forEach(function(r){if(!ctMap[r[7]])ctMap[r[7]]={}; ctMap[r[7]][r[4]]=1;});
+  var ctKeys=Object.keys(ctMap).sort(function(a,b){return Object.keys(ctMap[b]).length-Object.keys(ctMap[a]).length;});
+  new Chart(document.getElementById("cht-cty"),{type:"bar",data:{
+    labels:ctKeys,
+    datasets:[{data:ctKeys.map(function(k){return Object.keys(ctMap[k]).length;}),backgroundColor:["#4f8ef7","#ff4d5e","#22d3a0","#b47ff7","#f7c44f"],borderRadius:4,borderWidth:0}]
+  },options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9}},grid:{color:"#1e2640"}},y:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9},stepSize:2},grid:{color:"#1e2640"}}}}});
+  },0); // end setTimeout
+
+  // domain cards
+  var grid=document.getElementById("domGrid");
+  grid.innerHTML=DOMS.map(function(dom){
+    var rows=D.filter(function(r){return r[1]===dom;});
+    if(!rows.length) return "";
+    var g=uniq(rows.filter(function(r){return r[8]==="グローバル標準";}).map(function(r){return r[4];})).length;
+    var l=uniq(rows.filter(function(r){return r[8]==="ローカル";}).map(function(r){return r[4];})).length;
+    var le=uniq(rows.filter(function(r){return r[8]==="レガシー（移行対象）";}).map(function(r){return r[4];})).length;
+    var rv=uniq(rows.filter(function(r){return r[8]==="要見直し";}).map(function(r){return r[4];})).length;
+    var col=DOM_COL[dom]||"#4f8ef7";
+    return "<div class='dc' style='border-top:3px solid "+col+"' onclick='goMatrix(\""+esc(dom)+"\")'>"+
+      "<div class='dc-name'>"+esc(dom)+"</div>"+
+      "<div class='dc-stats'>"+
+        (g?"<span class='pill p-g'>G×"+g+"</span>":"")+
+        (l?"<span class='pill p-l'>L×"+l+"</span>":"")+
+        (le?"<span class='pill p-leg'>Leg×"+le+"</span>":"")+
+        (rv?"<span class='pill p-rev'>Rev×"+rv+"</span>":"")+
+      "</div>"+
+      "<div class='dc-hint'>▶ 診断を見る</div></div>";
+  }).join("");
+}
+
+// ═══════════════════════════════════════
+//  MATRIX
+// ═══════════════════════════════════════
+function initDomTabs(){
+  var el=document.getElementById("dtabs");
+  el.innerHTML=DOMS.map(function(d){
+    return "<button class='dtab"+(d===_mxDom?" on":"")+"' onclick='selectDom(\""+esc(d)+"\",this)'>"+esc(d)+"</button>";
+  }).join("");
+}
+function selectDom(dom,btn){
+  _mxDom=dom;
+  document.querySelectorAll(".dtab").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  renderMatrix(dom);
+  if(_mxView==="l") renderList();
+}
+function renderMatrix(dom){
+  document.getElementById("mx-ttl").textContent=dom+" — ケイパビリティ × システム区分マトリクス";
+  document.getElementById("gap-ttl").textContent=dom+" — 検出ギャップ";
+  var rows=D.filter(function(r){return r[1]===dom;});
+  var capMap=buildCapMap(rows);
+  var gaps=[], cnt={g:0,l:0,leg:0,r:0};
+  var tbody="";
+  Object.keys(capMap).forEach(function(capL){
+    var biz=BIZ[capL]||"G";
+    var capSmalls=Object.keys(capMap[capL]);
+    capSmalls.forEach(function(capS,si){
+      var cr=capMap[capL][capS];
+      var gl=getSys(cr,"グローバル標準"),lo=getSys(cr,"ローカル"),leg=getSys(cr,"レガシー（移行対象）"),rv=getSys(cr,"要見直し");
+      if(si===0){cnt.g+=gl.length;cnt.l+=lo.length;cnt.leg+=leg.length;cnt.r+=rv.length;}
+      var vd=verdict(capL,gl,lo,leg);
+      if(vd.cls!=="ok") gaps.push({cap:capL+" › "+capS,msg:vd.msg});
+      var mc = function(arr,glKey,col){
+        if(!arr.length) return "<td class='cc zero'><span class='cc-n z'>—</span></td>";
+        var safeCapL=capL.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+        var safeCapS=capS.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+        var safeGlKey=glKey.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+        var safeDom=dom.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+        return "<td class='cc' onclick=\"drillCell('"+safeCapL+"','"+safeCapS+"','"+safeGlKey+"','"+safeDom+"')\">"+
+          "<span class='cc-n' style='color:"+col+"'>"+arr.length+"</span>"+
+          "<span class='cc-h'>▶ 詳細</span></td>";
+      }
+      tbody+="<tr><td>"+
+        (si===0?"<span class='biz "+(biz==="G"?"biz-g":"biz-l")+"'>"+(biz==="G"?"グローバル":"ローカル")+"業務</span>":"")+
+        "<div class='cap-l'>"+(si===0?esc(capL):"")+"</div>"+
+        "<div class='cap-s'>› "+esc(capS)+"</div></td>"+
+        mc(gl,"グローバル標準","var(--g)")+
+        mc(lo,"ローカル","var(--l)")+
+        mc(leg,"レガシー（移行対象）","var(--leg)")+
+        mc(rv,"要見直し","var(--rev)")+
+        "<td><span class='vd "+vd.v+"'>"+vd.lbl+"</span></td></tr>";
+    });
+  });
+  document.getElementById("mxBody").innerHTML=tbody;
+  document.getElementById("mxBody").onclick = function(e){
+    var td = e.target; while(td && td.tagName!=="TD") td=td.parentElement;
+    if(td && td.dataset.capL){
+      drillCell(td.dataset.capL, td.dataset.capS, td.dataset.gl, td.dataset.dom);
+    }
+  };
+  document.getElementById("gapList").innerHTML=gaps.length===0
+    ?"<div style='color:var(--ok);font-size:11px;font-weight:600'>✓ ギャップなし</div>"
+    :gaps.map(function(g){return "<div class='gi'><div class='gi-cap'>"+esc(g.cap)+"</div><div class='gi-msg'>"+esc(g.msg)+"</div></div>";}).join("");
+  if(_barChart){ _barChart.destroy(); _barChart=null; }
+  setTimeout(function(){
+  if(typeof Chart==="undefined") return;
+  _barChart=new Chart(document.getElementById("cht-bar"),{type:"bar",data:{
+    labels:["グローバル","ローカル","レガシー","要見直し"],
+    datasets:[{data:[cnt.g,cnt.l,cnt.leg,cnt.r],backgroundColor:["#4f8ef7","#f7c44f","#ff4d5e","#b47ff7"],borderRadius:4,borderWidth:0}]
+  },options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9}},grid:{color:"#1e2640"}},y:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9},stepSize:1},grid:{color:"#1e2640"}}}}});
+  },0);
+}
+function drillCell(capL,capS,glKey,dom){
+  var rows=D.filter(function(r){return r[1]===dom&&r[2]===capL&&r[3]===capS&&r[8]===glKey;});
+  openM(capL+" › "+capS,"区分: "+glKey+" — "+rows.length+"件",rows,"");
+}
+
+// ═══════════════════════════════════════
+//  LIST
+// ═══════════════════════════════════════
+function filterLst(f,btn){
+  _lstFilter=f;
+  document.querySelectorAll("#sv-l .fb").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  renderList();
+}
+function renderList(){
+  document.getElementById("lst-ttl").textContent=_mxDom+" — システム一覧";
+  var rows=D.filter(function(r){return r[1]===_mxDom;});
+  if(_lstFilter!=="ALL") rows=rows.filter(function(r){return r[8]===_lstFilter;});
+  document.getElementById("lstBody").innerHTML=rows.map(function(r){
+    return "<tr><td style='color:var(--muted);font-family:JetBrains Mono,monospace;font-size:9px'>"+r[0]+"</td>"+
+      "<td>"+esc(r[1])+"</td><td>"+esc(r[2])+"</td><td>"+esc(r[3])+"</td>"+
+      "<td style='font-weight:600'>"+esc(r[4])+"</td>"+
+      "<td style='color:var(--muted);font-size:9px'>"+esc(r[5])+"</td>"+
+      "<td style='color:var(--muted)'>"+esc(r[6])+"</td>"+
+      "<td style='color:var(--muted)'>"+esc(r[7])+"</td>"+
+      "<td><span class='pill "+GL_CLS[r[8]]+"'>"+esc(r[8])+"</span></td>"+
+      "<td style='font-size:9px;color:var(--muted)'>"+esc(r[9])+"</td>"+
+      "<td style='font-size:9px;color:var(--muted)'>"+esc(r[10])+"</td>"+
+      "<td style='font-size:9px;color:var(--muted);font-family:JetBrains Mono,monospace'>"+esc(r[11])+"</td>"+
+      "<td style='font-size:9px;font-family:JetBrains Mono,monospace;color:"+(r[12]?"var(--gap)":"var(--muted)")+"'>"+esc(r[12]||"—")+"</td>"+
+      "<td><span class='pill "+(ST_CLS[r[13]]||"")+"'>"+esc(r[13])+"</span></td></tr>";
+  }).join("");
+}
+
+// ═══════════════════════════════════════
+//  COVERAGE A — カバレッジマップ
+// ═══════════════════════════════════════
+function initCovFilters(){
+  var fb=document.getElementById("covFbar");
+  DOMS.forEach(function(d){
+    var btn=document.createElement("button");
+    btn.className="fb"; btn.textContent=d;
+    btn.onclick=(function(dd){ return function(){ setCovDom(dd,btn); }; })(d);
+    fb.appendChild(btn);
+  });
+}
+function setCovDom(dom,btn){
+  _covDom=dom;
+  document.querySelectorAll("#covFbar .fb").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  renderCov();
+}
+// sys total caps cache
+var _sysCaps={};
+function getSysCaps(sysName){
+  if(!_sysCaps[sysName]){
+    _sysCaps[sysName]=uniq(D.filter(function(r){return r[4]===sysName;}).map(function(r){return r[2]+"__"+r[3];})).length;
+  }
+  return _sysCaps[sysName];
+}
+function renderCov(){
+  var domList=_covDom==="ALL"?DOMS:[_covDom];
+  var rows=_covDom==="ALL"?D:D.filter(function(r){return r[1]===_covDom;});
+  var html="";
+  domList.forEach(function(dom){
+    var dr=rows.filter(function(r){return r[1]===dom;});
+    if(!dr.length) return;
+    var capMap=buildCapMap(dr);
+    var capCount=0; Object.keys(capMap).forEach(function(cl){capCount+=Object.keys(capMap[cl]).length;});
+    html+="<div class='cov-block'>";
+    html+="<div class='cov-dhdr'><span class='cov-dname' style='color:"+(DOM_COL[dom]||"var(--g)")+"'>"+esc(dom)+"</span><span class='cov-dcnt'>"+capCount+" ケイパビリティ</span></div>";
+    Object.keys(capMap).forEach(function(capL){
+      var biz=BIZ[capL]||"G";
+      Object.keys(capMap[capL]).forEach(function(capS){
+        var cr=capMap[capL][capS];
+        var gl=getSys(cr,"グローバル標準"),lo=getSys(cr,"ローカル"),leg=getSys(cr,"レガシー（移行対象）"),rv=getSys(cr,"要見直し");
+        var vd=verdict(capL,gl,lo,leg);
+        var sysGroups={}; GL_KEYS.forEach(function(k){sysGroups[k]={};});
+        cr.forEach(function(r){ if(!sysGroups[r[8]][r[4]]) sysGroups[r[8]][r[4]]=[]; sysGroups[r[8]][r[4]].push(r); });
+        var tags="";
+        GL_KEYS.forEach(function(glKey){
+          Object.keys(sysGroups[glKey]).forEach(function(sysName){
+            var tc=getSysCaps(sysName);
+            var note=tc>1?" ×"+tc+"機能":"";
+            var safeN=sysName.replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;");
+            tags+="<div class='sys-tag "+GL_TCLS[glKey]+"' onclick=\"openSys('"+safeN+"')\">"+
+              "<span class='sdot'></span>"+esc(sysName)+(note?"<span class='sn'>"+note+"</span>":"")+
+              "</div>";
+          });
+        });
+        html+="<div class='cov-row'>"+
+          "<div class='cov-cap'>"+
+            "<span class='biz "+(biz==="G"?"biz-g":"biz-l")+"'>"+(biz==="G"?"G":"L")+"</span>"+
+            "<div class='cov-bl'>"+esc(capL)+"</div>"+
+            "<div class='cap-s'>› "+esc(capS)+"</div>"+
+          "</div>"+
+          "<div class='cov-sys'>"+tags+"</div>"+
+          "<div class='cov-vd'><span class='vd "+vd.v+"'>"+vd.lbl+"</span></div>"+
+          "</div>";
+      });
+    });
+    html+="</div>";
+  });
+  document.getElementById("covWrap").innerHTML=html;
+}
+function openSys(sysName){
+  var rows=D.filter(function(r){return r[4]===sysName;});
+  var tc=getSysCaps(sysName);
+  openM(sysName,"このシステムが担うケイパビリティ一覧 — "+tc+"機能カバー",rows,"");
+}
+
+// ═══════════════════════════════════════
+//  COVERAGE B — TIMELINE
+// ═══════════════════════════════════════
+function setTlF(f,btn){
+  _tlFilter=f;
+  document.querySelectorAll("#tlFbar .fb").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  renderTl();
+}
+function renderTl(){
+  var YEARS=[2019,2020,2021,2022,2023,2024,2025,2026,2027,2028,2029];
+  var NOW=2026;
+  var sysMap={};
+  D.forEach(function(r){
+    var s=r[4];
+    if(!sysMap[s]) sysMap[s]={name:s,gl:r[8],start:r[11],end:r[12],status:r[13],caps:[],dom:r[1]};
+    var cap=r[2]+" › "+r[3];
+    if(sysMap[s].caps.indexOf(cap)<0) sysMap[s].caps.push(cap);
+  });
+  var list=Object.keys(sysMap).map(function(k){return sysMap[k];});
+  if(_tlFilter==="leg") list=list.filter(function(s){return s.gl==="レガシー（移行対象）";});
+  if(_tlFilter==="ret") list=list.filter(function(s){return s.end&&s.end!=="";});
+  list.sort(function(a,b){
+    if(!a.end&&!b.end) return 0;
+    if(!a.end) return 1; if(!b.end) return -1;
+    return a.end.localeCompare(b.end);
+  });
+  var GL_BAR={"グローバル標準":"yb-g","ローカル":"yb-l","レガシー（移行対象）":"yb-leg","要見直し":"yb-rev"};
+  var html="<thead><tr><th class='scol'>システム名</th>";
+  YEARS.forEach(function(y){
+    html+="<th"+(y===NOW?" style='color:var(--ok)'":" ")+">"+y+(y===NOW?"<br>▼":""+"")+"</th>";
+  });
+  html+="</tr></thead><tbody>";
+  list.forEach(function(s){
+    var sy=s.start?parseInt(s.start.slice(0,4)):null;
+    var ey=s.end?parseInt(s.end.slice(0,4)):null;
+    var bc=GL_BAR[s.gl]||"yb-g";
+    var safeN=s.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    html+="<tr><td class='scol'><div class='sname'>"+esc(s.name)+"</div>"+
+      "<div class='scaps'>"+s.caps.slice(0,2).join(" / ")+(s.caps.length>2?" +"+(s.caps.length-2)+"機能":"")+"</div>"+
+      "<span class='pill "+GL_CLS[s.gl]+"' style='font-size:8px'>"+esc(s.gl)+"</span></td>";
+    YEARS.forEach(function(y){
+      var inR=sy&&y>=sy&&(!ey||y<=ey);
+      var ynow=y===NOW?" ynow":"";
+      html+="<td class='ycell"+ynow+"'>";
+      if(inR){
+        var lbl=y===sy?"開始":y===ey?"廃止":"";
+        html+="<div class='ybar "+bc+"' onclick=\"openSys('"+safeN+"')\" title='"+esc(s.name)+"'>"+lbl+"</div>";
+      }
+      html+="</td>";
+    });
+    html+="</tr>";
+  });
+  html+="</tbody>";
+  document.getElementById("tlTbl").innerHTML=html;
+}
+
+// ═══════════════════════════════════════
+//  COVERAGE C — LOCAL REASON
+// ═══════════════════════════════════════
+function setLrF(f,btn){
+  _lrFilter=f;
+  document.querySelectorAll("#lrFbar .fb").forEach(function(b){b.classList.remove("on");});
+  btn.classList.add("on");
+  renderLr();
+}
+function renderLr(){
+  var sysMap={};
+  D.filter(function(r){return r[8]==="ローカル";}).forEach(function(r){
+    var s=r[4];
+    if(!sysMap[s]) sysMap[s]={name:s,dom:r[1],status:r[13],end:r[12],reason:r[14]||"",caps:[],rows:[]};
+    var cap=r[2]+" › "+r[3];
+    if(sysMap[s].caps.indexOf(cap)<0) sysMap[s].caps.push(cap);
+    sysMap[s].rows.push(r);
+  });
+  var list=Object.keys(sysMap).map(function(k){return sysMap[k];});
+  if(_lrFilter!=="ALL") list=list.filter(function(s){return s.reason===_lrFilter;});
+  document.getElementById("lrGrid").innerHTML=list.map(function(s){
+    var ri=LR_INFO[s.reason]||LR_INFO[""];
+    var endNote=s.end?"<span style='color:var(--gap);font-size:9px;margin-left:6px'>廃止: "+esc(s.end)+"</span>":"";
+    var safeN=s.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    return "<div class='lr-card "+ri.cls+"' onclick=\"openSys('"+safeN+"')\">"+
+      "<div class='lr-name'>"+esc(s.name)+endNote+"</div>"+
+      "<div class='lr-dom'>"+esc(s.dom)+" · "+esc(s.status)+"</div>"+
+      "<span class='lr-rtag'>"+ri.icon+" "+ri.label+"</span>"+
+      "<div class='lr-caps'>"+s.caps.map(function(c){return "<span class='lr-cap'>"+esc(c)+"</span>";}).join("")+"</div>"+
+      "<div class='lr-act'>"+ri.act+"</div></div>";
+  }).join("")||"<div style='color:var(--muted)'>該当なし</div>";
+}
+
+// ═══════════════════════════════════════
+//  COVERAGE D — CHORD/COVERAGE BAR
+// ═══════════════════════════════════════
+function renderChord(){
+  var sysMap={};
+  D.filter(function(r){return r[8]==="グローバル標準";}).forEach(function(r){
+    var s=r[4];
+    if(!sysMap[s]) sysMap[s]={name:s,caps:{},doms:{}};
+    sysMap[s].caps[r[2]+"__"+r[3]]=1;
+    sysMap[s].doms[r[1]]=1;
+  });
+  var list=Object.keys(sysMap).map(function(k){
+    return {name:k,nc:Object.keys(sysMap[k].caps).length,nd:Object.keys(sysMap[k].doms).length,caps:Object.keys(sysMap[k].caps)};
+  }).sort(function(a,b){return b.nc-a.nc;});
+  var COLS=["#4f8ef7","#22d3a0","#f7c44f","#ff4d5e","#b47ff7","#e879f9","#34d399","#fb923c","#60a5fa","#a78bfa","#f472b6","#4ade80"];
+  if(_chordChart){ _chordChart.destroy(); _chordChart=null; }
+  setTimeout(function(){
+  if(typeof Chart==="undefined") return;
+  _chordChart=new Chart(document.getElementById("cht-chord"),{
+    type:"bar",
+    data:{
+      labels:list.map(function(s){return s.name.length>20?s.name.slice(0,20)+"…":s.name;}),
+      datasets:[{
+        label:"カバーするケイパビリティ数",
+        data:list.map(function(s){return s.nc;}),
+        backgroundColor:list.map(function(_,i){return COLS[i%COLS.length]+"cc";}),
+        borderRadius:4,borderWidth:0
+      }]
+    },
+    options:{
+      indexAxis:"y",
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return " "+c.raw+" ケイパビリティをカバー";}}}}  ,
+      scales:{
+        x:{ticks:{color:"#58688a",font:{family:"'JetBrains Mono'",size:9},stepSize:1},grid:{color:"#1e2640"}},
+        y:{ticks:{color:"#e4eaf8",font:{family:"'Noto Sans JP'",size:10}},grid:{color:"#1e2640"}}
+      },
+      onClick:function(e,els){
+        if(!els.length) return;
+        var s=list[els[0].index];
+        openSys(s.name);
+      }
+    }
+  });
+  },0);
+  document.getElementById("chordLeg").innerHTML=list.slice(0,12).map(function(s,i){
+    var safeN=s.name.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    var capSummary=s.caps.map(function(c){return c.split("__")[1]||c;}).slice(0,3).join(" / ")+(s.caps.length>3?" +"+(s.caps.length-3)+"機能":"");
+    return "<div class='cl-item' onclick=\"openSys('"+safeN+"')\">"+
+      "<div class='cl-dot' style='background:"+COLS[i%COLS.length]+"'></div>"+
+      "<div class='cl-txt'><div class='cl-name'>"+esc(s.name)+"</div>"+
+      "<div class='cl-caps'>"+esc(capSummary)+"</div>"+
+      "<span class='pill p-g' style='font-size:8px;margin-top:3px;display:inline-block'>"+s.nc+" caps · "+s.nd+" domains</span></div></div>";
+  }).join("");
+}
+
+// ═══════════════════════════════════════
+//  SYSTEM LIST (E)
+// ═══════════════════════════════════════
+var _sleDom="ALL", _sleGl="ALL", _sleSt="ALL";
+
+function initSleFilters(){
+  var el = document.getElementById("sle-dom-btns");
+  if(!el || el.children.length > 0) return;
+  DOMS.forEach(function(d){
+    var btn = document.createElement("button");
+    btn.className = "fb";
+    btn.textContent = d;
+    btn.onclick = (function(dd){ return function(){ setSleF("dom", dd, btn); }; })(d);
+    el.appendChild(btn);
+  });
+}
+
+function setSleF(type,val,btn){
+  if(type === "dom") _sleDom = val;
+  if(type === "gl")  _sleGl  = val;
+  if(type === "st")  _sleSt  = val;
+  var fbar = document.getElementById("sp-ce").querySelector(".fbar");
+  fbar.querySelectorAll(".fb").forEach(function(b){ b.classList.remove("on"); });
+  document.getElementById("sle-dom-all").classList.add("on");
+  document.getElementById("sle-gl-all").classList.add("on");
+  document.getElementById("sle-st-all").classList.add("on");
+  btn.classList.add("on");
+  renderSle();
+}
+
+function renderSle(){
+  initSleFilters();
+  var rows = D.slice();
+  if(_sleDom !== "ALL") rows = rows.filter(function(r){ return r[1] === _sleDom; });
+  if(_sleGl  !== "ALL") rows = rows.filter(function(r){ return r[8] === _sleGl;  });
+  if(_sleSt  !== "ALL") rows = rows.filter(function(r){ return r[13] === _sleSt; });
+  rows.sort(function(a,b){
+    var di = DOMS.indexOf(a[1]) - DOMS.indexOf(b[1]);
+    if(di !== 0) return di;
+    var gi = GL_KEYS.indexOf(a[8]) - GL_KEYS.indexOf(b[8]);
+    if(gi !== 0) return gi;
+    return a[4] < b[4] ? -1 : a[4] > b[4] ? 1 : 0;
+  });
+  document.getElementById("sle-count").textContent = rows.length + " 件表示";
+  var tbody = document.getElementById("sleBody");
+  tbody.innerHTML = "";
+  rows.forEach(function(r){
+    var tr = document.createElement("tr");
+    tr.style.cursor = "pointer";
+    tr.dataset.sys = r[4];
+    var cols = [
+      {v: r[4],  bold: true},
+      {v: r[1],  pill: "dom"},
+      {v: r[2]},
+      {v: r[3],  muted: true},
+      {v: r[5],  muted: true, small: true},
+      {v: r[6]},
+      {v: r[7],  muted: true},
+      {v: r[8],  pill: "gl"},
+      {v: r[9],  small: true, muted: true},
+      {v: r[10], small: true, muted: true},
+      {v: r[11], mono: true,  small: true, muted: true},
+      {v: r[12]||"—", mono: true, small: true, danger: !!r[12]},
+      {v: r[13], pill: "st"}
+    ];
+    cols.forEach(function(col){
+      var td = document.createElement("td");
+      if(col.pill === "gl"){
+        var sp = document.createElement("span");
+        sp.className = "pill " + (GL_CLS[col.v] || "");
+        sp.textContent = col.v;
+        td.appendChild(sp);
+      } else if(col.pill === "st"){
+        var sp = document.createElement("span");
+        sp.className = "pill " + (ST_CLS[col.v] || "");
+        sp.textContent = col.v;
+        td.appendChild(sp);
+      } else if(col.pill === "dom"){
+        var sp = document.createElement("span");
+        sp.style.cssText = "font-size:9px;padding:2px 6px;border-radius:3px;background:var(--s3);color:var(--muted)";
+        sp.textContent = col.v;
+        td.appendChild(sp);
+      } else {
+        td.textContent = col.v;
+      }
+      if(col.bold)   td.style.fontWeight = "600";
+      if(col.muted)  td.style.color = "var(--muted)";
+      if(col.small)  td.style.fontSize = "9px";
+      if(col.mono)   td.style.fontFamily = "JetBrains Mono, monospace";
+      if(col.danger) td.style.color = "var(--gap)";
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tbody.onclick = function(e){
+    var tr = e.target;
+    while(tr && tr.tagName !== "TR") tr = tr.parentElement;
+    if(tr && tr.dataset.sys) openSys(tr.dataset.sys);
+  };
+}
+
+// ═══════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════
+function goSysList(){
+  // カバレッジ分析タブへ移動
+  document.querySelectorAll(".ntab").forEach(function(b){b.classList.remove("on");});
+  document.querySelectorAll(".ntab")[2].classList.add("on");
+  document.querySelectorAll(".pg").forEach(function(el){el.classList.remove("on");});
+  document.getElementById("pg-cv").classList.add("on");
+  // Eタブへ切替
+  document.querySelectorAll(".spg").forEach(function(el){el.classList.remove("on");});
+  document.querySelectorAll(".stab").forEach(function(b){b.classList.remove("on");});
+  document.getElementById("sp-ce").classList.add("on");
+  document.getElementById("stab-ce").classList.add("on");
+  // カバレッジ未初期化なら初期化
+  if(!_cvInited){
+    initCovFilters();
+    renderCov(); renderTl(); renderLr(); renderChord();
+    _cvInited=true;
+  }
+  renderSle();
+}
+
+function boot(){
+  initOverview();
+  _ovInited=true;
+}
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
+</script>
+</body>
+</html>
