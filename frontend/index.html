@@ -5733,6 +5733,7 @@ function renderScenarioPanel() {
 let _bpSelectedL1 = null;
 let _bpCapabilities = [];
 let _bpAllApps = [];
+let _bpTreeCache = [];
 let _bpMatrixData = [];
 let _bpAdminScopeFilter = '';
 
@@ -5869,15 +5870,16 @@ async function loadCapabilityAdmin() {
 }
 
 function _renderBpL1List(tree) {
+  _bpTreeCache = tree;
   const list = document.getElementById('bpL1List');
   if (!list) return;
   if (!tree.length) {
     list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--gray-400);">データなし</div>`;
     return;
   }
-  list.innerHTML = tree.map(l1 => `
+  list.innerHTML = tree.map((l1, idx) => `
     <div class="bp-l1-item${_bpSelectedL1 === l1.capability_id ? ' selected' : ''}"
-         onclick="_selectBpL1(${JSON.stringify(l1)})">
+         onclick="_selectBpL1(this, ${idx})">
       <span class="bp-l1-item-name">${_esc(l1.capability_name)}</span>
       <span class="bp-l1-item-cnt">${(l1.children||[]).length}</span>
       ${currentUser === 'admin' ? `
@@ -5890,10 +5892,11 @@ function _renderBpL1List(tree) {
   `).join('');
 }
 
-function _selectBpL1(l1) {
+function _selectBpL1(el, idx) {
+  const l1 = _bpTreeCache[idx];
   _bpSelectedL1 = l1.capability_id;
-  document.querySelectorAll('.bp-l1-item').forEach(el => el.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+  document.querySelectorAll('.bp-l1-item').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
   _renderBpL2Panel(l1);
 }
 
