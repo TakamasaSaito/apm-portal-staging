@@ -233,6 +233,15 @@ CREATE TABLE IF NOT EXISTS cmdb_rel_ci (
   note             TEXT,
   created_at       DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS business_capability (
+    capability_id    TEXT PRIMARY KEY,
+    capability_name  TEXT NOT NULL,
+    parent_id        TEXT REFERENCES business_capability(capability_id),
+    level            INTEGER NOT NULL,
+    scope            TEXT,
+    sort_order       INTEGER
+);
     """)
 
     # スキーマ強制移行: environment / configuration_item から直接FKカラムを除去
@@ -269,9 +278,11 @@ CREATE TABLE configuration_item (
     # relation_type 初期データ投入
     cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('has_environment','環境を持つ','環境である')")
     cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('has_ci','構成情報を持つ','構成情報である')")
+    cur.execute("INSERT OR IGNORE INTO relation_type (type_name, parent_label, child_label) VALUES ('realizes','ケイパビリティ','実現システム')")
 
     # 既存データクリア（FK OFF なので順序自由）
     for table in [
+        "business_capability",
         "cmdb_rel_ci",
         "cost_plan", "demand_application", "demand_task", "project", "demand",
         "apm_request", "configuration_item", "environment",
@@ -1485,6 +1496,108 @@ CREATE TABLE configuration_item (
             [score, inv_class, capex, opex, fin_ben, roi, npv, did],
         )
 
+    # ---------- ビジネスケイパビリティ ----------
+    # (capability_id, capability_name, parent_id, level, scope, sort_order)
+    capabilities = [
+        # ── レベル1 ──
+        ("HRM",  "人事",              None,  1, None,    10),
+        ("FIN",  "経理・財務",        None,  1, None,    20),
+        ("SAL",  "営業・マーケティング", None, 1, None,   30),
+        ("GEN",  "総務",              None,  1, None,    40),
+        ("IT",   "IT基盤",            None,  1, None,    50),
+        # ── 人事 配下 ──
+        ("HRM-01", "勤怠管理",        "HRM", 2, "local",   11),
+        ("HRM-02", "給与計算",        "HRM", 2, "local",   12),
+        ("HRM-03", "採用管理",        "HRM", 2, "local",   13),
+        ("HRM-04", "人事・労務管理",  "HRM", 2, "local",   14),
+        ("HRM-05", "研修・人材開発",  "HRM", 2, "local",   15),
+        # ── 経理・財務 配下 ──
+        ("FIN-01", "会計管理",        "FIN", 2, "global",  21),
+        ("FIN-02", "経費管理",        "FIN", 2, "local",   22),
+        ("FIN-03", "予算管理",        "FIN", 2, "global",  23),
+        ("FIN-04", "財務報告",        "FIN", 2, "global",  24),
+        # ── 営業・マーケティング 配下 ──
+        ("SAL-01", "顧客管理（CRM）", "SAL", 2, "global",  31),
+        ("SAL-02", "営業支援（SFA）", "SAL", 2, "global",  32),
+        ("SAL-03", "マーケティング自動化", "SAL", 2, "global", 33),
+        ("SAL-04", "リード管理",      "SAL", 2, "global",  34),
+        # ── 総務 配下 ──
+        ("GEN-01", "文書管理",            "GEN", 2, "local",   41),
+        ("GEN-02", "設備・施設管理",      "GEN", 2, "local",   42),
+        ("GEN-03", "社内コミュニケーション", "GEN", 2, "local", 43),
+        # ── IT基盤 配下 ──
+        ("IT-01", "クラウド基盤",         "IT", 2, "global",  51),
+        ("IT-02", "認証・セキュリティ",   "IT", 2, "global",  52),
+        ("IT-03", "ITサービス管理",       "IT", 2, "global",  53),
+        ("IT-04", "基幹システム統合",     "IT", 2, "global",  54),
+    ]
+    for (cap_id, cap_name, parent_id, level, scope, sort_order) in capabilities:
+        cur.execute(
+            """INSERT INTO business_capability
+                   (capability_id, capability_name, parent_id, level, scope, sort_order)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            [cap_id, cap_name, parent_id, level, scope, sort_order],
+        )
+
+    # ケイパビリティ ↔ システム 紐付け（cmdb_rel_ci, relation_type='realizes'）
+    realizes_id = cur.execute(
+        "SELECT relation_type_id FROM relation_type WHERE type_name='realizes'"
+    ).fetchone()[0]
+
+    # (capability_id, application_id)
+    cap_app_links = [
+        # 勤怠管理 → 複数システム紐付け（重複デモ①）
+        ("HRM-01", "APM-013"),   # 勤怠管理システム（現行）
+        ("HRM-01", "APM-015"),   # 旧勤怠管理システム（retire済・重複）
+        ("HRM-01", "APM-021"),   # 旧勤怠連携バッチシステム（移行中・重複）
+        # 給与計算
+        ("HRM-02", "APM-007"),   # 旧給与計算システム（retire済）
+        ("HRM-02", "G-HRM"),     # グローバルHRM（移行先）
+        # 人事・労務管理
+        ("HRM-04", "APM-001"),   # 人事管理システム
+        ("HRM-04", "G-HRM"),     # グローバルHRM（重複あり）
+        # 会計管理
+        ("FIN-01", "G-ERP"),     # グローバルERP
+        # 経費管理 → 複数システム紐付け（重複デモ②）
+        ("FIN-02", "APM-004"),   # 経費精算システム（現行）
+        ("FIN-02", "APM-020"),   # 旧経費精算ワークフロー（レガシー・重複）
+        # 予算管理
+        ("FIN-03", "G-ERP"),     # グローバルERP
+        # 顧客管理（CRM）
+        ("SAL-01", "APM-005"),   # 顧客管理システム（開発中）
+        # 営業支援（SFA）
+        ("SAL-02", "APM-002"),   # 営業支援システム（SFA）
+        # マーケティング自動化 / リード管理
+        ("SAL-03", "APM-009"),   # マーケティング自動化ツール
+        ("SAL-04", "APM-009"),   # 同上（リード管理機能も兼務）
+        # 文書管理 → 複数システム紐付け（重複デモ③）
+        ("GEN-01", "APM-006"),   # 文書管理システム（開発予定）
+        ("GEN-01", "APM-019"),   # 旧文書管理システム（稼働中・重複）
+        ("GEN-01", "APM-016"),   # レガシー帳票出力システム（稼働中・重複）
+        # 設備・施設管理
+        ("GEN-02", "APM-010"),   # 設備管理システム
+        # 社内コミュニケーション
+        ("GEN-03", "APM-014"),   # 社内ポータル
+        ("GEN-03", "APM-022"),   # 旧グループウェア（レガシー）
+        # クラウド基盤
+        ("IT-01", "G-CLOUD"),    # グローバルクラウド基盤（AWS）
+        ("IT-01", "INF-DC1"),    # 国内データセンター基盤（移行中）
+        # 認証・セキュリティ
+        ("IT-02", "G-SSO"),      # グローバル認証基盤（SSO）
+        ("IT-02", "INF-AUTH"),   # 国内認証基盤（廃止予定）
+        # ITサービス管理
+        ("IT-03", "APM-012"),    # カスタマーサポートチケット管理
+        # 基幹システム統合
+        ("IT-04", "G-ERP"),      # グローバルERP
+    ]
+    for (cap_id, app_id) in cap_app_links:
+        cur.execute(
+            """INSERT INTO cmdb_rel_ci
+                   (parent_table, parent_id, child_table, child_id, relation_type_id)
+               VALUES ('business_capability', ?, 'application', ?, ?)""",
+            [cap_id, app_id, realizes_id],
+        )
+
     conn.commit()
     conn.close()
     print("✓ シードデータを投入しました")
@@ -1493,6 +1606,7 @@ CREATE TABLE configuration_item (
     print(f"  CI: {len(ci_data)}件, 依存関係: {len(deps)}件, 申請: {len(requests)}件")
     print(f"  デマンド: {len(demands)}件, タスク: {len(demand_tasks)}件, 関連アプリ: {len(demand_apps)}件")
     print(f"  コスト計画: {len(cost_plans)}件, プロジェクト: {len(projects)}件, 財務更新: {len(demand_financials)}件")
+    print(f"  ケイパビリティ: {len(capabilities)}件, ケイパビリティ-アプリ紐付け: {len(cap_app_links)}件")
 
 
 if __name__ == "__main__":
