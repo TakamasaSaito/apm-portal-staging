@@ -219,6 +219,18 @@ CREATE TABLE IF NOT EXISTS apm_request (
     end_plan          TEXT,
     app_category      TEXT
 );
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    audit_log_id  INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id       INTEGER REFERENCES user(user_id),
+    action        TEXT NOT NULL,
+    target_table  TEXT,
+    target_id     TEXT,
+    before_value  TEXT,
+    after_value   TEXT,
+    ip_address    TEXT,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
+);
         """)
 
         # Seed relation_type master data

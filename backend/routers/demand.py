@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 import aiosqlite
 from datetime import date
 from ..database import get_db
@@ -7,6 +7,7 @@ from ..models import (DemandCreate, DemandUpdate, DemandStageUpdate,
                       DemandApplicationCreate, CostPlanCreate, CostPlanUpdate,
                       ProjectCreate)
 from .auth import get_current_user
+from .audit import write_audit_log
 
 router = APIRouter(prefix="/api")
 
@@ -115,8 +116,9 @@ async def get_demand(
 @router.post("/demands", status_code=201)
 async def create_demand(
     payload: DemandCreate,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     async with db.execute("SELECT demand_id FROM demand ORDER BY demand_id DESC LIMIT 1") as cur:
         row = await cur.fetchone()
@@ -132,6 +134,12 @@ async def create_demand(
         [demand_id] + vals,
     )
     await db.commit()
+    await write_audit_log(
+        db, user_id=current_user["user_id"], action="create",
+        target_table="demand", target_id=demand_id,
+        after_value=data,
+        ip_address=request.client.host if request.client else None,
+    )
     return await _demand_with_users(db, demand_id)
 
 
@@ -140,8 +148,9 @@ async def create_demand(
 async def update_demand(
     demand_id: str,
     payload: DemandUpdate,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     d = await _demand_with_users(db, demand_id)
     if not d:
@@ -155,6 +164,12 @@ async def update_demand(
         list(data.values()) + [demand_id],
     )
     await db.commit()
+    await write_audit_log(
+        db, user_id=current_user["user_id"], action="update",
+        target_table="demand", target_id=demand_id,
+        after_value=data,
+        ip_address=request.client.host if request.client else None,
+    )
     return await _demand_with_users(db, demand_id)
 
 
@@ -163,8 +178,9 @@ async def update_demand(
 async def update_stage(
     demand_id: str,
     payload: DemandStageUpdate,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     d = await _demand_with_users(db, demand_id)
     if not d:
@@ -175,6 +191,12 @@ async def update_stage(
         [payload.stage, payload.reject_reason, payload.review_comment, payload.approval_comment, demand_id],
     )
     await db.commit()
+    await write_audit_log(
+        db, user_id=current_user["user_id"], action="update",
+        target_table="demand", target_id=demand_id,
+        after_value={"stage": payload.stage},
+        ip_address=request.client.host if request.client else None,
+    )
     return await _demand_with_users(db, demand_id)
 
 

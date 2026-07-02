@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 import aiosqlite
 import json
 from datetime import datetime
 from ..database import get_db
 from ..models import RequestCreate
 from .auth import get_current_user
+from .audit import write_audit_log
 
 router = APIRouter(prefix="/api")
 
@@ -101,8 +102,9 @@ async def list_requests(
 @router.post("/requests", status_code=201)
 async def create_request(
     data: RequestCreate,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     req_id = await _next_request_id(db)
     applied_at = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -152,12 +154,19 @@ async def create_request(
         ],
     )
     await db.commit()
+    await write_audit_log(
+        db, user_id=current_user["user_id"], action="create",
+        target_table="apm_request", target_id=req_id,
+        after_value=data.dict(),
+        ip_address=request.client.host if request.client else None,
+    )
     return {"request_id": req_id, "status": "pending"}
 
 
 @router.put("/requests/{req_id}/approve")
 async def approve_request(
     req_id: str,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -222,12 +231,19 @@ async def approve_request(
         )
 
     await db.commit()
+    await write_audit_log(
+        db, user_id=current_user["user_id"], action="update",
+        target_table="apm_request", target_id=req_id,
+        after_value={"status": "approved"},
+        ip_address=request.client.host if request.client else None,
+    )
     return {"status": "approved"}
 
 
 @router.put("/requests/{req_id}/reject")
 async def reject_request(
     req_id: str,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
@@ -249,4 +265,10 @@ async def reject_request(
         [approver_user_id, approved_at, req_id],
     )
     await db.commit()
+    await write_audit_log(
+        db, user_id=current_user["user_id"], action="update",
+        target_table="apm_request", target_id=req_id,
+        after_value={"status": "rejected"},
+        ip_address=request.client.host if request.client else None,
+    )
     return {"status": "rejected"}

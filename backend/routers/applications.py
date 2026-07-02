@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 import aiosqlite
 from ..database import get_db
 from ..models import ApplicationUpdate, AppDepUpdate
 from .auth import get_current_user
+from .audit import write_audit_log
 
 router = APIRouter(prefix="/api")
 
@@ -86,14 +87,17 @@ async def get_application(
 async def update_application(
     app_id: str,
     data: ApplicationUpdate,
+    request: Request,
     db: aiosqlite.Connection = Depends(get_db),
-    _: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     async with db.execute(
-        "SELECT application_id FROM application WHERE application_id = ?", [app_id]
+        "SELECT * FROM application WHERE application_id = ?", [app_id]
     ) as cur:
-        if not await cur.fetchone():
-            raise HTTPException(404, "Application not found")
+        before_row = await cur.fetchone()
+    if not before_row:
+        raise HTTPException(404, "Application not found")
+    before_value = dict(before_row)
 
     updates: dict = {}
     if data.application_name is not None:
@@ -137,6 +141,13 @@ async def update_application(
             [*updates.values(), app_id],
         )
         await db.commit()
+        await write_audit_log(
+            db, user_id=current_user["user_id"], action="update",
+            target_table="application", target_id=app_id,
+            before_value={k: before_value.get(k) for k in updates},
+            after_value=updates,
+            ip_address=request.client.host if request.client else None,
+        )
     return {"status": "updated"}
 
 

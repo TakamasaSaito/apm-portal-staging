@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import init_db
-from .routers import applications, environments, requests as req_router, auth, ci as ci_router, dashboard as dashboard_router, demand as demand_router, cmdb as cmdb_router, capability as capability_router
+from .routers import applications, environments, requests as req_router, auth, ci as ci_router, dashboard as dashboard_router, demand as demand_router, cmdb as cmdb_router, capability as capability_router, audit as audit_router
 
 _SEED_PATH = os.path.join(os.path.dirname(__file__), "..", "scripts", "seed.py")
 
@@ -47,6 +47,7 @@ app.include_router(dashboard_router.router)
 app.include_router(demand_router.router)
 app.include_router(cmdb_router.router)
 app.include_router(capability_router.router)
+app.include_router(audit_router.router)
 
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
 app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="static")
