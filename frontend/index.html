@@ -545,6 +545,9 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
       <div class="sidebar-item" onclick="showPage('history',null);highlightSidebar(null)">
         <span class="sidebar-icon">📋</span> 申請履歴
       </div>
+      <div class="sidebar-item" id="sb-audit-log" style="display:none;" onclick="showPage('audit-log',null);highlightSidebar('sb-audit-log')">
+        <span class="sidebar-icon">🔍</span> 監査ログ
+      </div>
     </div>
   </aside>
 
@@ -834,6 +837,53 @@ tr.clickable:hover td{background:#F8FAFC;cursor:pointer;}
         <div><div class="page-title">承認一覧</div><div class="page-subtitle">承認待ちの申請を処理します</div></div>
       </div>
       <div id="approvalListWrap"></div>
+    </div>
+
+    <!-- ===================== 監査ログ ===================== -->
+    <div id="page-audit-log" style="display:none;">
+      <div class="page-header">
+        <div><div class="page-title">🔍 監査ログ</div><div class="page-subtitle">ログイン・操作の履歴を閲覧できます</div></div>
+      </div>
+      <div class="table-card">
+        <div class="filter-bar" style="padding:16px 16px 0;">
+          <select class="filter-select" id="auditFilterAction" onchange="auditLogOffset=0;loadAuditLog()">
+            <option value="">すべての操作</option>
+            <option value="login">login</option>
+            <option value="login_failed">login_failed</option>
+            <option value="create">create</option>
+            <option value="update">update</option>
+            <option value="delete">delete</option>
+          </select>
+          <select class="filter-select" id="auditFilterTable" onchange="auditLogOffset=0;loadAuditLog()">
+            <option value="">すべての対象</option>
+            <option value="application">application</option>
+            <option value="demand">demand</option>
+            <option value="apm_request">apm_request</option>
+            <option value="auth">auth</option>
+          </select>
+        </div>
+        <div class="table-scroll-wrap" style="margin-top:8px;">
+          <table id="auditTable">
+            <thead><tr>
+              <th style="min-width:150px;">日時</th>
+              <th style="min-width:100px;">ユーザー名</th>
+              <th style="min-width:90px;">操作</th>
+              <th style="min-width:110px;">対象テーブル</th>
+              <th style="min-width:110px;">対象ID</th>
+              <th style="min-width:80px;">IPアドレス</th>
+              <th style="min-width:120px;">変更内容</th>
+            </tr></thead>
+            <tbody id="auditTableBody"></tbody>
+          </table>
+        </div>
+        <div id="auditPagination" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--gray-200);font-size:13px;color:var(--gray-600);">
+          <span id="auditPaginationInfo"></span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" id="auditPrevBtn" onclick="changeAuditPage(-1)">← 前へ</button>
+            <button class="btn btn-secondary btn-sm" id="auditNextBtn" onclick="changeAuditPage(1)">次へ →</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ===================== デマンド一覧 ===================== -->
@@ -1879,6 +1929,8 @@ function setUserFromStorage() {
   document.getElementById('loginUserName').textContent = user.user_name || '';
   document.getElementById('btnApplicant').classList.toggle('active', currentUser !== 'admin');
   document.getElementById('btnAdmin').classList.toggle('active', currentUser === 'admin');
+  const auditMenuItem = document.getElementById('sb-audit-log');
+  if (auditMenuItem) auditMenuItem.style.display = currentUser === 'admin' ? 'flex' : 'none';
 }
 
 async function doLogin() {
@@ -1942,7 +1994,7 @@ function closeSidebar() {
 }
 
 // ========== ページ切り替え ==========
-const ALL_PAGES = ['home','history','approval','demand-list','demand-form','demand-review','demand-tasks','demand-approve','demand-complete','demand-workbench','project-list','project-detail','bp-matrix','bp-admin'];
+const ALL_PAGES = ['home','history','approval','audit-log','demand-list','demand-form','demand-review','demand-tasks','demand-approve','demand-complete','demand-workbench','project-list','project-detail','bp-matrix','bp-admin'];
 function showPage(page, navEl) {
   if (window.innerWidth <= 768) closeSidebar();
   currentPage = page;
@@ -1954,6 +2006,7 @@ function showPage(page, navEl) {
   if (navEl) navEl.classList.add('active');
   if (page === 'history') renderHistoryTable();
   if (page === 'approval') renderApprovalList();
+  if (page === 'audit-log') loadAuditLog();
 }
 function showSidebarView(view, el) {
   if (window.innerWidth <= 768) closeSidebar();
@@ -3337,6 +3390,102 @@ async function approveRequest(id, approved) {
   } catch(e) {
     showToast('処理に失敗しました', 'error');
   }
+}
+
+// ========== 監査ログ ==========
+let auditLogOffset = 0;
+const auditLogLimit = 50;
+let auditLogTotal = 0;
+
+async function loadAuditLog() {
+  if (currentUser !== 'admin') {
+    document.getElementById('auditTableBody').innerHTML =
+      `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400);">🔒 閲覧は事務局のみ可能です</td></tr>`;
+    return;
+  }
+  const action = document.getElementById('auditFilterAction')?.value || '';
+  const table  = document.getElementById('auditFilterTable')?.value  || '';
+  const params = new URLSearchParams({limit: auditLogLimit, offset: auditLogOffset});
+  if (action) params.append('action', action);
+  if (table)  params.append('target_table', table);
+
+  try {
+    const data = await apiFetch('/api/audit-logs?' + params.toString());
+    if (!data) return;
+    auditLogTotal = data.total;
+    renderAuditTable(data.items);
+    updateAuditPagination();
+  } catch(e) {
+    document.getElementById('auditTableBody').innerHTML =
+      `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--red);">データ取得に失敗しました</td></tr>`;
+  }
+}
+
+const AUDIT_ACTION_STYLE = {
+  login:        'background:#dcfce7;color:#15803d;',
+  login_failed: 'background:#fee2e2;color:#b91c1c;',
+  create:       'background:#dbeafe;color:#1d4ed8;',
+  update:       'background:#fef3c7;color:#92400e;',
+  delete:       'background:#fee2e2;color:#b91c1c;',
+};
+
+function renderAuditTable(items) {
+  const tbody = document.getElementById('auditTableBody');
+  if (!items.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-400);">ログがありません</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = items.map((row, i) => {
+    const actionStyle = AUDIT_ACTION_STYLE[row.action] || 'background:var(--gray-100);color:var(--gray-600);';
+    const hasDiff = row.before_value || row.after_value;
+    const detailId = 'audit-detail-' + i;
+    let diffHtml = '';
+    if (hasDiff) {
+      const bv = row.before_value ? JSON.stringify(row.before_value, null, 2) : null;
+      const av = row.after_value  ? JSON.stringify(row.after_value,  null, 2) : null;
+      diffHtml = `<div id="${detailId}" style="display:none;margin-top:6px;">` +
+        (bv ? `<div style="font-size:10px;font-weight:700;color:var(--gray-500);margin-bottom:2px;">BEFORE</div><pre style="font-size:11px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">${escHtml(bv)}</pre>` : '') +
+        (av ? `<div style="font-size:10px;font-weight:700;color:var(--gray-500);margin-bottom:2px;margin-top:4px;">AFTER</div><pre style="font-size:11px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;padding:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">${escHtml(av)}</pre>` : '') +
+        `</div>`;
+    }
+    return `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap;">${escHtml(row.created_at || '')}</td>
+      <td>${escHtml(row.user_name || '（不明）')}</td>
+      <td><span style="display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;${actionStyle}">${escHtml(row.action)}</span></td>
+      <td style="font-size:12px;color:var(--gray-600);">${escHtml(row.target_table || '')}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;">${escHtml(row.target_id || '')}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gray-500);">${escHtml(row.ip_address || '')}</td>
+      <td>${hasDiff
+        ? `<button onclick="toggleAuditDetail('${detailId}')" style="background:none;border:1px solid var(--gray-300);border-radius:4px;font-size:11px;padding:2px 8px;cursor:pointer;color:var(--gray-600);">▶ 詳細</button>${diffHtml}`
+        : '<span style="color:var(--gray-400);">—</span>'
+      }</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleAuditDetail(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  const btn = el.previousElementSibling;
+  if (btn) btn.textContent = isOpen ? '▶ 詳細' : '▼ 閉じる';
+}
+
+function updateAuditPagination() {
+  const info = document.getElementById('auditPaginationInfo');
+  const prev = document.getElementById('auditPrevBtn');
+  const next = document.getElementById('auditNextBtn');
+  const from = auditLogTotal === 0 ? 0 : auditLogOffset + 1;
+  const to   = Math.min(auditLogOffset + auditLogLimit, auditLogTotal);
+  if (info) info.textContent = `${from}–${to} / ${auditLogTotal} 件`;
+  if (prev) prev.disabled = auditLogOffset === 0;
+  if (next) next.disabled = auditLogOffset + auditLogLimit >= auditLogTotal;
+}
+
+function changeAuditPage(delta) {
+  auditLogOffset = Math.max(0, auditLogOffset + delta * auditLogLimit);
+  loadAuditLog();
 }
 
 // ========== CSV出力 ==========

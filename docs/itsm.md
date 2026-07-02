@@ -104,3 +104,48 @@ WHERE r.parent_table='application' AND r.parent_id=? AND rt.type_name='has_envir
 | ip_address | IPアドレス |
 | bmc_ip | BMC/iLO等管理IPアドレス |
 | status | active / maintenance / decommissioned |
+
+---
+
+## セキュリティ・監査ログ機能
+
+### 概要
+
+全ての認証操作・データ変更操作を `audit_log` テーブルに記録し、事務局（admin）が閲覧できる機能。
+
+### audit_log テーブル
+
+| カラム | 説明 |
+|--------|------|
+| audit_log_id | PK（AUTO INCREMENT） |
+| user_id | 操作ユーザーID（ログイン失敗時はNULL） |
+| action | 操作種別（下表参照） |
+| target_table | 操作対象テーブル名 |
+| target_id | 操作対象レコードID |
+| before_value | 変更前の値（JSON文字列） |
+| after_value | 変更後の値（JSON文字列） |
+| ip_address | クライアントIPアドレス |
+| created_at | 操作日時 |
+
+### action 種別
+
+| action | 説明 | 記録箇所 |
+|--------|------|---------|
+| login | ログイン成功 | POST /api/auth/login |
+| login_failed | ログイン失敗 | POST /api/auth/login |
+| create | レコード作成 | POST /api/demands, POST /api/requests |
+| update | レコード更新 | PUT /api/applications/{id}, PUT /api/demands/{id}, PUT /api/demands/{id}/stage, PUT /api/requests/{id}/approve, PUT /api/requests/{id}/reject |
+| delete | レコード削除 | （将来対応） |
+
+### APIエンドポイント
+
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | /api/audit-logs | 監査ログ一覧（admin限定）。limit/offset/action/target_tableでフィルタ可 |
+
+### 閲覧画面（フロントエンド）
+
+- サイドバー「承認・申請管理」グループに「🔍 監査ログ」を追加（admin限定表示）
+- フィルター：操作種別・対象テーブル
+- 変更内容列（before_value / after_value）はクリックで展開表示
+- ページネーション：50件/ページ
