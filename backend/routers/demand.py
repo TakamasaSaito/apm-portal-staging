@@ -7,7 +7,7 @@ from ..models import (DemandCreate, DemandUpdate, DemandStageUpdate,
                       DemandApplicationCreate, CostPlanCreate, CostPlanUpdate,
                       ProjectCreate)
 from .auth import get_current_user
-from .audit import write_audit_log
+from .audit_utils import write_audit_log
 
 router = APIRouter(prefix="/api")
 

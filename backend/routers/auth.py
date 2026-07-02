@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from ..database import get_db
-from .audit import write_audit_log
+from .audit_utils import write_audit_log
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "apm-portal-dev-secret-key-change-in-production")
 ALGORITHM = "HS256"

@@ -3,7 +3,7 @@ import aiosqlite
 from ..database import get_db
 from ..models import ApplicationUpdate, AppDepUpdate
 from .auth import get_current_user
-from .audit import write_audit_log
+from .audit_utils import write_audit_log
 
 router = APIRouter(prefix="/api")
 
